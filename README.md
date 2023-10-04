@@ -11,6 +11,7 @@ Build unbiased anatomical templates from individual images
 - [Overview](#overview)
 - [Scope](#scope)
 - [Status](#status)
+- [Installation](#installation)
 - [Background](#background)
   - [On templates and atlases](#on-templates-and-atlases)
   - [Single-subject vs population templates](#single-subject-vs-population-templates)
@@ -37,7 +38,34 @@ The main aims of brainglobe-template-builder are to:
 > - 🏗️ The package is currently in early development. Stay tuned ⌛
 > - It is not sufficiently tested to be used for scientific analysis
 > - The interface is subject to changes.
-> 
+
+## Installation
+
+We recommend you install brainglobe-template-builder inside a [conda](https://docs.conda.io/en/latest/)
+or [mamba](https://mamba.readthedocs.io/en/latest/index.html) environment.
+In the following we assume you have `conda` installed,
+but the same commands will also work with `mamba`/`micromamba`.
+
+First, create and activate an environment.
+You can call your environment whatever you like, we've used "template-builder". Upon creation, we recommend you install the latest version of `ants` and `parallel` from the `aramislab` and `conda-forge` channels respectively:
+
+```sh
+conda create -n template-builder -c aramislab -c conda-forge python=3.10 ants parallel
+conda activate template-builder
+```
+
+To get the latest development version of brainglobe-template-builder, clone this repository and pip install the package, including all the extra "dev" dependencies:
+
+```sh
+git clone https://github.com/brainglobe/brainglobe-template-builder
+cd brainglobe-template-builder
+pip install . -e .[dev]
+```
+If you are using `zsh` (the default shell on macOS), you will need to replace the last command with:
+
+```sh
+pip install . -e '.[dev]'
+```
 
 ## Background
 ### On templates and atlases
