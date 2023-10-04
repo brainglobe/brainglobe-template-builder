@@ -100,7 +100,7 @@ The ANTs unbiased template construction method consists of the iterative applica
 In particular, brainglobe-template-builder uses an optimised version of the [antsMultivariateTemplateConstruction2.sh](https://github.com/ANTsX/ANTs/blob/master/Scripts/antsMultivariateTemplateConstruction2.sh) script. This optimised implementation was developed by the [CoBra lab](https://www.cobralab.ca/) and is available through the [optimized_antsMultivariateTemplateConstruction GitHub repository](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master).
 
 ## License
-⚖️ [BSD 3-Clause](./LICENSE)
+⚖️ [BSD 3-Clause](https://opensource.org/license/bsd-3-clause/)
 
 ## Template
 This package layout and configuration (including pre-commit hooks and GitHub actions) have been copied from the [python-cookiecutter](https://github.com/neuroinformatics-unit/python-cookiecutter) template.
