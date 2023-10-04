@@ -19,6 +19,14 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
 
+dependencies = [
+    "numpy",
+    "scipy",
+    "simpleitk",
+    "vtk",
+    "qbatch"
+]
+
 [project.urls]
 "Homepage" = "https://github.com/brainglobe/brainglobe-template-builder"
 "Bug Tracker" = "https://github.com/brainglobe/brainglobe-template-builder/issues"
