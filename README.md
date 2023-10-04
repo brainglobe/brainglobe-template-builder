@@ -22,7 +22,7 @@ Build unbiased anatomical templates from individual images
 ## Overview
 brainglobe-template-builder aims to assist researchers in constructing unbiased anatomical reference images, commonly known as templates.
 
-The primary goal is to create 'average' brain templates from a set of individual high-resolution brain images acquired across multiple subjects. That said, the under- 
+The primary goal is to create 'average' brain templates from a set of individual high-resolution brain images acquired across multiple subjects. That said, the under-
 lying algorithms and code should be applicable to any other organ for which digital 3D images are available.
 
 We aim to primarily support imaged produced by 3D volumetric microscopy, such as serial two-photon tomography (STPT) and light-sheet microscopy (LSM).
@@ -104,6 +104,3 @@ In particular, brainglobe-template-builder uses an optimised version of the [ant
 
 ## Template
 This package layout and configuration (including pre-commit hooks and GitHub actions) have been copied from the [python-cookiecutter](https://github.com/neuroinformatics-unit/python-cookiecutter) template.
-
-
-

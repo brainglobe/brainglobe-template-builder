@@ -21,10 +21,13 @@ autodoc_mock_imports = []
 sys.path.insert(0, os.path.abspath("../.."))
 
 project = "brainglobe-template-builder"
-copyright = "2022, Niko Sirmpilatze"
+copyright = "2022, UCL"
 author = "Niko Sirmpilatze"
 try:
     release = setuptools_scm.get_version(root="../..", relative_to=__file__)
+    if "+" in release:
+        # remove the git commit hash for a cleaner version number
+        release = release.split("+")[0]
 except LookupError:
     # if git is not initialised, still allow local build
     # with a dummy version
