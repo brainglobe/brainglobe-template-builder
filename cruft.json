@@ -1,0 +1,24 @@
+{
+    "template": "https://github.com/neuroinformatics-unit/python-cookiecutter",
+    "commit": "d010499028b854061a9afadc210a7d2142dfd4e2",
+    "checkout": null,
+    "context": {
+      "cookiecutter": {
+        "full_name": "Niko Sirmpilatze",
+        "email": "niko.sirbiladze@gmail.com",
+        "github_username_or_organization": "brainglobe",
+        "package_name": "brainglobe-template-builder",
+        "github_repository_url": "provide later",
+        "module_name": "brainglobe_template_builder",
+        "short_description": "Build unbiased anatomical templates from individual images",
+        "license": "BSD-3",
+        "create_docs": "yes",
+        "_copy_without_render": [
+          ".github/*"
+        ],
+        "_template": "https://github.com/neuroinformatics-unit/python-cookiecutter"
+      }
+    },
+    "directory": null
+  }
+  
