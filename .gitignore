@@ -81,3 +81,9 @@ venv/
 
 # written by setuptools_scm
 **/_version.py
+
+# Caches
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
