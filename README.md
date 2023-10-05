@@ -70,11 +70,11 @@ The aim of `brainglobe-template-builder` is to assist researchers in constructin
 Templates can be derived in two primary ways. A *single-subject* template is based on the brain of one individual. While this approach is simpler and may be suitable for some applications, it risks being unrepresentative, as the chosen individual might have unique anatomical features. On the other hand, *population* templates are constructed by aligning and averaging brain images from multiple subjects. This method captures the anatomical variability present in a population and reduces biases inherent in relying on a single subject. Population templates have become the standard in human MRI studies and are increasingly being adopted for animal brain studies.
 
 ### Template construction with ANTs
-`brainglobe-template-builder` leverages the power of [ANTs (Advanced Normalisation Tools)](http://stnava.github.io/ANTs/), a widely used software suite for image registration and segmentation. 
+`brainglobe-template-builder` leverages the power of [ANTs (Advanced Normalisation Tools)](http://stnava.github.io/ANTs/), a widely used software suite for image registration and segmentation.
 
 ANTs includes a template construction piepline - implemented in the [antsMultivariateTemplateConstruction2.sh](https://github.com/ANTsX/ANTs/blob/master/Scripts/antsMultivariateTemplateConstruction2.sh) script - that iteratively aligns and averages multiple images to produce an unbiased population template (see [this issue](https://github.com/ANTsX/ANTs/issues/520) for details).
 
-An [optimsed implementation of the above pipeline](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master), developed by the [CoBra lab](https://www.cobralab.ca/), lies at the core of the `brainglobe-template-builder`'s functionality. 
+An [optimsed implementation of the above pipeline](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master), developed by the [CoBra lab](https://www.cobralab.ca/), lies at the core of the `brainglobe-template-builder`'s functionality.
 
 ## License
 ⚖️ [BSD 3-Clause](https://opensource.org/license/bsd-3-clause/)
