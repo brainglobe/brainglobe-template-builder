@@ -9,98 +9,75 @@
 Build unbiased anatomical templates from individual images
 
 - [Overview](#overview)
-- [Scope](#scope)
-- [Status](#status)
 - [Installation](#installation)
 - [Background](#background)
   - [On templates and atlases](#on-templates-and-atlases)
   - [Single-subject vs population templates](#single-subject-vs-population-templates)
   - [Template construction with ANTs](#template-construction-with-ants)
 - [License](#license)
-- [Template](#template)
+- [Package blueprint](#package-blueprint)
 
 ## Overview
-brainglobe-template-builder aims to assist researchers in constructing unbiased anatomical reference images, commonly known as templates.
 
-The primary goal is to create 'average' brain templates from a set of individual high-resolution brain images acquired across multiple subjects. That said, the under-
-lying algorithms and code should be applicable to any other organ for which digital 3D images are available.
+`brainglobe-template-builder` provides a streamlined process to create unbiased anatomical reference images, or templates, from multiple high-resolution brain images. While primarily designed for brain imaging, its versatility extends to any organ with available 3D digital images, especially those produced by 3D volumetric microscopy like serial two-photon tomography (STPT) and light-sheet microscopy (LSM).
 
-We aim to primarily support imaged produced by 3D volumetric microscopy, such as serial two-photon tomography (STPT) and light-sheet microscopy (LSM).
+`brainglobe-template-builder` aims to:
+- Offer an intuitive Python interface to the [optimised ANTs template construction pipeline](#template-construction-with-ants).
+- Support 3D volumetric microscopy images, such as STPT and LSM.
+- Generate templates compatible with the [BrainGlobe ecosystem](https://brainglobe.info/), especially the [BrainGlobe Atlas API](https://brainglobe.info/documentation/bg-atlasapi/index.html).
 
-## Scope
-The main aims of brainglobe-template-builder are to:
-- provide a user-friendly and accessible Python-based interface to the [optimised ANTs template construction pipeline](#template-construction-with-ants)
-- support the ingestion of 3D volumetric microscopy images, such as STPT and LSM
-- produce templates that are compatible with the [BrainGlobe ecosystem](https://brainglobe.info/), especially the [BrainGlobe Atlas API](https://brainglobe.info/documentation/bg-atlasapi/index.html)
-
-## Status
-> **Warning**
-> - 🏗️ The package is currently in early development. Stay tuned ⌛
-> - It is not sufficiently tested to be used for scientific analysis
-> - The interface is subject to changes.
+> **Warning** 🏗️
+> - Early development phase. Stay tuned
+> - Interface may undergo changes.
 
 ## Installation
 
-We recommend you install brainglobe-template-builder inside a [conda](https://docs.conda.io/en/latest/)
-or [mamba](https://mamba.readthedocs.io/en/latest/index.html) environment.
-In the following we assume you have `conda` installed,
-but the same commands will also work with `mamba`/`micromamba`.
+We recommend installing `brainglobe-template-builder` within a [conda](https://docs.conda.io/en/latest/) or [mamba](https://mamba.readthedocs.io/en/latest/index.html) environment. Instructions assume `conda` usage, but `mamba`/`micromamba` are interchangeable.
 
-First, create and activate an environment.
-You can call your environment whatever you like, we've used "template-builder". Upon creation, we recommend you install the latest version of `ants` and `parallel` from the `aramislab` and `conda-forge` channels respectively:
 
 ```sh
 conda create -n template-builder -c aramislab -c conda-forge python=3.10 ants parallel
 conda activate template-builder
 ```
 
-To get the latest development version of brainglobe-template-builder, clone this repository and pip install the package, including all the extra "dev" dependencies:
+To get the latest development version of `brainglobe-template-builder`, clone this repository and pip install the package, including all the extra "dev" dependencies:
 
 ```sh
 git clone https://github.com/brainglobe/brainglobe-template-builder
 cd brainglobe-template-builder
 pip install . -e .[dev]
 ```
-If you are using `zsh` (the default shell on macOS), you will need to replace the last command with:
+For zsh users (default shell on macOS):
 
 ```sh
 pip install . -e '.[dev]'
 ```
 
 ## Background
+
 ### On templates and atlases
-In the context of brain imaging, a *template* is an image that serves as a standard reference for brain anatomy. The terms *template* and *reference image* are used interchangeably.
 
-Templates are typically used for registering (aligning) multiple individuals into a common coordinate space. This space can be either volumetric (3D coordinates system), surface-based (mesh), or a combination of both. Here, we refer to the volumetric case, unless otherwise specified.
+In brain imaging, a *template* serves as a standard reference for brain anatomy, often used interchangeably with the term *reference image*. By aligning multiple brain images to a common template, researchers can standardize their data, facilitating easier data-sharing, cross-study comparisons, and meta-analyses.
 
-For human MRI, the [MNI template](https://www.bic.mni.mcgill.ca/ServicesAtlases/ICBM152NLin2009) serves as the community standard volumetric template. Its integration into most major software packages makes it easy for researchers to register and report
-their results to MNI space. For neuroscientists working with mice, the [Allen Mouse Brain Atlas](https://mouse.brain-map.org/static/atlas) is playing a similar role. This facilitates data-sharing, cross-study comparisons and meta-analyses.
+An *atlas* elevates this concept by annotating a template with regions of interest, often called labels or parcellations. With an atlas, researchers can pinpoint specific brain regions and extract quantitative data from them.
 
-An *atlas* is a template that has been annotated with regions of interest - variably referred to as labels, parcellations, or annotations. The benefit of using an atlas is that it allows researchers to know which brain region they are looking at, and to extract quantitative information from that region. A prerequisite, is that their data is registered
-to the corresponding template - i.e. the reference space in which the atlas labels are defined.
+The entire process, from registration to data extraction, hinges on the quality of the template image. A high-quality template can significantly improve registration accuracy and the precision of atlas label annotations.
 
-This whole process relies on the quality of the template image, the accuracy of the registration, and the quality of the atlas labels. The cornerstone is the availability of a high-quality template image - i.e. a 3D image with good contrast, high resolution, and representative of the population of interest. Such a template can improve the accuracy of the registration as well as ease the annotation of atlas labels.
-
-brainglobe-template-builder aims to assist researchers in constructing such high-quality templates.
+The aim of `brainglobe-template-builder` is to assist researchers in constructing such high-quality templates.
 
 ### Single-subject vs population templates
-In theory, a brain of a single individual could serve as the template, which would require the acquisition of only one high quality image. These are referred to as *single-subject* templates and they may be sufficient, or even desirable in some applications.
 
-However, a single subject, even if carefully selected to be a *typical* healthy individual, may be at an extreme tail of the normal distribution in some brain regions. Moreover, a single subject template cannot represent the anatomical variability in the population.
-
-The solution is to build templates from multiple subjects, by aligning them to a common space and averaging the result. These are referred to as *population* templates.
-
-The construction of population templates is a well-established process in human MRI ([Avants et al., 2010](https://www.sciencedirect.com/science/article/pii/S1053811909010611); [Fonov et al., 2011](https://www.sciencedirect.com/science/article/pii/S1053811910010062#s0010)) and has been also applied to animal brains, such as the aforementioned Allen Mouse Brain Common Coordinate Framework([Wang et al., 2020](https://www.sciencedirect.com/science/article/pii/S0092867420304025#bib21)) and the [NIMH Macaque Template](https://www.sciencedirect.com/science/article/pii/S1053811921002743?via%3Dihub).
+Templates can be derived in two primary ways. A *single-subject* template is based on the brain of one individual. While this approach is simpler and may be suitable for some applications, it risks being unrepresentative, as the chosen individual might have unique anatomical features. On the other hand, *population* templates are constructed by aligning and averaging brain images from multiple subjects. This method captures the anatomical variability present in a population and reduces biases inherent in relying on a single subject. Population templates have become the standard in human MRI studies and are increasingly being adopted for animal brain studies.
 
 ### Template construction with ANTs
-brainglobe-template-builder relies on the population template construction algorithm implemented in [ANTs (Advanced Normalisation Tools)](http://stnava.github.io/ANTs/) - a widely used software package for image registration and segmentation.
+`brainglobe-template-builder` leverages the power of [ANTs (Advanced Normalisation Tools)](http://stnava.github.io/ANTs/), a widely used software suite for image registration and segmentation. 
 
-The ANTs unbiased template construction method consists of the iterative application of two major stages, the registration stage, and the template updating stage. You can find a more detailed description of the algorithm [here](https://github.com/ANTsX/ANTs/issues/520).
+ANTs includes a template construction piepline - implemented in the [antsMultivariateTemplateConstruction2.sh](https://github.com/ANTsX/ANTs/blob/master/Scripts/antsMultivariateTemplateConstruction2.sh) script - that iteratively aligns and averages multiple images to produce an unbiased population template (see [this issue](https://github.com/ANTsX/ANTs/issues/520) for details).
 
-In particular, brainglobe-template-builder uses an optimised version of the [antsMultivariateTemplateConstruction2.sh](https://github.com/ANTsX/ANTs/blob/master/Scripts/antsMultivariateTemplateConstruction2.sh) script. This optimised implementation was developed by the [CoBra lab](https://www.cobralab.ca/) and is available through the [optimized_antsMultivariateTemplateConstruction GitHub repository](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master).
+An [optimsed implementation of the above pipeline](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master), developed by the [CoBra lab](https://www.cobralab.ca/), lies at the core of the `brainglobe-template-builder`'s functionality. 
 
 ## License
 ⚖️ [BSD 3-Clause](https://opensource.org/license/bsd-3-clause/)
 
-## Template
+## Package blueprint
 This package layout and configuration (including pre-commit hooks and GitHub actions) have been copied from the [python-cookiecutter](https://github.com/neuroinformatics-unit/python-cookiecutter) template.
