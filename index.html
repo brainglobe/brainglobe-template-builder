@@ -1,0 +1,482 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>brainglobe-template-builder &#8212; brainglobe-template-builder</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=ac02cc09edc035673794" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=ac02cc09edc035673794" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=ac02cc09edc035673794" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=ac02cc09edc035673794" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=ac02cc09edc035673794" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
+  <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
+
+    <script src="_static/documentation_options.js?v=f539c95a"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
+    <link rel="canonical" href="https://brainglobe.github.io/brainglobe-template-builder/index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="#">
+  
+  
+  
+  
+  
+    <p class="title logo__title">brainglobe-template-builder v0.0.1</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/brainglobe/brainglobe-template-builder" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary" tabindex="0">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/brainglobe/brainglobe-template-builder" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article"></div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <p><a class="reference external" href="https://opensource.org/licenses/BSD-3-Clause"><img alt="License" src="https://img.shields.io/badge/License-BSD_3--Clause-orange.svg" /></a>
+<img alt="CI" src="https://img.shields.io/github/actions/workflow/status/brainglobe/brainglobe-template-builder/test_and_deploy.yml?label=CI" />
+<a class="reference external" href="https://codecov.io/gh/brainglobe/brainglobe-template-builder"><img alt="codecov" src="https://codecov.io/gh/brainglobe/brainglobe-template-builder/branch/main/graph/badge.svg?token=P8CCH3TI8K" /></a>
+<a class="reference external" href="https://github.com/charliermarsh/ruff"><img alt="Ruff" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json" /></a>
+<a class="reference external" href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg" /></a>
+<a class="reference external" href="https://github.com/pre-commit/pre-commit"><img alt="pre-commit" src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&amp;logoColor=white" /></a></p>
+<section class="tex2jax_ignore mathjax_ignore" id="brainglobe-template-builder">
+<h1>brainglobe-template-builder<a class="headerlink" href="#brainglobe-template-builder" title="Link to this heading">#</a></h1>
+<p>Build unbiased anatomical templates from individual images</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#overview">Overview</a></p></li>
+<li><p><a class="reference internal" href="#installation">Installation</a></p></li>
+<li><p><a class="reference internal" href="#background">Background</a></p>
+<ul>
+<li><p><a class="reference internal" href="#on-templates-and-atlases">On templates and atlases</a></p></li>
+<li><p><a class="reference internal" href="#single-subject-vs-population-templates">Single-subject vs population templates</a></p></li>
+<li><p><a class="reference internal" href="#template-construction-with-ants">Template construction with ANTs</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#license">License</a></p></li>
+<li><p><a class="reference internal" href="#package-blueprint">Package blueprint</a></p></li>
+</ul>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">brainglobe-template-builder</span></code> provides a streamlined process to create unbiased anatomical reference images, or templates, from multiple high-resolution brain images. While primarily designed for brain imaging, its versatility extends to any organ with available 3D digital images, especially those produced by 3D volumetric microscopy like serial two-photon tomography (STPT) and light-sheet microscopy (LSM).</p>
+<p><code class="docutils literal notranslate"><span class="pre">brainglobe-template-builder</span></code> aims to:</p>
+<ul class="simple">
+<li><p>Offer an intuitive Python interface to the <a class="reference internal" href="#template-construction-with-ants">optimised ANTs template construction pipeline</a>.</p></li>
+<li><p>Support 3D volumetric microscopy images, such as STPT and LSM.</p></li>
+<li><p>Generate templates compatible with the <a class="reference external" href="https://brainglobe.info/">BrainGlobe ecosystem</a>, especially the <a class="reference external" href="https://brainglobe.info/documentation/bg-atlasapi/index.html">BrainGlobe Atlas API</a>.</p></li>
+</ul>
+<blockquote>
+<div><p><strong>Warning</strong> 🏗️</p>
+<ul class="simple">
+<li><p>Early development phase. Stay tuned</p></li>
+<li><p>Interface may undergo changes.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<p>We recommend installing <code class="docutils literal notranslate"><span class="pre">brainglobe-template-builder</span></code> within a <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a> or <a class="reference external" href="https://mamba.readthedocs.io/en/latest/index.html">mamba</a> environment. Instructions assume <code class="docutils literal notranslate"><span class="pre">conda</span></code> usage, but <code class="docutils literal notranslate"><span class="pre">mamba</span></code>/<code class="docutils literal notranslate"><span class="pre">micromamba</span></code> are interchangeable.</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>template-builder<span class="w"> </span>-c<span class="w"> </span>aramislab<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10<span class="w"> </span>ants<span class="w"> </span>parallel
+conda<span class="w"> </span>activate<span class="w"> </span>template-builder
+</pre></div>
+</div>
+<p>To get the latest development version of <code class="docutils literal notranslate"><span class="pre">brainglobe-template-builder</span></code>, clone this repository and pip install the package, including all the extra “dev” dependencies:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/brainglobe/brainglobe-template-builder
+<span class="nb">cd</span><span class="w"> </span>brainglobe-template-builder
+pip<span class="w"> </span>install<span class="w"> </span>.<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
+</pre></div>
+</div>
+<p>For zsh users (default shell on macOS):</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>.<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;.[dev]&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="background">
+<h2>Background<a class="headerlink" href="#background" title="Link to this heading">#</a></h2>
+<section id="on-templates-and-atlases">
+<h3>On templates and atlases<a class="headerlink" href="#on-templates-and-atlases" title="Link to this heading">#</a></h3>
+<p>In brain imaging, a <em>template</em> serves as a standard reference for brain anatomy, often used interchangeably with the term <em>reference image</em>. By aligning multiple brain images to a common template, researchers can standardize their data, facilitating easier data-sharing, cross-study comparisons, and meta-analyses.</p>
+<p>An <em>atlas</em> elevates this concept by annotating a template with regions of interest, often called labels or parcellations. With an atlas, researchers can pinpoint specific brain regions and extract quantitative data from them.</p>
+<p>The entire process, from registration to data extraction, hinges on the quality of the template image. A high-quality template can significantly improve registration accuracy and the precision of atlas label annotations.</p>
+<p>The aim of <code class="docutils literal notranslate"><span class="pre">brainglobe-template-builder</span></code> is to assist researchers in constructing such high-quality templates.</p>
+</section>
+<section id="single-subject-vs-population-templates">
+<h3>Single-subject vs population templates<a class="headerlink" href="#single-subject-vs-population-templates" title="Link to this heading">#</a></h3>
+<p>Templates can be derived in two primary ways. A <em>single-subject</em> template is based on the brain of one individual. While this approach is simpler and may be suitable for some applications, it risks being unrepresentative, as the chosen individual might have unique anatomical features. On the other hand, <em>population</em> templates are constructed by aligning and averaging brain images from multiple subjects. This method captures the anatomical variability present in a population and reduces biases inherent in relying on a single subject. Population templates have become the standard in human MRI studies and are increasingly being adopted for animal brain studies.</p>
+</section>
+<section id="template-construction-with-ants">
+<h3>Template construction with ANTs<a class="headerlink" href="#template-construction-with-ants" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">brainglobe-template-builder</span></code> leverages the power of <a class="reference external" href="http://stnava.github.io/ANTs/">ANTs (Advanced Normalisation Tools)</a>, a widely used software suite for image registration and segmentation.</p>
+<p>ANTs includes a template construction piepline - implemented in the <a class="reference external" href="https://github.com/ANTsX/ANTs/blob/master/Scripts/antsMultivariateTemplateConstruction2.sh">antsMultivariateTemplateConstruction2.sh</a> script - that iteratively aligns and averages multiple images to produce an unbiased population template (see <a class="reference external" href="https://github.com/ANTsX/ANTs/issues/520">this issue</a> for details).</p>
+<p>An <a class="reference external" href="https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master">optimsed implementation of the above pipeline</a>, developed by the <a class="reference external" href="https://www.cobralab.ca/">CoBra lab</a>, lies at the core of the <code class="docutils literal notranslate"><span class="pre">brainglobe-template-builder</span></code>’s functionality.</p>
+</section>
+</section>
+<section id="license">
+<h2>License<a class="headerlink" href="#license" title="Link to this heading">#</a></h2>
+<p>⚖️ <a class="reference external" href="https://opensource.org/license/bsd-3-clause/">BSD 3-Clause</a></p>
+</section>
+<section id="package-blueprint">
+<h2>Package blueprint<a class="headerlink" href="#package-blueprint" title="Link to this heading">#</a></h2>
+<p>This package layout and configuration (including pre-commit hooks and GitHub actions) have been copied from the <a class="reference external" href="https://github.com/neuroinformatics-unit/python-cookiecutter">python-cookiecutter</a> template.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  <!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#background">Background</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#on-templates-and-atlases">On templates and atlases</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#single-subject-vs-population-templates">Single-subject vs population templates</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#template-construction-with-ants">Template construction with ANTs</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#license">License</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#package-blueprint">Package blueprint</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="_sources/index.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=ac02cc09edc035673794"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2022, UCL.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
