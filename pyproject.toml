@@ -82,12 +82,13 @@ ignore = [
   "tests/test_integration/",
   "docs/",
   "docs/source/",
+  "scripts/",
 ]
 
 
 [tool.ruff]
 line-length = 79
-exclude = ["__init__.py","build",".eggs"]
+exclude = ["__init__.py","build",".eggs","scripts"]
 select = ["I", "E", "F"]
 fix = true
 

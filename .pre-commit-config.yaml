@@ -1,4 +1,8 @@
-exclude: 'conf.py'
+exclude: |
+  (?x)(
+    conf.py|
+    ^optimized_antsMultiVariateTemplateConstruction/|
+  )
 # Configuring https://pre-commit.ci/ bot
 ci:
     autoupdate_schedule: monthly
