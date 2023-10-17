@@ -45,12 +45,12 @@ To get the latest development version of `brainglobe-template-builder`, clone th
 ```sh
 git clone https://github.com/brainglobe/brainglobe-template-builder
 cd brainglobe-template-builder
-pip install . -e .[dev]
+pip install -e .[dev]
 ```
 For zsh users (default shell on macOS):
 
 ```sh
-pip install . -e '.[dev]'
+pip install -e '.[dev]'
 ```
 
 ## Background
