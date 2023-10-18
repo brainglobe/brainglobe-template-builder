@@ -1,6 +1,7 @@
 from pathlib import Path
-import numpy as np
+
 import imio
+import numpy as np
 
 
 def save_nii(stack: np.ndarray, pix_sizes: list, dest_path: Path):
@@ -36,7 +37,8 @@ def _get_transf_matrix_from_res(pix_sizes: list) -> np.ndarray:
     Returns
     -------
     np.ndarray
-        A (4, 4) transformation matrix with the pixel dimensions on the diagonal
+        A (4, 4) transformation matrix with the pixel dimensions
+        on the first 3 diagonal entries.
     """
     transformation_matrix = np.eye(4)
     for i in range(3):
@@ -58,7 +60,7 @@ def tiff_to_nifti(tiff_path: Path, nifti_path: Path, pix_sizes: list):
         list of pixel dimensions in mm. The order is 'x', 'y', 'z'
     """
     stack = imio.load_any(tiff_path.as_posix())
-    save_nii(stack, pix_sizes, nifti_path.as_posix())
+    save_nii(stack, pix_sizes, nifti_path)
 
 
 def nifti_to_tiff(nifti_path: Path, tiff_path: Path):

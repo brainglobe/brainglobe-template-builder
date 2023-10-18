@@ -1,9 +1,5 @@
-exclude: |
-  (?x)(
-    conf.py|
-    ^optimized_antsMultiVariateTemplateConstruction/|
-  )
-# Configuring https://pre-commit.ci/ bot
+# ignore everything in scripts/optimized_antsMultiVariateTemplateConstruction
+exclude: ^$|^(scripts/optimized_antsMultiVariateTemplateConstruction)
 ci:
     autoupdate_schedule: monthly
 repos:
