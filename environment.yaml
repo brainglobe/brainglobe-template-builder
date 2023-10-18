@@ -1,4 +1,3 @@
-name: template-builder
 channels:
   - aramislab
   - conda-forge
@@ -10,5 +9,3 @@ dependencies:
   - conda-forge::pyqt
   - aramislab::ants
   - pip
-  - pip:
-    - -e .[dev]
