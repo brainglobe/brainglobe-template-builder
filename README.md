@@ -26,25 +26,32 @@ Build unbiased anatomical templates from individual images
 - Support 3D volumetric microscopy images, such as STPT and LSM.
 - Generate templates compatible with the [BrainGlobe ecosystem](https://brainglobe.info/), especially the [BrainGlobe Atlas API](https://brainglobe.info/documentation/bg-atlasapi/index.html).
 
-> **Warning** 🏗️
+> **Warning**
 > - Early development phase. Stay tuned
 > - Interface may undergo changes.
 
 ## Installation
 
+> **Warning**
+> - [ANTs](http://stnava.github.io/ANTs/), which [we depend on](#template-construction-with-ants), is a large package. The installation may take a while.
+> - ANTs is only available for Linux and macOS. If you are on Windows, you can use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
+
 We recommend installing `brainglobe-template-builder` within a [conda](https://docs.conda.io/en/latest/) or [mamba](https://mamba.readthedocs.io/en/latest/index.html) environment. Instructions assume `conda` usage, but `mamba`/`micromamba` are interchangeable.
 
-
-```sh
-conda create -n template-builder -c aramislab -c conda-forge python=3.10 ants parallel
-conda activate template-builder
-```
-
-To get the latest development version of `brainglobe-template-builder`, clone this repository and pip install the package, including all the extra "dev" dependencies:
+Use the provided `environment.yaml` file to create a new environment.
 
 ```sh
 git clone https://github.com/brainglobe/brainglobe-template-builder
 cd brainglobe-template-builder
+conda env create -f environment.yaml -n template-builder
+conda activate template-builder
+```
+
+We have called the environment `template-builder`, but you can choose any name you like.
+
+To install the latest development version of `brainglobe-template-builder`,
+
+```sh
 pip install -e .[dev]
 ```
 For zsh users (default shell on macOS):

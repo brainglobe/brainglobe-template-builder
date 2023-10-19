@@ -1,6 +1,6 @@
 include LICENSE
 include README.md
-exclude .pre-commit-config.yaml
+exclude *.yaml
 exclude cruft.json
 
 recursive-exclude * __pycache__
