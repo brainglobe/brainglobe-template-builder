@@ -16,6 +16,7 @@ import imio
 import napari
 import numpy as np
 import pandas as pd
+import skimage
 
 # %%
 # load tiff image into napari
@@ -26,6 +27,50 @@ image_path = data_dir / "template.tif"
 image = imio.load_any(image_path.as_posix())
 
 viewer = napari.view_image(image, name="image")
+
+# %%
+# Segment the brain from the background via thresholding
+# and add brain mask to napari viewer
+
+# first apply gaussian filter to image
+image_smoothed = skimage.filters.gaussian(image, sigma=3)
+viewer.add_image(
+    image_smoothed,
+    name="smoothed_image",
+    visible=False,
+)
+
+# %%
+# then apply thresholding to smoothed image
+thresholded = skimage.filters.threshold_triangle(image_smoothed)
+binary_smoothed = image_smoothed > thresholded
+# Remove small objects
+min_object_size = 500  # Define a minimum object size to keep (in pixels)
+binary_smoothed = skimage.morphology.remove_small_objects(
+    binary_smoothed, min_size=min_object_size
+)
+viewer.add_image(
+    binary_smoothed,
+    name="initial_binary",
+    colormap="green",
+    blending="additive",
+    opacity=0.5,
+)
+
+# %%
+# Erode the binary mask to remove the edges of the brain
+# and the resulting mask to napari viewer as a label layer
+eroded = skimage.morphology.binary_erosion(
+    binary_smoothed, footprint=np.ones((5, 5, 5))
+)
+viewer.add_labels(
+    eroded,
+    name="brain_mask",
+    opacity=0.5,
+)
+viewer.layers["initial_binary"].visible = False
+viewer.layers["brain_mask"].selected_label = 1
+
 
 # %%
 # Define initial set of 9 midline points
