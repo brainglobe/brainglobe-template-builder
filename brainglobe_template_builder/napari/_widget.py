@@ -10,12 +10,14 @@ from typing import Literal, Union
 
 import numpy as np
 from magicgui import magic_factory
-from napari.layers import Image, Labels
+from napari.layers import Image, Labels, Points
 from napari.types import LayerDataTuple
 from napari_plugin_engine import napari_hook_implementation
 
 from brainglobe_template_builder.utils import (
+    align_vectors,
     extract_largest_object,
+    fit_plane_to_points,
     get_midline_points,
     threshold_image,
 )
@@ -100,7 +102,7 @@ def mask_widget(
         )
 
     # return the mask as a napari Labels layer
-    return (mask, {"name": f"Mask_{image.name}", "opacity": 0.5}, "labels")
+    return (mask, {"name": "mask", "opacity": 0.5}, "labels")
 
 
 @magic_factory(
@@ -143,6 +145,65 @@ def points_widget(
     mask.visible = False
 
     return (points, point_attrs, "points")
+
+
+@magic_factory(
+    call_button="Align midline",
+    image={"label": "Image"},
+    points={"label": "Midline points"},
+)
+def align_widget(image: Image, points: Points) -> LayerDataTuple:
+    """Align image to midline points.
+
+    Parameters
+    ----------
+    image : Image
+        A napari image layer to align.
+    points : Points
+        A napari points layer containing the midline points.
+
+    Returns
+    -------
+    napari.types.LayerDataTuple
+        A napari Image layer containing the aligned image.
+    """
+
+    from scipy.ndimage import affine_transform
+
+    points_data = points.data
+    centroid = np.mean(points_data, axis=0)
+    normal_vector = fit_plane_to_points(points_data)
+
+    # 1. Translate so centroid is at origin
+    translate_to_origin = np.eye(4)
+    translate_to_origin[:3, 3] = -centroid
+
+    # 2. Rotate so normal vector aligns with x-axis
+    x_axis = np.array([0, 0, 1])
+    rotation_matrix = align_vectors(normal_vector, x_axis)
+    rotation = np.eye(4)
+    rotation[:3, :3] = rotation_matrix
+
+    # 3. Translate so plane is at middle slice along x-axis
+    translate_to_mid_x = np.eye(4)
+    mid_x = image.data.shape[2] // 2
+    translate_to_mid_x[2, 3] = mid_x - centroid[2]
+
+    # Combine transformations
+    transform = (
+        np.linalg.inv(translate_to_origin)
+        @ rotation
+        @ translate_to_origin
+        @ translate_to_mid_x
+    )
+    affine_matrix, offset = transform[:3, :3], transform[:3, 3]
+
+    # Apply the transformation to the image
+    transformed_image = affine_transform(
+        image.data, affine_matrix, offset=offset
+    )
+
+    return (transformed_image, {"name": "aligned image"}, "image")
 
 
 @napari_hook_implementation

@@ -98,3 +98,58 @@ def get_midline_points(mask: np.ndarray):
     points = list(product(z_slices, y_slices, [centroid[2]]))
 
     return np.array(points)
+
+
+def fit_plane_to_points(
+    points: np.ndarray,
+) -> tuple[float, float, float, float]:
+    """Fit a plane to a set of 3D points.
+
+    Parameters
+    ----------
+    points : np.ndarray
+        An array of shape (n, 3) containing the points.
+
+    Returns
+    -------
+    np.ndarray
+        The normal vector to the plane, with shape (3,).
+    """
+
+    # Ensure points are 3D
+    if points.shape[1] != 3:
+        raise ValueError("Points array must have 3 columns (z, y, x)")
+
+    centered_points = points - np.mean(points, axis=0)
+
+    # Use SVD to get the normal vector to the plane
+    _, _, vh = np.linalg.svd(centered_points)
+    normal_vector = vh[-1]
+
+    return normal_vector
+
+
+def align_vectors(v1, v2):
+    """Align two vectors using Rodrigues' rotation formula.
+
+    Parameters
+    ----------
+    v1 : np.ndarray
+        The first vector.
+    v2 : np.ndarray
+        The second vector.
+    """
+    v1 = v1 / np.linalg.norm(v1)
+    v2 = v2 / np.linalg.norm(v2)
+    cross_prod = np.cross(v1, v2)
+    dot_prod = np.dot(v1, v2)
+    s = np.linalg.norm(cross_prod)
+    K = np.array(
+        [
+            [0, -cross_prod[2], cross_prod[1]],
+            [cross_prod[2], 0, -cross_prod[0]],
+            [-cross_prod[1], cross_prod[0], 0],
+        ]
+    )
+    rotation = np.eye(3) + K + K @ K * ((1 - dot_prod) / (s**2))
+    return rotation
