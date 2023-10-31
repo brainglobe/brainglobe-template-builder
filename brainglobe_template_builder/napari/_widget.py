@@ -88,7 +88,7 @@ def mask_widget(
         )
 
     # return the mask as a napari Labels layer
-    return (mask, {"name": f"{image.name}_mask", "opacity": 0.5}, "labels")
+    return (mask, {"name": f"Mask_{image.name}", "opacity": 0.5}, "labels")
 
 
 @napari_hook_implementation
