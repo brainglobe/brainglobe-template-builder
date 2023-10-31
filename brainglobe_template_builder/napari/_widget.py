@@ -10,8 +10,7 @@ from typing import Literal, Union
 
 import numpy as np
 from magicgui import magic_factory
-from magicgui.widgets import ComboBox, Container
-from napari.layers import Image, Labels, Points
+from napari.layers import Image, Labels
 from napari.types import LayerDataTuple
 from napari_plugin_engine import napari_hook_implementation
 
@@ -102,47 +101,6 @@ def mask_widget(
 
     # return the mask as a napari Labels layer
     return (mask, {"name": f"Mask_{image.name}", "opacity": 0.5}, "labels")
-
-
-def create_point_label_menu(
-    points_layer: Points, point_labels: list[str]
-) -> Container:
-    """Create a point label menu widget for a napari points layer.
-
-    Parameters:
-    -----------
-    points_layer : napari.layers.Points
-        a napari points layer
-    point_labels : list[str]
-        a list of point labels
-
-    Returns:
-    --------
-    label_menu : Container
-        the magicgui Container with a dropdown menu widget
-    """
-    # Create the label selection menu
-    label_menu = ComboBox(label="point_label", choices=point_labels)
-    label_widget = Container(widgets=[label_menu])
-
-    def update_label_menu(event):
-        """Update the label menu when the point selection changes"""
-        new_label = str(points_layer.current_properties["label"][0])
-        if new_label != label_menu.value:
-            label_menu.value = new_label
-
-    points_layer.events.current_properties.connect(update_label_menu)
-
-    def label_changed(event):
-        """Update the Points layer when the label menu selection changes"""
-        selected_label = event.value
-        current_properties = points_layer.current_properties
-        current_properties["label"] = np.asarray([selected_label])
-        points_layer.current_properties = current_properties
-
-    label_menu.changed.connect(label_changed)
-
-    return label_widget
 
 
 @magic_factory(
