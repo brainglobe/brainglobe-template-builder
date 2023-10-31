@@ -10,14 +10,30 @@ from typing import Literal, Union
 
 import numpy as np
 from magicgui import magic_factory
-from napari.layers import Image
+from magicgui.widgets import ComboBox, Container
+from napari import Viewer
+from napari.layers import Image, Labels, Points
 from napari.types import LayerDataTuple
 from napari_plugin_engine import napari_hook_implementation
 
 from brainglobe_template_builder.utils import (
     extract_largest_object,
+    get_midline_points,
     threshold_image,
 )
+
+# 9 colors taken from ColorBrewer2.org Set3 palette
+POINTS_COLOR_CYCLE = [
+    "#8dd3c7",
+    "#ffffb3",
+    "#bebada",
+    "#fb8072",
+    "#80b1d3",
+    "#fdb462",
+    "#b3de69",
+    "#fccde5",
+    "#d9d9d9",
+]
 
 
 @magic_factory(
@@ -55,10 +71,8 @@ def mask_widget(
 
     Returns
     -------
-    layers : list[LayerDataTuple]
-        A list of napari layers to add to the viewer.
-        The first layer is the mask, and the second layer is the smoothed
-        image (if smoothing was applied).
+    napari.types.LayerDataTuple
+        A napari Labels layer containing the mask.
     """
 
     if image is not None:
@@ -91,6 +105,90 @@ def mask_widget(
     return (mask, {"name": f"Mask_{image.name}", "opacity": 0.5}, "labels")
 
 
+def create_point_label_menu(
+    points_layer: Points, point_labels: list[str]
+) -> Container:
+    """Create a point label menu widget for a napari points layer.
+
+    Parameters:
+    -----------
+    points_layer : napari.layers.Points
+        a napari points layer
+    point_labels : list[str]
+        a list of point labels
+
+    Returns:
+    --------
+    label_menu : Container
+        the magicgui Container with a dropdown menu widget
+    """
+    # Create the label selection menu
+    label_menu = ComboBox(label="point_label", choices=point_labels)
+    label_widget = Container(widgets=[label_menu])
+
+    def update_label_menu(event):
+        """Update the label menu when the point selection changes"""
+        new_label = str(points_layer.current_properties["label"][0])
+        if new_label != label_menu.value:
+            label_menu.value = new_label
+
+    points_layer.events.current_properties.connect(update_label_menu)
+
+    def label_changed(event):
+        """Update the Points layer when the label menu selection changes"""
+        selected_label = event.value
+        current_properties = points_layer.current_properties
+        current_properties["label"] = np.asarray([selected_label])
+        points_layer.current_properties = current_properties
+
+    label_menu.changed.connect(label_changed)
+
+    return label_widget
+
+
+@magic_factory(
+    call_button="Estimate midline points",
+)
+def points_widget(
+    mask: Labels,
+) -> LayerDataTuple:
+    """Create a points layer with 9 midline points.
+
+    Parameters
+    ----------
+    mask : Labels
+        A napari labels layer to use as a reference for the points.
+
+    Returns
+    -------
+    napari.types.LayerDataTuple
+        A napari Points layer containing the estimated midline points.
+    """
+
+    # Estimate 9 midline points
+    points = get_midline_points(mask.data)
+
+    point_labels = np.arange(1, points.shape[0] + 1)
+
+    point_attrs = {
+        "properties": {"label": point_labels},
+        "edge_color": "label",
+        "edge_color_cycle": POINTS_COLOR_CYCLE,
+        "symbol": "o",
+        "face_color": "transparent",
+        "edge_width": 0.3,
+        "size": 8,
+        "ndim": mask.ndim,
+        "name": "midline points",
+    }
+
+    return (points, point_attrs, "points")
+
+
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
-    return mask_widget
+    return [mask_widget, points_widget]
+
+
+viewer = Viewer()
+viewer.add_points()

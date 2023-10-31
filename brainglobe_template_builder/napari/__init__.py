@@ -7,9 +7,13 @@ except LookupError:
     __version__ = "unknown"
 
 from brainglobe_template_builder.napari._reader import napari_get_reader
-from brainglobe_template_builder.napari._widget import mask_widget
+from brainglobe_template_builder.napari._widget import (
+    mask_widget,
+    points_widget,
+)
 
 __all__ = (
     "napari_get_reader",
     "mask_widget",
+    "points_widget",
 )

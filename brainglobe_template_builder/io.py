@@ -2,6 +2,7 @@ from pathlib import Path
 
 import imio
 import numpy as np
+import pandas as pd
 
 
 def load_image_to_napari(tiff_path: Path):
@@ -25,6 +26,25 @@ def load_image_to_napari(tiff_path: Path):
         )
     image = imio.load_any(tiff_path.as_posix())
     return image
+
+
+def save_3d_points_to_csv(points: np.ndarray, file_path: Path):
+    """
+    Save 3D points to a csv file
+    """
+
+    if points.shape[1] != 3:
+        raise ValueError(
+            f"Points must be of shape (n, 3). Got shape {points.shape}"
+        )
+    if file_path.suffix != ".csv":
+        raise ValueError(
+            f"File extension {file_path.suffix} is not valid. "
+            f"Expected file path to end in .csv"
+        )
+
+    points_df = pd.DataFrame(points, columns=["z", "y", "x"])
+    points_df.to_csv(file_path, index=False)
 
 
 def save_nii(stack: np.ndarray, pix_sizes: list, dest_path: Path):

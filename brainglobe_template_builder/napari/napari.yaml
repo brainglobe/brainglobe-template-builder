@@ -7,7 +7,10 @@ contributions:
       title: Open data with brainglobe-template-builder
     - id: brainglobe-template-builder.make_mask_widget
       python_name: brainglobe_template_builder.napari._widget:mask_widget
-      title: Generate organ mask
+      title: Generate mask
+    - id: brainglobe-template-builder.make_points_widget
+      python_name: brainglobe_template_builder.napari._widget:points_widget
+      title: Annotate points
   readers:
     - command: brainglobe-template-builder.get_reader
       accepts_directories: false
@@ -17,3 +20,5 @@ contributions:
   widgets:
     - command: brainglobe-template-builder.make_mask_widget
       display_name: Generate Mask
+    - command: brainglobe-template-builder.make_points_widget
+      display_name: Annotate Points

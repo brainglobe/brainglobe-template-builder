@@ -1,3 +1,4 @@
+from itertools import product
 from typing import Literal, Union
 
 import numpy as np
@@ -54,3 +55,46 @@ def threshold_image(
         return image > thresholded
     else:
         raise ValueError(f"Unknown thresholding method {method}")
+
+
+def get_midline_points(mask: np.ndarray):
+    """Get a set of 9 points roughly on the x axis midline of a 3D binary mask.
+
+    Parameters
+    ----------
+    mask : np.ndarray
+        A binary mask of shape (z, y, x).
+
+    Returns
+    -------
+    np.ndarray
+        An array of shape (9, 3) containing the midline points.
+    """
+
+    # Ensure mask is 3D
+    if mask.ndim != 3:
+        raise ValueError("Mask must be 3D")
+
+    # Ensure mask is binary
+    try:
+        mask = mask.astype(bool)
+    except ValueError:
+        raise ValueError("Mask must be binary")
+
+    # Derive mask properties
+    props = measure.regionprops(measure.label(mask))[0]
+    # bbox in shape (3, 2): for each dim (row) the min and max (col)
+    bbox = np.array(props.bbox).reshape(2, 3).T
+    bbox_ranges = bbox[:, 1] - bbox[:, 0]
+    # mask centroid in shape (3,)
+    centroid = np.array(props.centroid)
+
+    # Find slices at 1/4, 2/4, and 3/4 of the z and y dimensions
+    z_slices = [bbox_ranges[0] / 4 * i for i in [1, 2, 3]]
+    y_slices = [bbox_ranges[1] / 4 * i for i in [1, 2, 3]]
+    # Find points at the intersection the centroid's x slice
+    # with the above y and z slices.
+    # This produces a set of 9 points roughly on the midline
+    points = list(product(z_slices, y_slices, [centroid[2]]))
+
+    return np.array(points)
