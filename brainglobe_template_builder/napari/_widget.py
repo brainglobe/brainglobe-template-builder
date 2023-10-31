@@ -14,17 +14,22 @@ from napari.layers import Image
 from napari.types import LayerDataTuple
 from napari_plugin_engine import napari_hook_implementation
 
+from brainglobe_template_builder.utils import (
+    extract_largest_object,
+    threshold_image,
+)
+
 
 @magic_factory(
     call_button="generate mask",
-    gauss_sigma={"widget_type": "FloatSlider", "max": 10, "min": 0, "step": 1},
-    threshold_method={"choices": ["triangle", "otsu"]},
-    erosion_size={"widget_type": "Slider", "max": 10, "min": 0, "step": 1},
+    gauss_sigma={"widget_type": "SpinBox", "max": 20, "min": 0},
+    threshold_method={"choices": ["triangle", "otsu", "isodata"]},
+    erosion_size={"widget_type": "SpinBox", "max": 20, "min": 0},
 )
 def mask_widget(
     image: Image,
     gauss_sigma: float = 3,
-    threshold_method: Literal["triangle", "otsu"] = "triangle",
+    threshold_method: Literal["triangle", "otsu", "isodata"] = "triangle",
     erosion_size: int = 5,
 ) -> Union[LayerDataTuple, None]:
     """Threshold image and create a mask for the largest object.
@@ -41,7 +46,9 @@ def mask_widget(
         Standard deviation for Gaussian kernel (in pixels) to smooth image
         before thresholding. Set to 0 to skip smoothing.
     threshold_method : str
-        Thresholding method to use. Options are 'triangle' and 'otsu'.
+        Thresholding method to use. One of 'triangle', 'otsu', and 'isodata'
+        (corresponding to methods from the skimage.filters module).
+        Defaults to 'triangle'.
     erosion_size : int
         Size of the erosion footprint (in pixels) to apply to the mask.
         Set to 0 to skip erosion.
@@ -60,7 +67,7 @@ def mask_widget(
         print("Please select an image layer")
         return None
 
-    from skimage import filters, measure, morphology
+    from skimage import filters, morphology
 
     # Apply gaussian filter to image
     if gauss_sigma > 0:
@@ -69,21 +76,10 @@ def mask_widget(
         data_smoothed = image.data
 
     # Threshold the (smoothed) image
-    if threshold_method == "triangle":
-        thresholded = filters.threshold_triangle(data_smoothed)
-    elif threshold_method == "otsu":
-        thresholded = filters.threshold_otsu(data_smoothed)
-    else:
-        raise ValueError(f"Unknown thresholding method {threshold_method}")
+    binary = threshold_image(data_smoothed, method=threshold_method)
 
-    binary = data_smoothed > thresholded
-
-    # Keep only the largest object
-    labeled_image = measure.label(binary)
-    regions = measure.regionprops(labeled_image)
-    largest_region = max(regions, key=lambda region: region.area)
-    # Create a binary mask for the largest object
-    mask = labeled_image == largest_region.label
+    # Keep only the largest object in the binary image
+    mask = extract_largest_object(binary)
 
     # Erode the mask
     if erosion_size > 0:
