@@ -11,7 +11,6 @@ from typing import Literal, Union
 import numpy as np
 from magicgui import magic_factory
 from magicgui.widgets import ComboBox, Container
-from napari import Viewer
 from napari.layers import Image, Labels, Points
 from napari.types import LayerDataTuple
 from napari_plugin_engine import napari_hook_implementation
@@ -172,15 +171,18 @@ def points_widget(
 
     point_attrs = {
         "properties": {"label": point_labels},
-        "edge_color": "label",
-        "edge_color_cycle": POINTS_COLOR_CYCLE,
-        "symbol": "o",
-        "face_color": "transparent",
-        "edge_width": 0.3,
-        "size": 8,
+        "face_color": "label",
+        "face_color_cycle": POINTS_COLOR_CYCLE,
+        "symbol": "cross",
+        "edge_width": 0,
+        "opacity": 0.6,
+        "size": 6,
         "ndim": mask.ndim,
         "name": "midline points",
     }
+
+    # Make mask layer invisible
+    mask.visible = False
 
     return (points, point_attrs, "points")
 
@@ -188,7 +190,3 @@ def points_widget(
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
     return [mask_widget, points_widget]
-
-
-viewer = Viewer()
-viewer.add_points()
