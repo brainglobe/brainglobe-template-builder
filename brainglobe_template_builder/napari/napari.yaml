@@ -5,15 +5,9 @@ contributions:
     - id: brainglobe-template-builder.get_reader
       python_name: brainglobe_template_builder.napari._reader:napari_get_reader
       title: Open data with brainglobe-template-builder
-    - id: brainglobe-template-builder.make_qwidget
-      python_name: brainglobe_template_builder.napari._widget:ExampleQWidget
-      title: Make example QWidget
-    - id: brainglobe-template-builder.make_blur_widget
-      python_name: brainglobe_template_builder.napari._widget:gaussian_blur_widget
-      title: Apply Gaussian blur to image
-    - id: brainglobe-template-builder.make_func_widget
-      python_name: brainglobe_template_builder.napari._widget:example_function_widget
-      title: Make example function widget
+    - id: brainglobe-template-builder.make_mask_widget
+      python_name: brainglobe_template_builder.napari._widget:mask_widget
+      title: Generate organ mask
   readers:
     - command: brainglobe-template-builder.get_reader
       accepts_directories: false
@@ -21,10 +15,5 @@ contributions:
       - '*.tif'
       - '*.tiff'
   widgets:
-    - command: brainglobe-template-builder.make_qwidget
-      display_name: Example QWidget
-    - command: brainglobe-template-builder.make_blur_widget
-      display_name: Gaussian Blur
-    - command: brainglobe-template-builder.make_func_widget
-      autogenerate: true
-      display_name: Example Function Widget
+    - command: brainglobe-template-builder.make_mask_widget
+      display_name: Generate Mask
