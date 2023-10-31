@@ -9,11 +9,11 @@ except LookupError:
 from brainglobe_template_builder.napari._reader import napari_get_reader
 from brainglobe_template_builder.napari._widget import (
     ExampleQWidget,
-    example_magic_widget,
+    gaussian_blur_widget,
 )
 
 __all__ = (
     "napari_get_reader",
     "ExampleQWidget",
-    "example_magic_widget",
+    "gaussian_blur_widget",
 )
