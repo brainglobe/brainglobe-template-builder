@@ -4,6 +4,29 @@ import imio
 import numpy as np
 
 
+def load_image_to_napari(tiff_path: Path):
+    """
+    Load an image to napari
+
+    Parameters
+    ----------
+    tiff_path : pathlib.Path
+        path to the tiff image
+
+    Returns
+    -------
+    image : np.ndarray
+    """
+    valid_extensions = [".tif", ".tiff"]
+    if tiff_path.suffix not in valid_extensions:
+        raise ValueError(
+            f"File extension {tiff_path.suffix} is not valid. "
+            f"Expected one of {valid_extensions}"
+        )
+    image = imio.load_any(tiff_path.as_posix())
+    return image
+
+
 def save_nii(stack: np.ndarray, pix_sizes: list, dest_path: Path):
     """
     Save 3D image stack to dest_path as a nifti image.

@@ -17,7 +17,9 @@ contributions:
   readers:
     - command: brainglobe-template-builder.get_reader
       accepts_directories: false
-      filename_patterns: ['*.npy']
+      filename_patterns:
+      - '*.tif'
+      - '*.tiff'
   widgets:
     - command: brainglobe-template-builder.make_qwidget
       display_name: Example QWidget
