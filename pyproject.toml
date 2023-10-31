@@ -28,6 +28,8 @@ dependencies = [
     "imio"
 ]
 
+entry-points."napari.manifest".brainglobe-template-builder = "brainglobe_template_builder.napari:napari.yaml"
+
 [project.urls]
 "Homepage" = "https://github.com/brainglobe/brainglobe-template-builder"
 "Bug Tracker" = "https://github.com/brainglobe/brainglobe-template-builder/issues"
