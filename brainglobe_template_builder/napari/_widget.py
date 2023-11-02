@@ -15,7 +15,6 @@ from napari.types import LayerDataTuple
 from napari_plugin_engine import napari_hook_implementation
 
 from brainglobe_template_builder.utils import (
-    align_vectors,
     extract_largest_object,
     fit_plane_to_points,
     get_midline_points,
@@ -151,61 +150,83 @@ def points_widget(
     call_button="Align midline",
     image={"label": "Image"},
     points={"label": "Midline points"},
+    axis={"label": "Axis", "choices": ["x", "y", "z"]},
 )
-def align_widget(image: Image, points: Points) -> LayerDataTuple:
-    """Align image to midline points.
+def transform_widget(
+    image: Image,
+    points: Points,
+    axis: Literal["x", "y", "z"] = "x",
+) -> LayerDataTuple:
+    """Transform image to align points with midline of the specified axis.
+
+    It first fits a plane to the points, then rigidly transforms the image
+    such that the fitted plane is aligned with the axis midline.
 
     Parameters
     ----------
     image : Image
         A napari image layer to align.
     points : Points
-        A napari points layer containing the midline points.
+        A napari points layer containing points.
+    axis : str
+        Axis to align the midline with. One of 'x', 'y', and 'z'.
+        Defaults to 'x'.
 
     Returns
     -------
     napari.types.LayerDataTuple
-        A napari Image layer containing the aligned image.
+        A napari Image layer containing the transformed image.
     """
 
     from scipy.ndimage import affine_transform
+    from scipy.spatial.transform import Rotation
 
     points_data = points.data
-    centroid = np.mean(points_data, axis=0)
     normal_vector = fit_plane_to_points(points_data)
+    assert normal_vector.shape == (3,)
 
-    # 1. Translate so centroid is at origin
-    translate_to_origin = np.eye(4)
-    translate_to_origin[:3, 3] = -centroid
+    # Compute centroid of the midline points
+    centroid = np.mean(points_data, axis=0)
 
-    # 2. Rotate so normal vector aligns with x-axis
-    x_axis = np.array([0, 0, 1])
-    rotation_matrix = align_vectors(normal_vector, x_axis)
-    rotation = np.eye(4)
-    rotation[:3, :3] = rotation_matrix
+    # Translation of the centroid to the origin
+    translation_to_origin = np.eye(4)
+    translation_to_origin[:3, 3] = -centroid
 
-    # 3. Translate so plane is at middle slice along x-axis
-    translate_to_mid_x = np.eye(4)
-    mid_x = image.data.shape[2] // 2
-    translate_to_mid_x[2, 3] = mid_x - centroid[2]
+    # Rotation to align normal vector with unit vector along the specified axis
+    axis_vec = np.zeros(3)
+    axis_index = {"z": 0, "y": 1, "x": 2}[axis]  # axis order is zyx in napari
+    axis_vec[axis_index] = 1
+    rotation_to_axis = Rotation.align_vectors(
+        axis_vec.reshape(1, 3),
+        normal_vector.reshape(1, 3),
+    )[0].as_matrix()
+    assert rotation_to_axis.shape == (3, 3)
+    rotation_4x4 = np.eye(4)
+    rotation_4x4[:3, :3] = rotation_to_axis
 
-    # Combine transformations
-    transform = (
-        np.linalg.inv(translate_to_origin)
-        @ rotation
-        @ translate_to_origin
-        @ translate_to_mid_x
+    # Translation back, so that the plane is in the middle of axis
+    translation_to_mid_axis = np.eye(4)
+    translation_to_mid_axis[axis_index, 3] = (
+        image.data.shape[axis_index] // 2 - centroid[axis_index]
     )
-    affine_matrix, offset = transform[:3, :3], transform[:3, 3]
+
+    # Combine transformations into a single 4x4 matrix
+    transformation_matrix = (
+        np.linalg.inv(translation_to_origin)
+        @ rotation_4x4
+        @ translation_to_origin
+        @ translation_to_mid_axis
+    )
 
     # Apply the transformation to the image
     transformed_image = affine_transform(
-        image.data, affine_matrix, offset=offset
+        image,
+        transformation_matrix[:3, :3],
+        offset=transformation_matrix[:3, 3],
     )
-
-    return (transformed_image, {"name": "aligned image"}, "image")
+    return (transformed_image, {"name": "transformed image"}, "image")
 
 
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
-    return [mask_widget, points_widget]
+    return [mask_widget, points_widget, transform_widget]

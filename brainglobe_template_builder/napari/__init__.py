@@ -10,11 +10,12 @@ from brainglobe_template_builder.napari._reader import napari_get_reader
 from brainglobe_template_builder.napari._widget import (
     mask_widget,
     points_widget,
-    align_widget,
+    transform_widget,
 )
 
 __all__ = (
     "napari_get_reader",
     "mask_widget",
     "points_widget",
+    "transform_widget",
 )

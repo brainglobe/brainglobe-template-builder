@@ -11,8 +11,8 @@ contributions:
     - id: brainglobe-template-builder.make_points_widget
       python_name: brainglobe_template_builder.napari._widget:points_widget
       title: Annotate points
-    - id: brainglobe-template-builder.make_align_widget
-      python_name: brainglobe_template_builder.napari._widget:align_widget
+    - id: brainglobe-template-builder.make_transform_widget
+      python_name: brainglobe_template_builder.napari._widget:transform_widget
       title: Align midline
   readers:
     - command: brainglobe-template-builder.get_reader
@@ -25,5 +25,5 @@ contributions:
       display_name: Generate Mask
     - command: brainglobe-template-builder.make_points_widget
       display_name: Annotate Points
-    - command: brainglobe-template-builder.make_align_widget
-      display_name: Align Midline
+    - command: brainglobe-template-builder.make_transform_widget
+      display_name: Transform to midline
