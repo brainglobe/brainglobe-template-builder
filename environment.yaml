@@ -6,6 +6,6 @@ dependencies:
   - python=3.10
   - conda-forge::parallel
   - conda-forge::napari
-  - conda-forge::pyqt
+  - conda-forge::qtpy
   - aramislab::ants
   - pip
