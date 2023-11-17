@@ -1,5 +1,6 @@
 import numpy as np
 from napari.layers import Image
+from napari.utils.notifications import show_info
 from napari.viewer import Viewer
 from qtpy.QtWidgets import (
     QComboBox,
@@ -44,13 +45,13 @@ class GenerateMask(QWidget):
         """Generate a mask from the selected image layer."""
 
         if len(self.viewer.layers.selection) != 1:
-            print("Please select exactly one image layer")
+            show_info("Please select exactly one image layer")
             return None
-        else:
-            image = list(self.viewer.layers.selection)[0]
+
+        image = self.viewer.layers.selection[0]
 
         if not isinstance(image, Image):
-            print("The selected layer is not an image layer")
+            show_info("The selected layer is not an image layer")
             return None
 
         # Get parameters from widgets
