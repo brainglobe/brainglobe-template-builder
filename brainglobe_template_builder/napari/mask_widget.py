@@ -1,4 +1,5 @@
 import numpy as np
+from brainglobe_utils.qtpy.collapsible_widget import CollapsibleWidget
 from napari.layers import Image
 from napari.utils.notifications import show_info
 from napari.viewer import Viewer
@@ -17,28 +18,32 @@ from brainglobe_template_builder.utils import (
 )
 
 
-class GenerateMask(QWidget):
+class GenerateMask(CollapsibleWidget):
     def __init__(self, napari_viewer: Viewer, parent=None):
-        super().__init__(parent=parent)
+        super().__init__(title="Generate Mask", parent=parent)
         self.viewer = napari_viewer
-        self.setLayout(QFormLayout())
+
+        content = QWidget(parent=self)
+        content.setLayout(QFormLayout())
+
+        self.setContent(content)
 
         self.gauss_sigma = QSpinBox(parent=self)
         self.gauss_sigma.setRange(0, 20)
         self.gauss_sigma.setValue(3)
-        self.layout().addRow("gauss sigma:", self.gauss_sigma)
+        content.layout().addRow("gauss sigma:", self.gauss_sigma)
 
         self.threshold_method = QComboBox(parent=self)
         self.threshold_method.addItems(["triangle", "otsu", "isodata"])
-        self.layout().addRow("threshold method:", self.threshold_method)
+        content.layout().addRow("threshold method:", self.threshold_method)
 
         self.erosion_size = QSpinBox(parent=self)
         self.erosion_size.setRange(0, 20)
         self.erosion_size.setValue(5)
-        self.layout().addRow("erosion size:", self.erosion_size)
+        content.layout().addRow("erosion size:", self.erosion_size)
 
         self.generate_mask_button = QPushButton("Generate mask", parent=self)
-        self.layout().addRow(self.generate_mask_button)
+        content.layout().addRow(self.generate_mask_button)
         self.generate_mask_button.clicked.connect(self._on_button_click)
 
     def _on_button_click(self):
@@ -48,7 +53,7 @@ class GenerateMask(QWidget):
             show_info("Please select exactly one image layer")
             return None
 
-        image = self.viewer.layers.selection[0]
+        image = list(self.viewer.layers.selection)[0]
 
         if not isinstance(image, Image):
             show_info("The selected layer is not an image layer")
