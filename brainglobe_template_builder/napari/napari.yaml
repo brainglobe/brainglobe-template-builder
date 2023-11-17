@@ -6,7 +6,7 @@ contributions:
       python_name: brainglobe_template_builder.napari._reader:napari_get_reader
       title: Open data with brainglobe-template-builder
     - id: brainglobe-template-builder.make_mask_widget
-      python_name: brainglobe_template_builder.napari._widget:mask_widget
+      python_name: brainglobe_template_builder.napari.mask_widget:GenerateMask
       title: Generate mask
     - id: brainglobe-template-builder.make_points_widget
       python_name: brainglobe_template_builder.napari._widget:points_widget
