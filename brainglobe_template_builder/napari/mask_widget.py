@@ -1,4 +1,3 @@
-import numpy as np
 from napari.layers import Image
 from napari.utils.notifications import show_info
 from napari.viewer import Viewer
@@ -9,15 +8,13 @@ from qtpy.QtWidgets import (
     QSpinBox,
     QWidget,
 )
-from skimage import filters, morphology
 
-from brainglobe_template_builder.utils import (
-    extract_largest_object,
-    threshold_image,
-)
+from brainglobe_template_builder.preproc import create_mask
 
 
-class GenerateMask(QWidget):
+class CreateMask(QWidget):
+    """Widget to create a mask from a selected image layer."""
+
     def __init__(self, napari_viewer: Viewer, parent=None):
         super().__init__(parent=parent)
         self.viewer = napari_viewer
@@ -37,44 +34,30 @@ class GenerateMask(QWidget):
         self.erosion_size.setValue(5)
         self.layout().addRow("erosion size:", self.erosion_size)
 
-        self.generate_mask_button = QPushButton("Generate mask", parent=self)
+        self.generate_mask_button = QPushButton("Create mask", parent=self)
         self.layout().addRow(self.generate_mask_button)
         self.generate_mask_button.clicked.connect(self._on_button_click)
 
     def _on_button_click(self):
-        """Generate a mask from the selected image layer."""
+        """Create a mask from the selected image layer, using the parameters
+        specified in the widget, and add it to the napari viewer.
+        """
 
         if len(self.viewer.layers.selection) != 1:
-            show_info("Please select exactly one image layer")
+            show_info("Please select exactly one Image layer")
             return None
 
         image = list(self.viewer.layers.selection)[0]
 
         if not isinstance(image, Image):
-            show_info("The selected layer is not an image layer")
+            show_info("The selected layer is not an Image layer")
             return None
 
-        # Get parameters from widgets
-        gauss_sigma = self.gauss_sigma.value()
-        threshold_method = self.threshold_method.currentText()
-        erosion_size = self.erosion_size.value()
+        mask_data = create_mask(
+            image.data,
+            gauss_sigma=self.gauss_sigma.value(),
+            threshold_method=self.threshold_method.currentText(),
+            erosion_size=self.erosion_size.value(),
+        )
 
-        # Apply gaussian filter to image
-        if gauss_sigma > 0:
-            data_smoothed = filters.gaussian(image.data, sigma=gauss_sigma)
-        else:
-            data_smoothed = image.data
-
-        # Threshold the (smoothed) image
-        binary = threshold_image(data_smoothed, method=threshold_method)
-
-        # Keep only the largest object in the binary image
-        mask = extract_largest_object(binary)
-
-        # Erode the mask
-        if erosion_size > 0:
-            mask = morphology.binary_erosion(
-                mask, footprint=np.ones((erosion_size,) * image.ndim)
-            )
-
-        self.viewer.add_labels(mask, opacity=0.5, name="mask")
+        self.viewer.add_labels(mask_data, name="mask", opacity=0.5)
