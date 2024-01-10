@@ -8,8 +8,10 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from brainglobe_template_builder.preproc import align_to_midline
-from brainglobe_template_builder.utils import get_midline_points
+from brainglobe_template_builder.preproc import (
+    align_to_midline,
+    get_midline_points,
+)
 
 
 class FindMidline(QWidget):
