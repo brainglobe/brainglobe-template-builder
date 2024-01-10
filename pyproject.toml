@@ -25,7 +25,8 @@ dependencies = [
     "simpleitk",
     "vtk",
     "qbatch",
-    "imio"
+    "imio",
+    "brainglobe-utils[napari]",
 ]
 
 entry-points."napari.manifest".brainglobe-template-builder = "brainglobe_template_builder.napari:napari.yaml"
