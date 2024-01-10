@@ -1,5 +1,4 @@
 import numpy as np
-from brainglobe_utils.qtpy.collapsible_widget import CollapsibleWidget
 from napari.layers import Image
 from napari.utils.notifications import show_info
 from napari.viewer import Viewer
@@ -18,32 +17,28 @@ from brainglobe_template_builder.utils import (
 )
 
 
-class GenerateMask(CollapsibleWidget):
+class GenerateMask(QWidget):
     def __init__(self, napari_viewer: Viewer, parent=None):
-        super().__init__(title="Generate Mask", parent=parent)
+        super().__init__(parent=parent)
         self.viewer = napari_viewer
-
-        content = QWidget(parent=self)
-        content.setLayout(QFormLayout())
-
-        self.setContent(content)
+        self.setLayout(QFormLayout())
 
         self.gauss_sigma = QSpinBox(parent=self)
         self.gauss_sigma.setRange(0, 20)
         self.gauss_sigma.setValue(3)
-        content.layout().addRow("gauss sigma:", self.gauss_sigma)
+        self.layout().addRow("gauss sigma:", self.gauss_sigma)
 
         self.threshold_method = QComboBox(parent=self)
         self.threshold_method.addItems(["triangle", "otsu", "isodata"])
-        content.layout().addRow("threshold method:", self.threshold_method)
+        self.layout().addRow("threshold method:", self.threshold_method)
 
         self.erosion_size = QSpinBox(parent=self)
         self.erosion_size.setRange(0, 20)
         self.erosion_size.setValue(5)
-        content.layout().addRow("erosion size:", self.erosion_size)
+        self.layout().addRow("erosion size:", self.erosion_size)
 
         self.generate_mask_button = QPushButton("Generate mask", parent=self)
-        content.layout().addRow(self.generate_mask_button)
+        self.layout().addRow(self.generate_mask_button)
         self.generate_mask_button.clicked.connect(self._on_button_click)
 
     def _on_button_click(self):
