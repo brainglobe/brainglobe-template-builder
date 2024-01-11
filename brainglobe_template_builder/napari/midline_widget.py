@@ -10,7 +10,8 @@ from qtpy.QtWidgets import (
 )
 
 from brainglobe_template_builder.preproc import (
-    align_to_midline,
+    apply_transform,
+    get_alignment_transform,
     get_midline_points,
 )
 
@@ -157,16 +158,18 @@ class FindMidline(QWidget):
 
     def _on_align_button_click(self):
         """Align image and add the transformed image to the viewer."""
-        # Get values from dropdowns
         image_name = self.select_image_dropdown.currentText()
         points_name = self.select_points_dropdown.currentText()
         axis = self.select_axis_dropdown.currentText()
 
-        # Call align_to_midline function
-        aligned_image = align_to_midline(
+        transform = get_alignment_transform(
             self.viewer.layers[image_name].data,
             self.viewer.layers[points_name].data,
             axis=axis,
+        )
+
+        aligned_image = apply_transform(
+            self.viewer.layers[image_name].data, transform
         )
 
         self.viewer.add_image(aligned_image, name="aligned image")
