@@ -29,10 +29,10 @@ class CreateMask(QWidget):
         self.threshold_method.addItems(["triangle", "otsu", "isodata"])
         self.layout().addRow("threshold method:", self.threshold_method)
 
-        self.erosion_size = QSpinBox(parent=self)
-        self.erosion_size.setRange(0, 20)
-        self.erosion_size.setValue(5)
-        self.layout().addRow("erosion size:", self.erosion_size)
+        self.closing_size = QSpinBox(parent=self)
+        self.closing_size.setRange(0, 20)
+        self.closing_size.setValue(5)
+        self.layout().addRow("closing size:", self.closing_size)
 
         self.generate_mask_button = QPushButton("Create mask", parent=self)
         self.layout().addRow(self.generate_mask_button)
@@ -57,7 +57,7 @@ class CreateMask(QWidget):
             image.data,
             gauss_sigma=self.gauss_sigma.value(),
             threshold_method=self.threshold_method.currentText(),
-            erosion_size=self.erosion_size.value(),
+            closing_size=self.closing_size.value(),
         )
 
         self.viewer.add_labels(mask_data, name="mask", opacity=0.5)
