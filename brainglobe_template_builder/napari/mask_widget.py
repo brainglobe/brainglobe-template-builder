@@ -4,6 +4,7 @@ from napari.viewer import Viewer
 from qtpy.QtWidgets import (
     QComboBox,
     QFormLayout,
+    QGroupBox,
     QPushButton,
     QSpinBox,
     QWidget,
@@ -20,23 +21,33 @@ class CreateMask(QWidget):
         self.viewer = napari_viewer
         self.setLayout(QFormLayout())
 
-        self.gauss_sigma = QSpinBox(parent=self)
+        self._create_mask_group()
+
+    def _create_mask_group(self):
+        """Create the group of widgets concerned with creating a mask."""
+        self.mask_groupbox = QGroupBox("Create mask to exclude background")
+        self.mask_groupbox.setLayout(QFormLayout())
+        self.layout().addRow(self.mask_groupbox)
+
+        self.gauss_sigma = QSpinBox(parent=self.mask_groupbox)
         self.gauss_sigma.setRange(0, 20)
         self.gauss_sigma.setValue(3)
-        self.layout().addRow("gauss sigma:", self.gauss_sigma)
+        self.mask_groupbox.layout().addRow("gaussian sigma:", self.gauss_sigma)
 
-        self.threshold_method = QComboBox(parent=self)
+        self.threshold_method = QComboBox(parent=self.mask_groupbox)
         self.threshold_method.addItems(["triangle", "otsu", "isodata"])
-        self.layout().addRow("threshold method:", self.threshold_method)
+        self.mask_groupbox.layout().addRow(
+            "threshold method:", self.threshold_method
+        )
 
-        self.closing_size = QSpinBox(parent=self)
+        self.closing_size = QSpinBox(parent=self.mask_groupbox)
         self.closing_size.setRange(0, 20)
         self.closing_size.setValue(5)
-        self.layout().addRow("closing size:", self.closing_size)
+        self.mask_groupbox.layout().addRow("closing size:", self.closing_size)
 
-        self.generate_mask_button = QPushButton("Create mask", parent=self)
-        self.layout().addRow(self.generate_mask_button)
-        self.generate_mask_button.clicked.connect(self._on_button_click)
+        self.create_mask_button = QPushButton("Create mask", parent=self)
+        self.mask_groupbox.layout().addRow(self.create_mask_button)
+        self.create_mask_button.clicked.connect(self._on_button_click)
 
     def _on_button_click(self):
         """Create a mask from the selected image layer, using the parameters
