@@ -22,7 +22,7 @@ class FindMidline(QWidget):
         self.viewer = napari_viewer
         self.setLayout(QFormLayout())
 
-        # Add button to estimate midline points
+        # Initialise button to estimate midline points
         self.estimate_points_button = QPushButton(
             "Estimate midline points", parent=self
         )
@@ -34,11 +34,17 @@ class FindMidline(QWidget):
         # Add dropdown to select image layer
         self.select_image_dropdown = QComboBox(parent=self)
         self.select_image_dropdown.addItems(self._get_layers_by_type(Image))
+        self.select_image_dropdown.currentTextChanged.connect(
+            self._on_dropdown_selection_change
+        )
         self.layout().addRow("image:", self.select_image_dropdown)
 
         # Add dropdown to select points layer
         self.select_points_dropdown = QComboBox(parent=self)
         self.select_points_dropdown.addItems(self._get_layers_by_type(Points))
+        self.select_points_dropdown.currentTextChanged.connect(
+            self._on_dropdown_selection_change
+        )
         self.layout().addRow("points:", self.select_points_dropdown)
 
         # Add dropdown to select axis
@@ -52,6 +58,7 @@ class FindMidline(QWidget):
         )
         self.layout().addRow(self.align_image_button)
         self.align_image_button.clicked.connect(self._on_align_button_click)
+        self.align_image_button.setEnabled(False)
 
         # 9 colors taken from ColorBrewer2.org Set3 palette
         self.point_colors = [
@@ -84,6 +91,7 @@ class FindMidline(QWidget):
             dropdown.addItems(self._get_layers_by_type(layer_type))
 
     def _on_estimate_button_click(self):
+        """Estimate midline points and add them to the viewer."""
         if len(self.viewer.layers.selection) != 1:
             show_info("Please select exactly one Labels layer")
             return None
@@ -109,13 +117,12 @@ class FindMidline(QWidget):
             "name": "midline points",
         }
 
-        # Make mask layer invisible
         mask.visible = False
-
         self.viewer.add_points(points, **point_attrs)
         self._refresh_layer_dropdowns()
 
     def _on_align_button_click(self):
+        """Align image and add the transformed image to the viewer."""
         # Get values from dropdowns
         image_name = self.select_image_dropdown.currentText()
         points_name = self.select_points_dropdown.currentText()
@@ -129,3 +136,14 @@ class FindMidline(QWidget):
         )
 
         self.viewer.add_image(aligned_image, name="aligned image")
+
+    def _on_dropdown_selection_change(self):
+        """Enable align button if both image and points dropdowns
+        have a selection."""
+        if (
+            self.select_image_dropdown.currentText() == ""
+            or self.select_points_dropdown.currentText() == ""
+        ):
+            self.align_image_button.setEnabled(False)
+        else:
+            self.align_image_button.setEnabled(True)
