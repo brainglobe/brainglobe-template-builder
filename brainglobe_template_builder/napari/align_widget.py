@@ -146,18 +146,28 @@ class AlignMidplane(QWidget):
         show_info("Please move all 9 estimated points exactly to the midplane")
 
     def _on_align_button_click(self):
-        """Align image and add the transformed image to the viewer."""
+        """Align image and mask to midplane and add them to the viewer."""
         image_name = self.select_image_dropdown.currentText()
+        image_data = self.viewer.layers[image_name].data
+        mask_name = self.select_mask_dropdown.currentText()
+        mask_data = self.viewer.layers[mask_name].data
         points_name = self.select_points_dropdown.currentText()
+        points_data = self.viewer.layers[points_name].data
         axis = self.select_axis_dropdown.currentText()
 
         aligner = MidplaneAligner(
-            self.viewer.layers[image_name].data,
-            self.viewer.layers[points_name].data,
+            image_data,
+            points_data,
             symmetry_axis=axis,
         )
-        aligned_image = aligner.transform_image()
-        self.viewer.add_image(aligned_image, name="aligned image")
+        aligned_image = aligner.transform_image(image_data)
+        self.viewer.add_image(aligned_image, name="aligned_image")
+        aligned_mask = aligner.transform_image(mask_data)
+        self.viewer.add_labels(aligned_mask, name="aligned_mask", opacity=0.5)
+        # Hide original image, mask, and points layers
+        self.viewer.layers[image_name].visible = False
+        self.viewer.layers[mask_name].visible = False
+        self.viewer.layers[points_name].visible = False
 
     def _on_dropdown_selection_change(self):
         # Enable estimate button if mask dropdown has a value

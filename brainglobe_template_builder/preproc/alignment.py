@@ -153,7 +153,7 @@ class MidplaneAligner:
         self.normal_vector = normal_vector
         self.symmetry_axis_vector = symmetry_axis_vector
 
-    def get_transform(self):
+    def _compute_transform(self):
         """Find the transformation matrix that aligns the plane defined by the
         points to the midplane of the image along the symmetry axis.
         """
@@ -179,11 +179,19 @@ class MidplaneAligner:
         self.transform = (
             translation_to_mid_axis @ rotation @ translation_to_origin
         )
-        return self.transform
 
-    def transform_image(self):
-        """Transform the image using the transformation matrix."""
+    def transform_image(self, image: np.ndarray = None):
+        """Transform the image using the transformation matrix.
+
+        Parameters
+        ----------
+        image : np.ndarray
+            The image to transform. If None, the image passed to the
+            constructor is used.
+        """
         if not hasattr(self, "transform"):
-            self.get_transform()
-        self.transformed_image = apply_transform(self.image, self.transform)
+            self._compute_transform()
+        if image is None:
+            image = self.image
+        self.transformed_image = apply_transform(image, self.transform)
         return self.transformed_image
