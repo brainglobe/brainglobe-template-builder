@@ -1,8 +1,8 @@
 from brainglobe_utils.qtpy.collapsible_widget import CollapsibleWidgetContainer
 from napari.viewer import Viewer
 
+from brainglobe_template_builder.napari.align_widget import AlignMidplane
 from brainglobe_template_builder.napari.mask_widget import CreateMask
-from brainglobe_template_builder.napari.midline_widget import FindMidline
 
 
 class PreprocWidgets(CollapsibleWidgetContainer):
@@ -17,9 +17,9 @@ class PreprocWidgets(CollapsibleWidgetContainer):
         self._expand_mask_widget()
 
         self.add_widget(
-            FindMidline(napari_viewer, parent=self),
+            AlignMidplane(napari_viewer, parent=self),
             collapsible=True,
-            widget_title="Find midline",
+            widget_title="Align midplane",
         )
         self._connect_midline_widget_toggle()
 

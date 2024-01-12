@@ -2,209 +2,188 @@ from itertools import product
 from typing import Literal
 
 import numpy as np
-from scipy.ndimage import affine_transform
 from skimage import measure
 
+from brainglobe_template_builder.preproc.transform_utils import (
+    apply_transform,
+    get_rotation_from_vectors,
+)
 
-def get_midline_points(mask: np.ndarray):
-    """Get a set of 9 points roughly on the x axis midline of a 3D binary mask.
-
-    Parameters
-    ----------
-    mask : np.ndarray
-        A binary mask of shape (z, y, x).
-
-    Returns
-    -------
-    np.ndarray
-        An array of shape (9, 3) containing the midline points.
-    """
-
-    # Check input
-    if mask.ndim != 3:
-        raise ValueError("Mask must be 3D")
-
-    try:
-        mask = mask.astype(bool)
-    except ValueError:
-        raise ValueError("Mask must be binary")
-
-    # Derive mask properties
-    props = measure.regionprops(measure.label(mask))[0]
-    # bbox in shape (3, 2): for each dim (row) the min and max (col)
-    bbox = np.array(props.bbox).reshape(2, 3).T
-    bbox_ranges = bbox[:, 1] - bbox[:, 0]
-    # mask centroid in shape (3,)
-    centroid = np.array(props.centroid)
-
-    # Find slices at 1/4, 2/4, and 3/4 of the z and y dimensions
-    z_slices = [bbox_ranges[0] / 4 * i for i in [1, 2, 3]]
-    y_slices = [bbox_ranges[1] / 4 * i for i in [1, 2, 3]]
-    # Find points at the intersection the centroid's x slice
-    # with the above y and z slices.
-    # This produces a set of 9 points roughly on the midline
-    points = list(product(z_slices, y_slices, [centroid[2]]))
-
-    return np.array(points)
+NAPARI_AXIS_ORDER = "zyx"
 
 
-def _fit_plane_to_points(
-    points: np.ndarray,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Fit a plane to a set of 3D points.
+class MidplaneEstimator:
+    """Class to estimates points along the midplane of a 3D object, based on a
+    binary mask of the object."""
 
-    Parameters
-    ----------
-    points : np.ndarray
-        An array of shape (n_points, 3) containing the points.
+    def __init__(
+        self,
+        mask: np.ndarray,
+        symmetry_axis: Literal["x", "y", "z"] = "x",
+    ):
+        """Initialise the estimator.
 
-    Returns
-    -------
-    centroid : np.ndarray
-        The centroid of the points.
-    normal_vector : np.ndarray
-        A vector normal to the fitted plane.
-    """
+        Parameters
+        ----------
+        mask : np.ndarray
+            A 3D binary mask of the object.
+        symmetry_axis : str
+            Axis of symmetry, one of 'x', 'y', and 'z'.
+            Defaults to 'x'. For brains, this would be the left-right axis.
+            Keep in mind that the axis order is zyx in napari.
+        """
+        self.mask = mask
+        self.symmetry_axis = symmetry_axis
 
-    # Find the centroid of the points
-    centroid = np.mean(points, axis=0)
-    # Use SVD to get the normal vector to the plane
-    _, _, vh = np.linalg.svd(points - centroid)
-    normal_vector = vh[-1]
+        self._validate_inputs()
+        self.symmetry_axis_idx = NAPARI_AXIS_ORDER.index(symmetry_axis)
+        print("Axis index:", self.symmetry_axis_idx)
 
-    return centroid, normal_vector
+    def _validate_inputs(self):
+        """Validate the inputs to the aligner."""
 
+        if self.mask.ndim != 3:
+            raise ValueError("Mask must be 3D")
+        if self.symmetry_axis not in ["x", "y", "z"]:
+            raise ValueError("Symmetry axis must be one of 'x', 'y', or 'z'")
+        try:
+            self.mask = self.mask.astype(bool)
+        except ValueError:
+            raise ValueError("Mask must be binary")
 
-def _rotation_matrix_from_vectors(vec1: np.ndarray, vec2: np.ndarray):
-    """Find the rotation matrix that aligns vec1 to vec2. Implementation
-    adapted from StackOverflow [1]_.
+    def _get_mask_properties(self):
+        """Get properties of the mask, specifically the centroid and the
+        dimensions of the mask's bounding box (in pixels)."""
+        props = measure.regionprops(measure.label(self.mask))[0]
+        self.centroid = np.array(props.centroid)
+        bbox = np.array(props.bbox).reshape(2, 3).T
+        self.mask_dims = bbox[:, 1] - bbox[:, 0]
+        print("Mask dims:", self.mask_dims)
 
-    Parameters
-    ----------
-    vec1 : np.ndarray
-        The 3D "source" vector
-    vec2 : np.ndarray
-        The 3D "target" vector
+    def get_points(self):
+        """Estimate 9 points along the midplane of the mask.
 
-    Returns
-    -------
-    A rotation matrix (3x3) that, when applied to vec1, aligns it with vec2.
+        The midplane is initialised as the plane perpendicular to the symmetry
+        axis that contains the centroid of the mask. The midplane is then
+        intersected with 3 slices along each of the other two axes, resulting
+        in 9 points.
+        """
 
-    References
-    ----------
-    .. [1] https://stackoverflow.com/questions/45142959
-    """
-    a = (vec1 / np.linalg.norm(vec1)).reshape(3)
-    b = (vec2 / np.linalg.norm(vec2)).reshape(3)
-    v = np.cross(a, b)
-    c = np.dot(a, b)
-    s = np.linalg.norm(v)
-    kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
-    rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s**2))
-    return rotation_matrix
-
-
-def get_alignment_transform(
-    image: np.ndarray,
-    points: np.ndarray,
-    axis: Literal["x", "y", "z"] = "x",
-) -> np.ndarray:
-    """Find the transformation matrix that aligns the plane defined by the
-    given points to the midline of the specified axis.
-
-    Parameters
-    ----------
-    image : np.ndarray
-        A 3D image to align.
-    points : np.ndarray
-        An array of shape (n_points, 3) containing points.
-    axis : str
-        Axis to align the midline with. One of 'x', 'y', and 'z'.
-        Defaults to 'x'. The axis order is zyx in napari.
-
-    Returns
-    -------
-    transform: np.ndarray
-        A 4x4 rigid transformation matrix (3x3 rotation matrix with a 3x1
-        translation vector appended to the right).
-    """
-
-    # Check input
-    if image.ndim != 3:
-        raise ValueError("Image must be 3D")
-    if points.ndim != 2 or points.shape[1] != 3:
-        raise ValueError("Points must be an array of shape (n_points, 3)")
-    if axis not in ["x", "y", "z"]:
-        raise ValueError("Axis must be one of 'x', 'y', or 'z'")
-
-    # Fit a plane to the points
-    centroid, normal_vector = _fit_plane_to_points(points)
-
-    # Construct a unit vector along the specified axis
-    axis_idx = {"z": 0, "y": 1, "x": 2}[axis]  # axis order is zyx in napari
-    axis_vector = np.zeros(3)
-    axis_vector[axis_idx] = 1
-
-    # invert the normal vector if it points in the opposite direction of the
-    # specified axis
-    if np.dot(normal_vector, axis_vector) < 0:
-        normal_vector = -normal_vector
-
-    # Compute the necessary transforms
-    # 1. translate to origin (so that centroid is at origin)
-    translation_to_origin = np.eye(4)
-    translation_to_origin[:3, 3] = -centroid
-    # 2. rotate to align fitted plane with specified axis
-    rotation = np.eye(4)
-    rotation[:3, :3] = _rotation_matrix_from_vectors(
-        normal_vector, axis_vector
-    )
-    # 3. translate to mid-axis (so that centroid is at middle of axis)
-    translation_to_mid_axis = np.eye(4)
-    offset = (image.shape[axis_idx] / 2 - centroid[axis_idx]) * axis_vector
-    translation_to_mid_axis[:3, 3] = centroid + offset
-    # Combine the transforms
-    combined_transform = (
-        translation_to_mid_axis @ rotation @ translation_to_origin
-    )
-    return combined_transform
+        self._get_mask_properties()
+        # Find middle of the symmetry axis
+        mid_plane = self.centroid[self.symmetry_axis_idx]
+        # Find slices at 1/4, 2/4, and 3/4 of the two other dimensions
+        a, b = [i for i in range(3) if i != self.symmetry_axis_idx]
+        print("Other axes:", a, b)
+        other_planes_a = [self.mask_dims[a] / 4 * i for i in [1, 2, 3]]
+        other_planes_b = [self.mask_dims[b] / 4 * i for i in [1, 2, 3]]
+        # Find points at the intersection the symmetry axis midplane
+        # with quarter-planes of the other two axes (produces 9 points)
+        points = list(product(other_planes_a, other_planes_b, [mid_plane]))
+        self.points = np.array(points)  # (9, 3)
+        return self.points
 
 
-def apply_transform(
-    data: np.ndarray,
-    transform: np.ndarray,
-) -> np.ndarray:
-    """Apply a rigid transformation to an image.
+class MidplaneAligner:
+    """Class for aligning a given plane (as defined by a set of 3D points)
+    to the midplane of an image along a given symmetry axis."""
 
-    Parameters
-    ----------
-    data : np.ndarray
-        A 3D image to transform.
-    transform : np.ndarray
-        A 4x4 transformation matrix.
+    def __init__(
+        self,
+        image: np.ndarray,
+        points: np.ndarray,
+        symmetry_axis: Literal["x", "y", "z"] = "x",
+    ):
+        """Initialise the aligner.
 
-    Returns
-    -------
-    np.ndarray
-        The transformed data.
+        Parameters
+        ----------
+        image : np.ndarray
+            A 3D image to align.
+        points : np.ndarray
+            An array of shape (n_points, 3) containing 3D point coordinates.
+            At least 3 points are required, and they must not be colinear.
+        symmetry_axis : str
+            Axis of symmetry, one of 'x', 'y', and 'z'.
+            Defaults to 'x'. For brains, this would be the left-right axis.
+            Keep in mind that the axis order is zyx in napari.
+        """
+        self.image = image
+        self.points = points
+        self.symmetry_axis = symmetry_axis
 
-    Notes
-    -----
-    This function inverts the affine and flips the offset when passing the data
-    to `scipy.ndimage.affine_transform`. This is because the transforms are
-    given in the 'push' (or 'forward') direction, transforming input to output,
-    whereas `scipy.ndimage.affine_transform` does `pull` (or `backward`)
-    resampling, transforming the output space to the input.
-    """
+        self._validate_inputs()
+        self.symmetry_axis_idx = NAPARI_AXIS_ORDER.index(symmetry_axis)
 
-    if data.ndim != 3:
-        raise ValueError("Data must be 3D")
-    if transform.shape != (4, 4):
-        raise ValueError("Transform must be a 4x4 matrix")
+    def _validate_inputs(self):
+        """Validate the inputs to the aligner."""
+        if self.image.ndim != 3:
+            raise ValueError("Image must be 3D")
+        if self.points.ndim != 2 or self.points.shape[1] != 3:
+            raise ValueError("Points must be an array of shape (n_points, 3)")
+        if self.points.shape[0] < 3:
+            raise ValueError("At least 3 points are required")
+        if np.linalg.matrix_rank(self.points) < 3:
+            raise ValueError("Points must not be colinear")
+        if self.symmetry_axis not in ["x", "y", "z"]:
+            raise ValueError("Symmetry axis must be one of 'x', 'y', or 'z'")
 
-    transformed = affine_transform(
-        data,
-        np.linalg.inv(transform[:3, :3]),
-        offset=-transform[:3, 3],
-    )
-    return transformed
+    def _fit_plane_to_points(self):
+        """Fit a plane to the points.
+
+        The plane is fitted using SVD, and the normal vector is computed as the
+        last row of the V matrix. The normal vector is then inverted if it
+        points in the opposite direction of the symmetry axis unit vector.
+        """
+        # Use SVD to get the normal vector to the plane
+        centroid = np.mean(self.points, axis=0)
+        _, _, vh = np.linalg.svd(self.points - centroid)
+        normal_vector = vh[-1]
+
+        # Unit vector along the symmetry axis
+        symmetry_axis_vector = np.zeros(3)
+        symmetry_axis_vector[self.symmetry_axis_idx] = 1
+
+        # invert the normal vector if it points in the opposite direction of
+        # symmetry axis unit vector
+        if np.dot(normal_vector, symmetry_axis_vector) < 0:
+            normal_vector = -normal_vector
+
+        self.centroid = centroid
+        self.normal_vector = normal_vector
+        self.symmetry_axis_vector = symmetry_axis_vector
+
+    def get_transform(self):
+        """Find the transformation matrix that aligns the plane defined by the
+        points to the midplane of the image along the symmetry axis.
+        """
+        self._fit_plane_to_points()
+
+        # Compute the necessary transforms
+        # 1. translate to origin (so that centroid is at origin)
+        translation_to_origin = np.eye(4)
+        translation_to_origin[:3, 3] = -self.centroid
+        # 2. rotate to align fitted plane with symmetry axis
+        rotation = np.eye(4)
+        rotation[:3, :3] = get_rotation_from_vectors(
+            self.normal_vector, self.symmetry_axis_vector
+        )
+        # 3. translate to mid-axis (so that centroid is at middle of axis)
+        translation_to_mid_axis = np.eye(4)
+        offset = (
+            self.image.shape[self.symmetry_axis_idx] / 2
+            - self.centroid[self.symmetry_axis_idx]
+        ) * self.symmetry_axis_vector
+        translation_to_mid_axis[:3, 3] = self.centroid + offset
+        # Combine the transforms
+        self.transform = (
+            translation_to_mid_axis @ rotation @ translation_to_origin
+        )
+        return self.transform
+
+    def transform_image(self):
+        """Transform the image using the transformation matrix."""
+        if not hasattr(self, "transform"):
+            self.get_transform()
+        self.transformed_image = apply_transform(self.image, self.transform)
+        return self.transformed_image
