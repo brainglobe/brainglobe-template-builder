@@ -169,7 +169,8 @@ class FindMidline(QWidget):
         )
 
         aligned_image = apply_transform(
-            self.viewer.layers[image_name].data, transform
+            self.viewer.layers[image_name].data,
+            transform,
         )
 
         self.viewer.add_image(aligned_image, name="aligned image")

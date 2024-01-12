@@ -244,26 +244,35 @@ def get_alignment_transform(
 
     # Fit a plane to the points
     centroid, normal_vector = _fit_plane_to_points(points)
+
+    # Construct a unit vector along the specified axis
+    axis_idx = {"z": 0, "y": 1, "x": 2}[axis]  # axis order is zyx in napari
+    axis_vector = np.zeros(3)
+    axis_vector[axis_idx] = 1
+
     # invert the normal vector if it points in the opposite direction of the
     # specified axis
-    axis_index = {"z": 0, "y": 1, "x": 2}[axis]  # axis order is zyx in napari
-    axis_vector = np.zeros(3)
-    axis_vector[axis_index] = 1
     if np.dot(normal_vector, axis_vector) < 0:
         normal_vector = -normal_vector
 
-    # Find rotation to align the fitted plane (i.e. its normal vector)
-    # with the specified axis (i.e. the axis unit vector)
-    rotation_matrix = _rotation_matrix_from_vectors(normal_vector, axis_vector)
-    # Find offset to bring the centroid to the middle of the specified axis
-    mid_axis = image.shape[axis_index] // 2
-    offset = mid_axis - centroid[axis_index]
-
-    # Construct the transformation matrix by combining rotation and offset
-    transform = np.zeros((4, 4))
-    transform[:3, :3] = rotation_matrix
-    transform[:3, 3] = offset * axis_vector
-    return transform
+    # Compute the necessary transforms
+    # 1. translate to origin (so that centroid is at origin)
+    translation_to_origin = np.eye(4)
+    translation_to_origin[:3, 3] = -centroid
+    # 2. rotate to align fitted plane with specified axis
+    rotation = np.eye(4)
+    rotation[:3, :3] = _rotation_matrix_from_vectors(
+        normal_vector, axis_vector
+    )
+    # 3. translate to mid-axis (so that centroid is at middle of axis)
+    translation_to_mid_axis = np.eye(4)
+    offset = (image.shape[axis_idx] / 2 - centroid[axis_idx]) * axis_vector
+    translation_to_mid_axis[:3, 3] = centroid + offset
+    # Combine the transforms
+    combined_transform = (
+        translation_to_mid_axis @ rotation @ translation_to_origin
+    )
+    return combined_transform
 
 
 def apply_transform(
@@ -298,13 +307,9 @@ def apply_transform(
     if transform.shape != (4, 4):
         raise ValueError("Transform must be a 4x4 matrix")
 
-    # use larger output shape (to avoid cropping of edges)
-    output_shape = [int(1.1 * s) for s in data.shape]
-
     transformed = affine_transform(
         data,
         np.linalg.inv(transform[:3, :3]),
         offset=-transform[:3, 3],
-        output_shape=output_shape,
     )
     return transformed
