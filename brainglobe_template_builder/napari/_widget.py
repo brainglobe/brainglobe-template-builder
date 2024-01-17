@@ -14,32 +14,17 @@ class PreprocWidgets(CollapsibleWidgetContainer):
             collapsible=True,
             widget_title="Create mask",
         )
-        self._expand_mask_widget()
 
         self.add_widget(
             AlignMidplane(napari_viewer, parent=self),
             collapsible=True,
             widget_title="Align midplane",
         )
-        self._connect_midline_widget_toggle()
 
-    def get_widgets(self):
-        """Get all widgets in the container."""
-        return [
-            self.layout().itemAt(i).widget()
-            for i in range(self.layout().count())
-        ]
-
-    def _expand_mask_widget(self):
-        """Expand the mask widget."""
-        mask_widget = self.get_widgets()[0]
-        mask_widget.expand()
-
-    def _connect_midline_widget_toggle(self):
-        """Connect the toggle of the midline widget to the refresh of its
-        dropdowns.
-        """
-        midline_widget = self.get_widgets()[1]
-        midline_widget.toggled.connect(
-            midline_widget.content().refresh_dropdowns
+        self.mask_widget, self.midplane_widget = self.collapsible_widgets
+        # expand mask widget by default
+        self.mask_widget.expand()
+        # refresh dropdowns when midline widget is toggled
+        self.midplane_widget.toggled.connect(
+            self.midplane_widget.content().refresh_dropdowns
         )
