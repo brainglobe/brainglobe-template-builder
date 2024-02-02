@@ -56,6 +56,6 @@ jobs:
     needs: [build_sdist_wheels]
     runs-on: ubuntu-latest
     steps:
-    - uses: neuroinformatics-unit/actions/upload_pypi@reuse-pypi-upload
-      with:
-        secret_name: BTB_UPLOAD_API_KEY
+    - uses: neuroinformatics-unit/actions/upload_pypi@main
+      secrets:
+        pypi-api-key: ${{ secrets.BTB_UPLOAD_API_KEY }}
