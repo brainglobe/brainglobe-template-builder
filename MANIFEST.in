@@ -10,3 +10,4 @@ recursive-exclude * *.py[co]
 recursive-exclude docs *
 recursive-exclude tests *
 recursive-exclude scripts *
+recursive-exclude examples *
