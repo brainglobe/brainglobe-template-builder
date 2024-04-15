@@ -5,6 +5,31 @@ import pandas as pd
 from brainglobe_utils import image_io as imio
 
 
+def get_unique_folder_in_dir(search_dir: Path, search_str: str) -> Path:
+    """
+    Find a folder in a directory that contains a unique string.
+
+    Parameters
+    ----------
+    search_dir : Path
+        Directory to search in
+    search_str : str
+        String to search for in folder names
+
+    Returns
+    -------
+    folder : Path
+        Path to the folder that contains the search string
+    """
+    all_folders = [x for x in search_dir.iterdir() if x.is_dir()]
+    folders_with_str = [x for x in all_folders if search_str in x.name]
+    if len(folders_with_str) == 0:
+        raise ValueError(f"No folders with {search_str} found")
+    if len(folders_with_str) > 1:
+        raise ValueError(f"Multiple folders with {search_str} found")
+    return folders_with_str[0]
+
+
 def load_image_to_napari(tiff_path: Path):
     """
     Load an image to napari
