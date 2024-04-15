@@ -11,3 +11,4 @@ recursive-exclude docs *
 recursive-exclude tests *
 recursive-exclude scripts *
 recursive-exclude examples *
+recursive-exclude data *
