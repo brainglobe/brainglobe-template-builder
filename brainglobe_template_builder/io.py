@@ -1,8 +1,8 @@
 from pathlib import Path
 
-import imio
 import numpy as np
 import pandas as pd
+from brainglobe_utils import image_io as imio
 
 
 def load_image_to_napari(tiff_path: Path):

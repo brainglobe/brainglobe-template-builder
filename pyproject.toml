@@ -1,12 +1,12 @@
 [project]
 name = "brainglobe-template-builder"
-authors = [{name = "Niko Sirmpilatze", email= "niko.sirbiladze@gmail.com"}]
+authors = [{ name = "Niko Sirmpilatze", email = "niko.sirbiladze@gmail.com" }]
 description = "Build unbiased anatomical templates from individual images"
 readme = "README.md"
 requires-python = ">=3.9.0"
 dynamic = ["version"]
 
-license = {text = "BSD-3-Clause"}
+license = { text = "BSD-3-Clause" }
 
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -25,8 +25,7 @@ dependencies = [
     "simpleitk",
     "vtk",
     "qbatch",
-    "imio",
-    "brainglobe-utils[napari]",
+    "brainglobe-utils[napari]>=0.4.3",
 ]
 
 entry-points."napari.manifest".brainglobe-template-builder = "brainglobe_template_builder.napari:napari.yaml"
@@ -40,23 +39,19 @@ entry-points."napari.manifest".brainglobe-template-builder = "brainglobe_templat
 
 [project.optional-dependencies]
 dev = [
-  "pytest",
-  "pytest-cov",
-  "coverage",
-  "tox",
-  "black",
-  "mypy",
-  "pre-commit",
-  "ruff",
-  "setuptools_scm",
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "tox",
+    "black",
+    "mypy",
+    "pre-commit",
+    "ruff",
+    "setuptools_scm",
 ]
 
 [build-system]
-requires = [
-    "setuptools>=45",
-    "wheel",
-    "setuptools_scm[toml]>=6.2",
-]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -79,20 +74,20 @@ line-length = 79
 
 [tool.check-manifest]
 ignore = [
-  ".yaml",
-  "tox.ini",
-  "tests/",
-  "tests/test_unit/",
-  "tests/test_integration/",
-  "docs/",
-  "docs/source/",
-  "scripts/",
+    ".yaml",
+    "tox.ini",
+    "tests/",
+    "tests/test_unit/",
+    "tests/test_integration/",
+    "docs/",
+    "docs/source/",
+    "scripts/",
 ]
 
 
 [tool.ruff]
 line-length = 79
-exclude = ["__init__.py","build",".eggs","scripts"]
+exclude = ["__init__.py", "build", ".eggs", "scripts"]
 select = ["I", "E", "F"]
 fix = true
 

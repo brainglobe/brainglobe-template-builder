@@ -7,7 +7,7 @@ https://napari.org/stable/plugins/guides.html?#readers
 """
 from pathlib import Path
 
-import imio
+from brainglobe_utils import image_io as imio
 
 
 def napari_get_reader(path):
