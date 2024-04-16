@@ -7,11 +7,13 @@ Built a population template for the BlackCap brain
 # Imports
 # -------
 import os
+import shutil
 from datetime import date
 from pathlib import Path
 
 import pandas as pd
 from loguru import logger
+from tqdm import tqdm
 
 from brainglobe_template_builder.io import get_unique_folder_in_dir
 
@@ -160,16 +162,34 @@ images_df.to_csv(images_csv, index=False)
 logger.info(f"Saved image information to csv: {images_csv}")
 
 # Save images to the output rawdata directory
-for idx, row in images_df.iterrows():
+n_copied, n_symlinked = 0, 0
+for idx in tqdm(images_df.index):
+    row = images_df.loc[idx, :]
     sub = row["subject_id"]
     sub_dir = rawdata_dir / f"sub-{sub}"
     sub_dir.mkdir(exist_ok=True)
-
+    microns = row["microns"]
     image_id = row["image_id"]
-    img_target_path = row["image_path"]
-    img_link_path = sub_dir / f"{image_id}.tif"
-    img_link_path.symlink_to(img_target_path)
+    img_source_path = row["image_path"]
+    img_dest_path = sub_dir / f"{image_id}.tif"
 
-    logger.debug(f"Linked {img_link_path} to {img_target_path}")
+    # if the destination path exists, skip
+    if img_dest_path.exists():
+        logger.debug(f"Skipping {img_dest_path} as it already exists.")
+        continue
 
-logger.info(f"Linked {n_img} images to {rawdata_dir}.")
+    # if image is 10 microns, symlink it (they are large)
+    if microns == 10:
+        img_dest_path.symlink_to(img_source_path)
+        logger.debug(f"Symlinked {img_dest_path} to {img_source_path}")
+        n_symlinked += 1
+    # else copy the image
+    else:
+        shutil.copyfile(img_source_path, img_dest_path)
+        logger.debug(f"Copied {img_source_path} to {img_dest_path}")
+        n_copied += 1
+
+logger.info(
+    f"Copied {n_copied} and symlinked {n_symlinked} "
+    f"images to {rawdata_dir}."
+)
