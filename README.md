@@ -24,7 +24,7 @@ Build unbiased anatomical templates from individual images
 `brainglobe-template-builder` aims to:
 - Offer an intuitive Python interface to the [optimised ANTs template construction pipeline](#template-construction-with-ants).
 - Support 3D volumetric microscopy images, such as STPT and LSM.
-- Generate templates compatible with the [BrainGlobe ecosystem](https://brainglobe.info/), especially the [BrainGlobe Atlas API](https://brainglobe.info/documentation/bg-atlasapi/index.html).
+- Generate templates compatible with the [BrainGlobe ecosystem](https://brainglobe.info/), especially the [BrainGlobe Atlas API](https://brainglobe.info/documentation/brainglobe-atlasapi/index.html).
 
 > **Warning**
 > - Early development phase. Stay tuned
