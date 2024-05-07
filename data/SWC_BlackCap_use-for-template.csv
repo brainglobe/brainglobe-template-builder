@@ -1,7 +1,7 @@
 subject_id,channel,color,hemi,comment
 BC58,3,green,right,shadow artifacts in left hemi
 BC73,3,green,both,small damage in midbrain
-BC38,3, green,both,small damage in midbrain and cerebellum
+BC38,3,green,both,small damage in midbrain and cerebellum
 BC63,4,blue,both,blue channel has the best SNR
 BC15,4,blue,both,may need to mask injection and missing few slices at cerebellum
 BC08,3,green,both,need to mask injection and missing small part of midbrain
