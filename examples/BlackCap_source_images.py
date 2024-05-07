@@ -27,10 +27,16 @@ species_id = "BlackCap"
 species_common_name = "Black cap"  # as in the source csv table
 output_dir = atlas_dir / species_id
 output_dir.mkdir(parents=True, exist_ok=True)
+# Make both "rawdata" and "derivatives" folders
+rawdata_dir = output_dir / "rawdata"
+rawdata_dir.mkdir(exist_ok=True)
+deriv_dir = output_dir / "derivatives"
+deriv_dir.mkdir(exist_ok=True)
 
 # Set up logging
-current_script_name = Path(__file__).name.split(".")[0]
-logger.add(output_dir / f"{current_script_name}.log")
+today = date.today()
+current_script_name = "BlackCap_source_images"
+logger.add(output_dir / f"{today}_{current_script_name}.log")
 logger.info(f"Will save outputs to {output_dir}.")
 
 # %%
@@ -110,14 +116,12 @@ for _, row in df.iterrows():
             ][0]
             ch_color = ch_color if ch_color != "far_red" else "farred"
             image_id = f"sub-{sub}_res-{microns}um_channel-{ch_color}"
-            rec_channel = ch_color in row["Imaging channel to use"]
             images_list_of_dicts.append(
                 {
                     "subject_id": sub,
                     "microns": microns,
                     "channel": ch_num,
                     "color": ch_color,
-                    "recommended_channel": rec_channel,
                     "image_id": image_id,
                     "image_path": stack_path / img,
                 }
@@ -128,9 +132,9 @@ n_img = len(images_df)
 logger.info(f"Found {n_img} images across subjects, resolutions and channels.")
 
 # %%
-
 # Check for missing downsampled stacks
 # -------------------------------------
+# Logs a warning if any of the expected resolutions are missing
 
 expected_microns = [10, 25, 50]
 for sub in df["subject_id"]:
@@ -144,24 +148,24 @@ for sub in df["subject_id"]:
             logger.warning(f"Subject {sub} lacks {microns} micron stack")
 
 # %%
-# Save the images (with relevant info) to the atlas directory
+# Save dataframes and images to rawdata
+# -------------------------------------
+# Save the dataframes to the output rawdata directory.
 
-# Create a rawdata folder in the output directory
-rawdata_dir = output_dir / "rawdata"
-rawdata_dir.mkdir(exist_ok=True)
-
-# Save dataframes to the output rawdata directory
-today = date.today()
-
-subjects_csv = rawdata_dir / f"subjects_{today}.csv"
+subjects_csv = rawdata_dir / f"{today}_subjects.csv"
 df.to_csv(subjects_csv, index=False)
 logger.info(f"Saved subject information to csv: {subjects_csv}")
 
-images_csv = rawdata_dir / f"images_{today}.csv"
+images_csv = rawdata_dir / f"{today}_images.csv"
 images_df.to_csv(images_csv, index=False)
 logger.info(f"Saved image information to csv: {images_csv}")
 
+# %%
 # Save images to the output rawdata directory
+# (doesn't overwrite existing images).
+# High-resolution images (10um) are just symlinked to avoid duplication
+# of large files.
+
 n_copied, n_symlinked = 0, 0
 for idx in tqdm(images_df.index):
     row = images_df.loc[idx, :]
@@ -193,3 +197,49 @@ logger.info(
     f"Copied {n_copied} and symlinked {n_symlinked} "
     f"images to {rawdata_dir}."
 )
+
+# %%
+# Select data to use for template creation
+# ----------------------------------------
+# Here we select the subset of subjects to use for template creation.
+# The selection is based on visual inspection of the lowest-resolution
+# images (here 50um).
+#
+# The selected subjects are supplied as a .csv file named
+# "use_for_template.csv" which should be placed in the derivatives folder.
+
+# The resolution to use for visual inspection + preprocessing
+lowres = "50um"
+
+# Check for the .csv file
+use_for_template_csv = deriv_dir / "use_for_template.csv"
+if use_for_template_csv.exists():
+    use_for_template = pd.read_csv(use_for_template_csv)
+
+    assert (
+        use_for_template.subject_id.is_unique
+    ), "Subject IDs must be unique in use_for_template.csv"
+    n_subjects_to_use = len(use_for_template)
+    logger.info(
+        f"Will use {n_subjects_to_use} subjects for template creation."
+    )
+
+    for _, row in use_for_template.iterrows():
+        sub = row["subject_id"]
+        sub_str = f"sub-{sub}"
+        channel = row["color"]
+        hemi = row["hemi"]
+        filename = f"{sub_str}_res-{lowres}_channel-{channel}.tif"
+        # Create derivatives folder for each selected subject
+        (deriv_dir / sub_str).mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created derivatives folder for {sub_str}")
+        # copy the low-res image from rawdata to derivatives for convenience
+        raw_file = rawdata_dir / sub_str / filename
+        derivative_file = deriv_dir / sub_str / filename
+        if derivative_file.is_file():
+            logger.info(f"Skipping {derivative_file} as it already exists.")
+        else:
+            shutil.copyfile(raw_file, derivative_file)
+            logger.info(
+                f"Copied {filename} to the {sub_str} derivatives folder."
+            )
