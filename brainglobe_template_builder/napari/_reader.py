@@ -7,7 +7,7 @@ https://napari.org/stable/plugins/guides.html?#readers
 """
 from pathlib import Path
 
-from brainglobe_utils import image_io as imio
+from brainglobe_utils.IO.image.load import load_any
 
 
 def napari_get_reader(path):
@@ -66,7 +66,7 @@ def reader_function(path):
     # handle both a string and a list of strings
     paths = [path] if isinstance(path, str) else path
     # load all files into arrays
-    arrays = [imio.load_any(_path) for _path in paths]
+    arrays = [load_any(_path) for _path in paths]
     # Specify names for the layers
     names = [Path(_path).stem for _path in paths]
     # return a list of tuples of the form (data, add_kwargs, layer_type)
