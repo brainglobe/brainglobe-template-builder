@@ -95,6 +95,14 @@ class AlignMidplane(QWidget):
         self.align_image_button.clicked.connect(self._on_align_button_click)
         self.align_groupbox.layout().addRow(self.align_image_button)
 
+        # Add button to split image down the midplane
+        self.split_image_button = QPushButton(
+            "Split and refect image", parent=self.align_groupbox
+        )
+        self.split_image_button.setEnabled(False)
+        self.split_image_button.clicked.connect(self._on_split_button_click)
+        self.align_groupbox.layout().addRow(self.split_image_button)
+
     def _get_layers_by_type(self, layer_type: Layer) -> list:
         """Return a list of napari layers of a given type."""
         return [
@@ -164,10 +172,32 @@ class AlignMidplane(QWidget):
         self.viewer.add_image(aligned_image, name="aligned_image")
         aligned_mask = aligner.transform_image(mask_data)
         self.viewer.add_labels(aligned_mask, name="aligned_mask", opacity=0.5)
+        split_mask = aligner.split_mask(aligned_mask)
+        self.viewer.add_labels(split_mask, name="split_mask", opacity=0.5)
         # Hide original image, mask, and points layers
         self.viewer.layers[image_name].visible = False
         self.viewer.layers[mask_name].visible = False
         self.viewer.layers[points_name].visible = False
+        # Enable the split button
+        self.split_image_button.setEnabled(True)
+        # Make aligner object accessible to other methods
+        self.aligner = aligner
+
+    def _on_split_button_click(self):
+        """Split the aligned image and its mask down the midplane and reflect
+        each half."""
+        aligned_image = self.viewer.layers["aligned_image"].data
+        split_mask = self.viewer.layers["split_mask"].data
+        hemi1_image, hemi2_image = self.aligner.split_and_reflect_image(
+            aligned_image
+        )
+        hemi1_mask, hemi2_mask = self.aligner.split_and_reflect_image(
+            split_mask
+        )
+        self.viewer.add_image(hemi1_image, name="hemi1_sym_image")
+        self.viewer.add_labels(hemi1_mask, name="hemi1_sym_mask", opacity=0.5)
+        self.viewer.add_image(hemi2_image, name="hemi2_sym_image")
+        self.viewer.add_labels(hemi2_mask, name="hemi2_sym_mask", opacity=0.5)
 
     def _on_dropdown_selection_change(self):
         # Enable estimate button if mask dropdown has a value
