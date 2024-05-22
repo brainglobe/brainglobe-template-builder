@@ -196,59 +196,34 @@ class MidplaneAligner:
         self.transformed_image = apply_transform(image, self.transform)
         return self.transformed_image
 
-    def split_mask(self, mask: np.ndarray) -> np.ndarray:
-        """Label each half of the mask along the symmetry axis with different
+    def label_halves(self, image: np.ndarray) -> np.ndarray:
+        """Label each half of the image along the symmetry axis with different
         integer values, to help diagnose issues with the splitting process.
 
         Parameters
         ----------
-        mask : np.ndarray
-            The mask to split. Must contain only 1 label
+        image : np.ndarray
+            The image to label. This should be aligned along the symmetry axis.
 
         Returns
         -------
         np.ndarray
-            An array of the same shape as the input mask, with each half
-            labelled with a different integer value.
+            An array of the same shape as the input image, with each half
+            labelled with a different integer value (2 and 3).
         """
-        # Ensure mask is binary
-        mask = mask.astype(bool)
         axi = self.symmetry_axis_idx
-        axis_len = mask.shape[axi]
-        half_len = axis_len // 2
-        split_mask = np.zeros_like(mask, dtype=int)
-
-        # Create slicing objects for each half
-        slicer_half1 = [slice(None)] * mask.ndim
-        slicer_half1[axi] = slice(0, half_len)
-        slicer_half2 = [slice(None)] * mask.ndim
-        slicer_half2[axi] = slice(half_len, axis_len)
-
-        # Apply new labels only to the regions labeled in the input mask
-        split_mask[tuple(slicer_half1)] = mask[tuple(slicer_half1)] * 2
-        split_mask[tuple(slicer_half2)] = mask[tuple(slicer_half2)] * 3
-
-        return split_mask
-
-    def split_and_reflect_image(
-        self, image: np.ndarray
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Split the transformed image into two halves along the symmetry
-        axis and reflect each half to produce two full images.
-
-        Parameters
-        ----------
-        image : np.ndarray
-            The image to split and reflect.
-        """
-        axi = self.symmetry_axis_idx  # axis index
         axis_len = image.shape[axi]
         half_len = axis_len // 2
-        # take first half_len slices along the symmetry axis (first hald)
-        hemi1 = image.take(range(half_len), axis=axi)
-        # take last half_len slices along the symmetry axis (second half)
-        hemi2 = image.take(range(half_len, axis_len), axis=axi)
-        # reflect each half to produce two full images
-        full1 = np.concatenate([hemi1, np.flip(hemi1, axis=axi)], axis=axi)
-        full2 = np.concatenate([np.flip(hemi2, axis=axi), hemi2], axis=axi)
-        return full1, full2
+        labelled_halves = np.zeros_like(image, dtype=int)
+
+        # Create slicing objects for each half
+        slicer_half1 = [slice(None)] * image.ndim
+        slicer_half1[axi] = slice(0, half_len)
+        slicer_half2 = [slice(None)] * image.ndim
+        slicer_half2[axi] = slice(half_len, axis_len)
+
+        # Apply different integer values to each half
+        labelled_halves[tuple(slicer_half1)] = 2
+        labelled_halves[tuple(slicer_half2)] = 3
+
+        return labelled_halves
