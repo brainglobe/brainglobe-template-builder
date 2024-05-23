@@ -1,8 +1,11 @@
+from pathlib import Path
+
 from napari.layers import Image, Labels, Layer, Points
 from napari.utils.notifications import show_info
 from napari.viewer import Viewer
 from qtpy.QtWidgets import (
     QComboBox,
+    QFileDialog,
     QFormLayout,
     QGroupBox,
     QPushButton,
@@ -95,6 +98,16 @@ class AlignMidplane(QWidget):
         self.align_image_button.clicked.connect(self._on_align_button_click)
         self.align_groupbox.layout().addRow(self.align_image_button)
 
+        # Add button to save transformed image
+        self.save_transform_button = QPushButton(
+            "Save transform", parent=self.align_groupbox
+        )
+        self.save_transform_button.setEnabled(False)
+        self.save_transform_button.clicked.connect(
+            self._on_save_transform_click
+        )
+        self.align_groupbox.layout().addRow(self.save_transform_button)
+
     def _get_layers_by_type(self, layer_type: Layer) -> list:
         """Return a list of napari layers of a given type."""
         return [
@@ -183,6 +196,8 @@ class AlignMidplane(QWidget):
         self.viewer.layers[aligned_mask_name].visible = False
         # Make aligner object accessible to other methods
         self.aligner = aligner
+        # Enable save transform button
+        self.save_transform_button.setEnabled(True)
 
     def _on_dropdown_selection_change(self):
         # Enable estimate button if mask dropdown has a value
@@ -199,3 +214,15 @@ class AlignMidplane(QWidget):
             self.align_image_button.setEnabled(False)
         else:
             self.align_image_button.setEnabled(True)
+
+    def _on_save_transform_click(self):
+        """Save the midplane alignment tranform to a text file."""
+        if not hasattr(self, "aligner"):
+            show_info("Please align the image to the midplane first")
+            return
+        dlg = QFileDialog()
+        dlg.setFileMode(QFileDialog.AnyFile)
+        dlg.setAcceptMode(QFileDialog.AcceptSave)
+        if dlg.exec_():
+            path = dlg.selectedFiles()[0]
+            self.aligner.save_transform(Path(path))

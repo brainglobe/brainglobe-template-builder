@@ -1,4 +1,5 @@
 from itertools import product
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
@@ -193,8 +194,15 @@ class MidplaneAligner:
             self._compute_transform()
         if image is None:
             image = self.image
-        self.transformed_image = apply_transform(image, self.transform)
+        transformed_image = apply_transform(image, self.transform)
+        self.transformed_image = transformed_image.astype(image.dtype)
         return self.transformed_image
+
+    def save_transform(self, dest_path: Path):
+        """Save the midplane alignment transform to a text file."""
+        if not hasattr(self, "transform"):
+            raise ValueError("Please align the image to the midplane first")
+        np.savetxt(dest_path, self.transform)
 
     def label_halves(self, image: np.ndarray) -> np.ndarray:
         """Label each half of the image along the symmetry axis with different
