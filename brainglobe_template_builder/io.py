@@ -1,9 +1,10 @@
 from pathlib import Path
 
+import nibabel as nib
 import numpy as np
 import pandas as pd
 from brainglobe_utils.IO.image.load import load_any
-from brainglobe_utils.IO.image.save import to_nii, to_tiff
+from brainglobe_utils.IO.image.save import to_tiff
 
 
 def get_unique_folder_in_dir(search_dir: Path, search_str: str) -> Path:
@@ -73,7 +74,11 @@ def save_3d_points_to_csv(points: np.ndarray, file_path: Path):
     points_df.to_csv(file_path, index=False)
 
 
-def save_nii(stack: np.ndarray, pix_sizes: list, dest_path: Path):
+def save_nii(
+    stack: np.ndarray,
+    vox_sizes: list,
+    dest_path: Path,
+):
     """
     Save 3D image stack to dest_path as a nifti image.
 
@@ -81,41 +86,43 @@ def save_nii(stack: np.ndarray, pix_sizes: list, dest_path: Path):
     ----------
     stack : np.ndarray
         3D image stack
-    pix_sizes : list
-        list of pixel dimensions in mm. The order is 'x', 'y', 'z'
+    vox_sizes : list
+        list of voxel dimensions in mm. The order is 'x', 'y', 'z'
     dest_path : pathlib.Path
         path to save the nifti image
     """
-    transformation_matrix = _get_transf_matrix_from_res(pix_sizes)
-    to_nii(
-        stack,
-        dest_path.as_posix(),
-        scale=pix_sizes,
-        affine_transform=transformation_matrix,
-    )
+    affine = _get_transf_matrix_from_res(vox_sizes)
+    nii_img = nib.Nifti1Image(stack, affine, dtype=stack.dtype)
+
+    # get the created header
+    header = nii_img.header
+    print(header)
+
+    # save the image
+    nib.save(nii_img, dest_path.as_posix())
 
 
-def _get_transf_matrix_from_res(pix_sizes: list) -> np.ndarray:
-    """Create transformation matrix from a dictionary of pixel dimensions.
+def _get_transf_matrix_from_res(vox_sizes: list) -> np.ndarray:
+    """Create transformation matrix from a dictionary of voxel dimensions.
 
     Parameters
     ----------
-    pix_sizes : list
-        list of pixel dimensions in mm. The order is 'x', 'y', 'z'
+    vox_sizes : list
+        list of voxel dimensions in mm. The order is 'x', 'y', 'z'
 
     Returns
     -------
     np.ndarray
-        A (4, 4) transformation matrix with the pixel dimensions
+        A (4, 4) transformation matrix with the voxel dimensions
         on the first 3 diagonal entries.
     """
     transformation_matrix = np.eye(4)
     for i in range(3):
-        transformation_matrix[i, i] = pix_sizes[i]
+        transformation_matrix[i, i] = vox_sizes[i]
     return transformation_matrix
 
 
-def tiff_to_nifti(tiff_path: Path, nifti_path: Path, pix_sizes: list):
+def tiff_to_nifti(tiff_path: Path, nifti_path: Path, vox_sizes: list):
     """
     Convert a tiff image to a nifti image
 
@@ -125,11 +132,11 @@ def tiff_to_nifti(tiff_path: Path, nifti_path: Path, pix_sizes: list):
         path to the tiff image
     nifti_path : pathlib.Path
         path to save the nifti image
-    pix_sizes : list
-        list of pixel dimensions in mm. The order is 'x', 'y', 'z'
+    vox_sizes : list
+        list of voxel dimensions in mm. The order is 'x', 'y', 'z'
     """
     stack = load_any(tiff_path.as_posix())
-    save_nii(stack, pix_sizes, nifti_path)
+    save_nii(stack, vox_sizes, nifti_path)
 
 
 def nifti_to_tiff(nifti_path: Path, tiff_path: Path):

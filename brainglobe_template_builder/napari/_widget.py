@@ -3,6 +3,7 @@ from napari.viewer import Viewer
 
 from brainglobe_template_builder.napari.align_widget import AlignMidplane
 from brainglobe_template_builder.napari.mask_widget import CreateMask
+from brainglobe_template_builder.napari.save_widget import SaveWidget
 
 
 class PreprocWidgets(CollapsibleWidgetContainer):
@@ -21,7 +22,17 @@ class PreprocWidgets(CollapsibleWidgetContainer):
             widget_title="Align midplane",
         )
 
-        self.mask_widget, self.midplane_widget = self.collapsible_widgets
+        self.add_widget(
+            SaveWidget(napari_viewer, parent=self),
+            collapsible=True,
+            widget_title="Save",
+        )
+
+        (
+            self.mask_widget,
+            self.midplane_widget,
+            self.save_widget,
+        ) = self.collapsible_widgets
         # expand mask widget by default
         self.mask_widget.expand()
         # refresh dropdowns when midline widget is toggled
