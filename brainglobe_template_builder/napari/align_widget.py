@@ -124,6 +124,8 @@ class AlignMidplane(QWidget):
         axis = self.select_axis_dropdown.currentText()
         estimator = MidplaneEstimator(mask.data, symmetry_axis=axis)
         points = estimator.get_points()
+        prefix = mask_name.split("_label-")[0]
+        points_name = f"{prefix}_points-midplane"
 
         # Point layer attributes
         point_attrs = {
@@ -134,7 +136,7 @@ class AlignMidplane(QWidget):
             "opacity": 0.6,
             "size": 6,
             "ndim": mask.ndim,
-            "name": "midplane points",
+            "name": points_name,
         }
 
         self.viewer.add_points(points, **point_attrs)
@@ -142,7 +144,7 @@ class AlignMidplane(QWidget):
         # Move viewer to show z-plane of first point
         self.viewer.dims.set_point(0, points[0][0])
         # Enable "Select points" mode
-        self.viewer.layers["midplane_points"].mode = "select"
+        self.viewer.layers[points_name].mode = "select"
         show_info("Please move all 9 estimated points exactly to the midplane")
 
     def _on_align_button_click(self):
@@ -161,19 +163,24 @@ class AlignMidplane(QWidget):
             symmetry_axis=axis,
         )
         aligned_image = aligner.transform_image(image_data)
-        self.viewer.add_image(aligned_image, name="aligned_image")
+        aligned_image_name = f"{image_name}_aligned"
+        self.viewer.add_image(aligned_image, name=aligned_image_name)
         aligned_mask = aligner.transform_image(mask_data)
-        self.viewer.add_labels(aligned_mask, name="aligned_mask", opacity=0.5)
-        aligned_halves = aligner.label_halves(aligned_image)
+        aligned_mask_name = f"{mask_name}_aligned"
         self.viewer.add_labels(
-            aligned_halves, name="aligned_halves", opacity=0.5
+            aligned_mask, name=aligned_mask_name, opacity=0.5
+        )
+        aligned_halves = aligner.label_halves(aligned_image)
+        aligned_halves_name = aligned_mask_name.replace("-brain", "-halves")
+        self.viewer.add_labels(
+            aligned_halves, name=aligned_halves_name, opacity=0.5
         )
         # Hide original image, mask, and points layers
         self.viewer.layers[image_name].visible = False
         self.viewer.layers[mask_name].visible = False
         self.viewer.layers[points_name].visible = False
         # Hide aligned mask layer
-        self.viewer.layers["aligned_mask"].visible = False
+        self.viewer.layers[aligned_mask_name].visible = False
         # Make aligner object accessible to other methods
         self.aligner = aligner
 

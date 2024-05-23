@@ -71,4 +71,5 @@ class CreateMask(QWidget):
             closing_size=self.closing_size.value(),
         )
 
-        self.viewer.add_labels(mask_data, name="mask", opacity=0.5)
+        mask_name = f"{image.name}_label-brain"
+        self.viewer.add_labels(mask_data, name=mask_name, opacity=0.5)

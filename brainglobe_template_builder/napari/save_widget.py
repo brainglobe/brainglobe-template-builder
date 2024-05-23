@@ -16,7 +16,7 @@ from qtpy.QtWidgets import (
 from brainglobe_template_builder.io import save_3d_points_to_csv, save_nii
 
 
-class SaveWidget(QWidget):
+class SaveFiles(QWidget):
     def __init__(self, napari_viewer: Viewer, parent=None):
         super().__init__(parent=parent)
         self.viewer = napari_viewer
