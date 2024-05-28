@@ -68,4 +68,6 @@ def apply_transform(
         np.linalg.inv(transform[:3, :3]),
         offset=-transform[:3, 3],
     )
-    return transformed
+    # Preserve original data range and type
+    transformed = np.clip(transformed, data.min(), data.max())
+    return transformed.astype(data.dtype)

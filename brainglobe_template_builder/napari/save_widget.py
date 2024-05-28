@@ -107,6 +107,8 @@ class SaveFiles(QWidget):
                 saved_layer_names.append(layer.name)
             elif isinstance(layer, Image) or isinstance(layer, Labels):
                 tif_path = f"{save_dir}/{layer.name}.tif"
+                if isinstance(layer, Image):
+                    layer.data = layer.data.astype("float32")
                 layer.save(tif_path)  # native napari save for images
                 nii_path = Path(f"{save_dir}/{layer.name}.nii.gz")
                 save_nii(  # custom save to nii

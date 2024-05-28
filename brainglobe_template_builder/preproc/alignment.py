@@ -194,8 +194,7 @@ class MidplaneAligner:
             self._compute_transform()
         if image is None:
             image = self.image
-        transformed_image = apply_transform(image, self.transform)
-        self.transformed_image = transformed_image.astype(image.dtype)
+        self.transformed_image = apply_transform(image, self.transform)
         return self.transformed_image
 
     def save_transform(self, dest_path: Path):
