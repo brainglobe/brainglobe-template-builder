@@ -82,6 +82,10 @@ def save_nii(
     """
     Save 3D image stack to dest_path as a nifti image.
 
+    This function assumes that the image is in the ASR orientation
+    and sets the qform and sform of the nifti header accordingly
+    (so that the image is displayed correctly in nifti viewers like ITK-SNAP).
+
     Parameters
     ----------
     stack : np.ndarray
@@ -93,12 +97,19 @@ def save_nii(
     """
     affine = _get_transf_matrix_from_res(vox_sizes)
     nii_img = nib.Nifti1Image(stack, affine, dtype=stack.dtype)
-
-    # get the created header
-    header = nii_img.header
-    print(header)
-
-    # save the image
+    # Set qform and sform to match axes orientation, assuming ASR
+    reorient = np.array(
+        [
+            [0, 0, -1, 0],
+            [-1, 0, 0, 0],
+            [0, -1, 0, 0],
+            [0, 0, 0, 1],
+        ]
+    )
+    new_form = reorient @ affine
+    nii_img.set_qform(new_form, code=3)
+    nii_img.set_sform(new_form, code=3)
+    # save the nifti image
     nib.save(nii_img, dest_path.as_posix())
 
 
