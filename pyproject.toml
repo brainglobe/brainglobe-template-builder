@@ -27,6 +27,7 @@ dependencies = [
     "simpleitk",
     "vtk",
     "qbatch",
+    "antspyx",
     "brainglobe-utils[napari]>=0.5",
 ]
 
