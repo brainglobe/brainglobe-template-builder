@@ -32,7 +32,7 @@ def get_unique_folder_in_dir(search_dir: Path, search_str: str) -> Path:
     return folders_with_str[0]
 
 
-def load_image_to_napari(tiff_path: Path):
+def load_tiff(tiff_path: Path):
     """
     Load an image to napari
 
