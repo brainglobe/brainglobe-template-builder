@@ -1,6 +1,8 @@
 """
-Built a population template for the BlackCap brain
-==================================================
+Identify source images for BlackCap template
+============================================
+Set up project directory with all relevant data and identify source images
+to be used for building the BlackCap template.
 """
 
 # %%
