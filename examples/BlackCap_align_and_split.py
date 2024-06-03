@@ -42,12 +42,22 @@ logger.add(output_dir / f"{today}_{current_script_name}.log")
 # %%
 # Define registration target
 # --------------------------
+# We need three images, all in ASR orientation and nifti format:
+# 1. The reference image aligned to the mid-sagittal plane
+# 2. The brain mask of the reference image
+# 3. The mask of the halves of the reference image (left and right)
+
 
 target_dir = deriv_dir / "template_asym_n=3"
 target_image_path = target_dir / "template_orig-asr_aligned.nii.gz"
 target_image = ants.image_read(target_image_path.as_posix())
 target_mask_path = target_dir / "template_orig-asr_label-brain_aligned.nii.gz"
 target_mask = ants.image_read(target_mask_path.as_posix())
+target_halves_mask_path = (
+    target_dir / "template_orig-asr_label-halves_aligned.nii.gz"
+)
+target_halves_mask = ants.image_read(target_halves_mask_path.as_posix())
+
 
 # %%
 # Load a dataframe with images to use for the template
@@ -108,9 +118,22 @@ for idx, row in df.iloc[:1].iterrows():
     save_nii(mask, vox_sizes, mask_path)
     logger.info(f"Saved brain mask as {mask_path.name}.")
 
-    # Run N4BiasFieldCorrection on the reoriented image
+    # Plot the mask over the image to check
     image_asr_obj = ants.image_read(nii_path.as_posix())
     mask_obj = ants.image_read(mask_path.as_posix())
+    ants.plot(
+        image_asr_obj,
+        mask_obj,
+        overlay_alpha=0.5,
+        overlay_cmap="plasma",
+        axis=1,
+        title="Brain mask over image",
+        filename=nii_path.with_name(
+            mask_path.stem.split(".")[0] + "_overlay.png"
+        ).as_posix(),
+    )
+
+    # Run N4BiasFieldCorrection on the reoriented image
     image_asr_n4 = ants.n4_bias_field_correction(image_asr_obj, mask=mask_obj)
     image_asr_n4_path = nii_path.with_name(
         nii_path.stem.split(".")[0] + "_N4.nii.gz"
@@ -118,7 +141,7 @@ for idx, row in df.iloc[:1].iterrows():
     ants.image_write(image_asr_n4, image_asr_n4_path.as_posix())
     logger.info(
         "Run N4BiasFieldCorrection on the reoriented image "
-        f" and saved as {image_asr_n4_path.name}."
+        f"and saved as {image_asr_n4_path.name}."
     )
 
     # Rigid-register the reoriented image to an already aligned target
@@ -135,10 +158,53 @@ for idx, row in df.iloc[:1].iterrows():
         verbose=False,
         outprefix=output_prefix,
     )
-    logger.info("Rigid-registered the reoriented image to the target.")
+    logger.info(
+        "Aligned the reoriented image to the target via rigid registration."
+    )
     aligned_image = results["warpedmovout"]
-    ants.image_write(aligned_image, output_prefix + ".nii.gz")
-    logger.info(f"Saved aligned image as {output_prefix}.nii.gz.")
+    aligned_image_path = Path(output_prefix + ".nii.gz")
+    ants.image_write(aligned_image, aligned_image_path.as_posix())
+    logger.info(f"Saved aligned image as {aligned_image_path.name}.")
+
+    # Transform the brain mask to the aligned image space
+    aligned_mask = ants.apply_transforms(
+        fixed=aligned_image,
+        moving=mask_obj,
+        transformlist=results["fwdtransforms"],
+        interpolator="nearestNeighbor",
+    )
+    # Multiply the transformed mask by the halves mask halves mask
+    # and then binarise to get masks for the right and left hemispheres
+    aligned_hemis_mask = ants.image_clone(aligned_mask)
+    aligned_hemis_mask.view()[:] = (
+        aligned_mask.numpy() * target_halves_mask.numpy()
+    )
+    aligned_mask_path = nii_path.with_name(
+        nii_path.stem.split(".")[0] + "_label-hemis_aligned.nii.gz"
+    )
+    ants.image_write(aligned_hemis_mask, aligned_mask_path.as_posix())
+    logger.info(f"Saved aligned hemispheres mask as {aligned_mask_path.name}.")
+
+    # Plot the aligned image over the target to check registration
+    ants.plot(
+        target_image,
+        aligned_image,
+        overlay_alpha=0.5,
+        overlay_cmap="plasma",
+        axis=1,
+        title="Aligned image over target (rigid registration)",
+        filename=output_prefix + "_target_overlay.png",
+    )
+    # Plot the hemi masks over the aligned image to check the split
+    ants.plot(
+        aligned_image,
+        aligned_hemis_mask,
+        overlay_alpha=0.5,
+        axis=1,
+        title="Aligned image split into right and left hemispheres",
+        filename=output_prefix + "_hemis_overlay.png",
+    )
+    logger.info("Plotted overlays to visually check alignment.")
 
 
 # %%
