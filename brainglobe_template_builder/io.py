@@ -95,10 +95,11 @@ def save_nii(
     dest_path : pathlib.Path
         path to save the nifti image
     """
-    # If dtype is boolean, convert to uint8
-    if stack.dtype == bool:
+    # If dtype is boolean or int of any type, convert to uint8
+    # This is for labels, we assumer no more than 256 labels
+    if stack.dtype == bool or np.issubdtype(stack.dtype, np.integer):
         stack = stack.astype(np.uint8)
-    
+
     affine = _get_transf_matrix_from_res(vox_sizes)
     nii_img = nib.Nifti1Image(stack, affine, dtype=stack.dtype)
     # Set qform and sform to match axes orientation, assuming ASR
