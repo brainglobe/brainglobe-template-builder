@@ -78,7 +78,6 @@ def save_nii(
     stack: np.ndarray,
     vox_sizes: list,
     dest_path: Path,
-    labels: bool = False,
 ):
     """
     Save 3D image stack to dest_path as a nifti image.
@@ -95,21 +94,11 @@ def save_nii(
         list of voxel dimensions in mm. The order is 'x', 'y', 'z'
     dest_path : pathlib.Path
         path to save the nifti image
-    labels : bool
-        If True, the stack is assumed to be a label image and
-        will be converted to uint8/uint16 before saving.
-        Default is False.
     """
-    # Handle data type for label images
-    if labels:
-        if stack.dtype == bool:
-            stack = stack.astype(np.uint8)
-        elif stack.dtype not in [np.uint8, np.uint16]:
-            raise ValueError(
-                f"Data type {stack.dtype} is not supported for label images. "
-                f"Supported data types are uint8, uint16, and bool "
-                f"(which is converted to uint8)."
-            )
+    # If dtype is boolean or int of any type, convert to uint8
+    # This is for labels, we assumer no more than 256 labels
+    if stack.dtype == bool or np.issubdtype(stack.dtype, np.integer):
+        stack = stack.astype(np.uint8)
 
     affine = _get_transf_matrix_from_res(vox_sizes)
     nii_img = nib.Nifti1Image(stack, affine, dtype=stack.dtype)
