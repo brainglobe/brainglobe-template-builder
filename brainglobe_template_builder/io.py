@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 import nibabel as nib
 import numpy as np
@@ -78,6 +79,7 @@ def save_nii(
     stack: np.ndarray,
     vox_sizes: list,
     dest_path: Path,
+    kind: Literal["image", "label"] = "image",
 ):
     """
     Save 3D image stack to dest_path as a nifti image.
@@ -94,10 +96,11 @@ def save_nii(
         list of voxel dimensions in mm. The order is 'x', 'y', 'z'
     dest_path : pathlib.Path
         path to save the nifti image
+    kind : Literal["image", "label"]
+        Whether the stack is an image or a label. If label, the dtype
+        is converted to uint8.
     """
-    # If dtype is boolean or int of any type, convert to uint8
-    # This is for labels, we assumer no more than 256 labels
-    if stack.dtype == bool or np.issubdtype(stack.dtype, np.integer):
+    if kind == "label":
         stack = stack.astype(np.uint8)
 
     affine = _get_transf_matrix_from_res(vox_sizes)
