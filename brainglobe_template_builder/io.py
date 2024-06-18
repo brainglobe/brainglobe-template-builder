@@ -121,6 +121,39 @@ def save_nii(
     nib.save(nii_img, dest_path.as_posix())
 
 
+def file_path_with_suffix(path: Path, suffix: str, new_ext=None) -> Path:
+    """
+    Return a new path with the given suffix added before the extension.
+
+    "suffix" the string to add before the left-most period, while
+    extension is the string after that. For example, if ``suffix=="_new"``,
+    and ``new_ext=".nii.gz"``, the output path will end with "_new.nii.gz".
+
+    Parameters
+    ----------
+    path : pathlib.Path
+        The file path to modify.
+    suffix : str
+        The suffix to add before the extension.
+    new_ext : pathlib.Path, optional
+        If given, replace the current extension with this one.
+        Should include the leading period.
+
+    Returns
+    -------
+    Path
+        The new path to the file with the given suffix.
+
+    """
+    suffixes = "".join(path.suffixes)
+    pure_stem = str(path.stem).rstrip(suffixes)
+    if new_ext is not None:
+        new_name = f"{pure_stem}{suffix}{new_ext}"
+    else:
+        new_name = f"{pure_stem}{suffix}{suffixes}"
+    return path.with_name(new_name)
+
+
 def _get_transf_matrix_from_res(vox_sizes: list) -> np.ndarray:
     """Create transformation matrix from a dictionary of voxel dimensions.
 
