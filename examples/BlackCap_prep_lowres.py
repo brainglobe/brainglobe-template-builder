@@ -16,6 +16,7 @@ prepare them for template construction:
 # %%
 # Imports
 # -------
+import os
 from datetime import date
 from pathlib import Path
 
@@ -44,23 +45,23 @@ from brainglobe_template_builder.preproc.splitting import (
 # and set up logging.
 
 # Define voxel size(in microns) of the lowest resolution image
-MICRONS = 50
+lowres = 50
 # String to identify the resolution in filenames
-res_str = f"res-{MICRONS}um"
+res_str = f"res-{lowres}um"
 # Define voxel sizes in mm (for Nifti saving)
-vox_sizes = [MICRONS * 1e-3] * 3  # in mm
+vox_sizes = [lowres * 1e-3] * 3  # in mm
 
-# Create the output directory
-atlas_dir = Path("/media/ceph-niu/neuroinformatics/atlas-forge")
+# Prepare directory structure
+atlas_dir = Path("/ceph/neuroinformatics/neuroinformatics/atlas-forge")
 species_id = "BlackCap"
-output_dir = atlas_dir / species_id
-deriv_dir = output_dir / "derivatives"
+species_dir = atlas_dir / species_id
+deriv_dir = species_dir / "derivatives"
 assert deriv_dir.exists(), f"Could not find derivatives directory {deriv_dir}."
 
 # Set up logging
 today = date.today()
-current_script_name = "BlackCap_prep_lowres"
-logger.add(output_dir / f"{today}_{current_script_name}.log")
+current_script_name = os.path.basename(__file__).replace(".py", "")
+logger.add(species_dir / "logs" / f"{today}_{current_script_name}.log")
 
 # %%
 # Define registration target
@@ -70,7 +71,11 @@ logger.add(output_dir / f"{today}_{current_script_name}.log")
 # 2. The brain mask of the reference image
 # 3. The mask of the halves of the reference image (left and right)
 
-target_dir = deriv_dir / "template_asym_n=3"
+# Here we used the previously generated template as a target
+# We have manually aligned the template to the mid-sagittal plane with napari
+# and prepared the masks accordingly.
+
+target_dir = species_dir / "templates" / "template_asym_res-50um_n-3"
 target_image = ants.image_read(
     (target_dir / "template_orig-asr_aligned.nii.gz").as_posix()
 )
@@ -85,12 +90,12 @@ target_halves_mask = ants.image_read(
 # Load a dataframe with image paths to use for the template
 # ---------------------------------------------------------
 
-source_csv_dir = deriv_dir / "use_for_template.csv"
+source_csv_dir = species_dir / "templates" / "use_for_template.csv"
 df = pd.read_csv(source_csv_dir)
 n_subjects = len(df)
 
 # take the hemi column and split it into two boolean columns
-# named use_left and use_right
+# named use_left and use_right (for easier filtering)
 df["use_left"] = df["hemi"].isin(["left", "both"])
 df["use_right"] = df["hemi"].isin(["right", "both"])
 
@@ -101,7 +106,7 @@ df.head(n_subjects)
 # ---------------------------------
 
 # Create a dictionary to store the paths to the use4template directories
-# per subject
+# per subject. These will contain all necessary images for template building.
 use4template_dirs = {}
 
 for idx, row in tqdm(df.iterrows(), total=n_subjects):
@@ -243,8 +248,11 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
 
 
 # %%
-# Use the paths to the use4template directories nad the dataframe to save
-# 3 separate lists of images (save the paths to txt files).
+# Generate lists of file paths for template construction
+# -----------------------------------------------------
+# Use the paths to the use4template directories to generate lists of file paths
+# for the template construction pipeline. Three kinds of template will be
+# generated, and each needs the corresponging brain image and mask files:
 # 1. All asym* files for subjects where hemi=both. These will be used to
 #    generate an asymmetric brain template.
 # 2. All right-sym* files for subjects where use_right is True, and
@@ -253,3 +261,56 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
 # 3. All right-hemi* files for subjects where use_right is True,
 #    and all left-hemi-xflip* files for subjects where use_left is True.
 #    These will be used to generate a symmetric hemisphere template.
+
+filepath_lists = {
+    "asym-brain": [],
+    "asym-mask": [],
+    "sym-brain": [],
+    "sym-mask": [],
+    "hemi-brain": [],
+    "hemi-mask": [],
+}
+
+for _, row in df.iterrows():
+    subject_str = "sub-" + row["subject_id"]
+    use4template_dir = use4template_dirs[subject_str]
+
+    if row["hemi"] == "both":
+        # Add paths for the asymmetric brain template
+        for label in ["brain", "mask"]:
+            filepath_lists[f"asym-{label}"].append(
+                use4template_dir / f"asym-{label}.nii.gz"
+            )
+
+    if row["use_right"]:
+        for label in ["brain", "mask"]:
+            # Add paths for the symmetric brain template
+            filepath_lists[f"sym-{label}"].append(
+                use4template_dir / f"right-sym-{label}.nii.gz"
+            )
+            # Add paths for the hemispheric template
+            filepath_lists[f"hemi-{label}"].append(
+                use4template_dir / f"right-hemi-{label}.nii.gz"
+            )
+    
+    if row["use_left"]:
+        for label in ["brain", "mask"]:
+            # Add paths for the symmetric brain template
+            filepath_lists[f"sym-{label}"].append(
+                use4template_dir / f"left-sym-{label}.nii.gz"
+            )
+            # Add paths for the hemispheric template
+            filepath_lists[f"hemi-{label}"].append(
+                use4template_dir / f"left-hemi-xflip-{label}.nii.gz"
+            )
+
+# %%
+# Save the file paths to text files, each in a separate directory
+
+for key, paths in filepath_lists.items():
+    kind, label = key.split("-")  # e.g. "asym" and "brain"
+    n_images = len(paths)
+    template_name = f"template_{kind}_{res_str}_n-{n_images}"
+    template_dir = species_dir / "templates" / template_name
+    template_dir.mkdir(exist_ok=True)
+    np.savetxt(template_dir / f"{label}_paths.txt", paths, fmt="%s")

@@ -20,11 +20,11 @@ from tqdm import tqdm
 from brainglobe_template_builder.io import get_unique_folder_in_dir
 
 # %%
-# Set up output directory and logging
-# ------------------------------------
+# Set up directories and logging
+# ------------------------------
 
-# Create the output directory
-atlas_dir = Path("/nfs/nhome/live/sirmpilatzen/NIU/atlas-forge")
+# Prepare directory structure
+atlas_dir = Path("/ceph/neuroinformatics/neuroinformatics/atlas-forge")
 species_id = "BlackCap"
 species_common_name = "Black cap"  # as in the source csv table
 species_dir = atlas_dir / species_id
