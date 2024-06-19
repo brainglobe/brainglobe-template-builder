@@ -32,12 +32,15 @@ def get_right_and_left_slices(array: np.ndarray) -> tuple:
 
 
 def generate_arrays_4template(
-    brain: np.ndarray, mask: np.ndarray, pad: int = 0
+    subject: str, brain: np.ndarray, mask: np.ndarray, pad: int = 0
 ) -> dict[str, np.ndarray]:
     """Generate all needed arrays for the template building process.
 
     Parameters
     ----------
+    subject : str
+        Subject ID to use as a prefix for the keys in the output dictionary,
+        e.g. "sub-01".
     brain : np.ndarray
         The aligned brain image to split into hemispheres and symmetrise.
     mask : np.ndarray
@@ -51,7 +54,9 @@ def generate_arrays_4template(
 
     Returns
     -------
-    A dictionary containing the following arrays:
+    A dictionary containing the multiple arrays needed for the template
+    building process. The keys start with the subject ID and end with the
+    following suffixes (e.g. "sub-01_asym-brain"):
     - asym-brain: the input aligned image (asymmetric brain)
     - asym-mask: the input aligned mask (asymmetric mask)
     - right-hemi-brain: the right hemisphere of the image
@@ -77,8 +82,8 @@ def generate_arrays_4template(
 
     # Put the input arrays into the dictionary
     out_dict = {
-        "asym-brain": brain,
-        "asym-mask": mask,
+        f"{subject}_asym-brain": brain,
+        f"{subject}_asym-mask": mask,
     }
 
     right_half, left_half = get_right_and_left_slices(brain)
@@ -92,12 +97,12 @@ def generate_arrays_4template(
         left_sym_arr = np.dstack([left_half_arr_xflip, left_half_arr])
         out_dict.update(
             {
-                f"right-hemi-{label}": right_half_arr,
-                f"right-hemi-xflip-{label}": right_half_arr_xflip,
-                f"left-hemi-{label}": left_half_arr,
-                f"left-hemi-xflip-{label}": left_half_arr_xflip,
-                f"right-sym-{label}": right_sym_arr,
-                f"left-sym-{label}": left_sym_arr,
+                f"{subject}_right-hemi-{label}": right_half_arr,
+                f"{subject}_right-hemi-xflip-{label}": right_half_arr_xflip,
+                f"{subject}_left-hemi-{label}": left_half_arr,
+                f"{subject}_left-hemi-xflip-{label}": left_half_arr_xflip,
+                f"{subject}_right-sym-{label}": right_sym_arr,
+                f"{subject}_left-sym-{label}": left_sym_arr,
             }
         )
 

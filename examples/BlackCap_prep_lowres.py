@@ -112,10 +112,10 @@ use4template_dirs = {}
 for idx, row in tqdm(df.iterrows(), total=n_subjects):
     # Figure out input-output paths
     row = df.iloc[idx]
-    subject_str = "sub-" + row["subject_id"]
+    subject = "sub-" + row["subject_id"]
     channel_str = "channel-" + row["color"]
-    file_prefix = f"{subject_str}_{res_str}_{channel_str}"
-    deriv_subj_dir = deriv_dir / subject_str
+    file_prefix = f"{subject}_{res_str}_{channel_str}"
+    deriv_subj_dir = deriv_dir / subject
     tiff_path = deriv_subj_dir / f"{file_prefix}.tif"
 
     logger.info(f"Starting to process {file_prefix}...")
@@ -234,13 +234,18 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
 
     # Generate arrays for template construction and save as niftis
     use4template_dir = Path(output_prefix.as_posix() + "padded_use4template")
+    # if it exists, delete existing files in it
+    if use4template_dir.exists():
+        logger.warning(f"Removing existing files in {use4template_dir}.")
+        for file in use4template_dir.glob("*"):
+            file.unlink()
     use4template_dir.mkdir(exist_ok=True)
 
     array_dict = generate_arrays_4template(
-        aligned_image.numpy(), aligned_mask.numpy(), pad=2
+        subject, aligned_image.numpy(), aligned_mask.numpy(), pad=2
     )
     save_array_dict_to_nii(array_dict, use4template_dir, vox_sizes)
-    use4template_dirs[subject_str] = use4template_dir
+    use4template_dirs[subject] = use4template_dir
     logger.info(
         f"Saved images for template construction in {use4template_dir}."
     )
@@ -262,7 +267,7 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
 #    and all left-hemi-xflip* files for subjects where use_left is True.
 #    These will be used to generate a symmetric hemisphere template.
 
-filepath_lists = {
+filepath_lists: dict[str, list] = {
     "asym-brain": [],
     "asym-mask": [],
     "sym-brain": [],
@@ -272,36 +277,36 @@ filepath_lists = {
 }
 
 for _, row in df.iterrows():
-    subject_str = "sub-" + row["subject_id"]
-    use4template_dir = use4template_dirs[subject_str]
+    subject = "sub-" + row["subject_id"]
+    use4template_dir = use4template_dirs[subject]
 
     if row["hemi"] == "both":
         # Add paths for the asymmetric brain template
         for label in ["brain", "mask"]:
             filepath_lists[f"asym-{label}"].append(
-                use4template_dir / f"asym-{label}.nii.gz"
+                use4template_dir / f"{subject}_asym-{label}.nii.gz"
             )
 
     if row["use_right"]:
         for label in ["brain", "mask"]:
             # Add paths for the symmetric brain template
             filepath_lists[f"sym-{label}"].append(
-                use4template_dir / f"right-sym-{label}.nii.gz"
+                use4template_dir / f"{subject}_right-sym-{label}.nii.gz"
             )
             # Add paths for the hemispheric template
             filepath_lists[f"hemi-{label}"].append(
-                use4template_dir / f"right-hemi-{label}.nii.gz"
+                use4template_dir / f"{subject}_right-hemi-{label}.nii.gz"
             )
-    
+
     if row["use_left"]:
         for label in ["brain", "mask"]:
             # Add paths for the symmetric brain template
             filepath_lists[f"sym-{label}"].append(
-                use4template_dir / f"left-sym-{label}.nii.gz"
+                use4template_dir / f"{subject}_left-sym-{label}.nii.gz"
             )
             # Add paths for the hemispheric template
             filepath_lists[f"hemi-{label}"].append(
-                use4template_dir / f"left-hemi-xflip-{label}.nii.gz"
+                use4template_dir / f"{subject}_left-hemi-xflip-{label}.nii.gz"
             )
 
 # %%
