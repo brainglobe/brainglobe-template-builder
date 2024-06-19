@@ -88,12 +88,21 @@ target_halves_mask = ants.image_read(
 source_csv_dir = deriv_dir / "use_for_template.csv"
 df = pd.read_csv(source_csv_dir)
 n_subjects = len(df)
-df.head(n_subjects)
 
+# take the hemi column and split it into two boolean columns
+# named use_left and use_right
+df["use_left"] = df["hemi"].isin(["left", "both"])
+df["use_right"] = df["hemi"].isin(["right", "both"])
+
+df.head(n_subjects)
 
 # %%
 # Run the pipeline for each subject
 # ---------------------------------
+
+# Create a dictionary to store the paths to the use4template directories
+# per subject
+use4template_dirs = {}
 
 for idx, row in tqdm(df.iterrows(), total=n_subjects):
     # Figure out input-output paths
@@ -226,7 +235,21 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
         aligned_image.numpy(), aligned_mask.numpy(), pad=2
     )
     save_array_dict_to_nii(array_dict, use4template_dir, vox_sizes)
+    use4template_dirs[subject_str] = use4template_dir
     logger.info(
         f"Saved images for template construction in {use4template_dir}."
     )
     logger.info(f"Finished processing {file_prefix}.")
+
+
+# %%
+# Use the paths to the use4template directories nad the dataframe to save
+# 3 separate lists of images (save the paths to txt files).
+# 1. All asym* files for subjects where hemi=both. These will be used to
+#    generate an asymmetric brain template.
+# 2. All right-sym* files for subjects where use_right is True, and
+#    all left-sym* files for subjects where use_left is True.
+#    These will be used to generate a symmetric brain template.
+# 3. All right-hemi* files for subjects where use_right is True,
+#    and all left-hemi-xflip* files for subjects where use_left is True.
+#    These will be used to generate a symmetric hemisphere template.

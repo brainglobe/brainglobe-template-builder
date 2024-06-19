@@ -27,25 +27,23 @@ from brainglobe_template_builder.io import get_unique_folder_in_dir
 atlas_dir = Path("/nfs/nhome/live/sirmpilatzen/NIU/atlas-forge")
 species_id = "BlackCap"
 species_common_name = "Black cap"  # as in the source csv table
-output_dir = atlas_dir / species_id
-output_dir.mkdir(parents=True, exist_ok=True)
-# Make both "rawdata" and "derivatives" folders
-rawdata_dir = output_dir / "rawdata"
-rawdata_dir.mkdir(exist_ok=True)
-deriv_dir = output_dir / "derivatives"
-deriv_dir.mkdir(exist_ok=True)
+species_dir = atlas_dir / species_id
+species_dir.mkdir(parents=True, exist_ok=True)
+# Make "rawdata", "derivatives", "templates", and "logs" directories
+for folder in ["rawdata", "derivatives", "templates", "logs"]:
+    (species_dir / folder).mkdir(exist_ok=True)
 
 # Set up logging
 today = date.today()
-current_script_name = "BlackCap_source_images"
-logger.add(output_dir / f"{today}_{current_script_name}.log")
-logger.info(f"Will save outputs to {output_dir}.")
+current_script_name = os.path.basename(__file__).replace(".py", "")
+logger.add(species_dir / "logs" / f"{today}_{current_script_name}.log")
+logger.info(f"Will save outputs to {species_dir}.")
 
 # %%
 # Load a dataframe with all SWC brains used for atlases
 # ------------------------------------------------------
 
-source_csv_dir = Path.cwd().parent / "data"
+source_csv_dir = Path.cwd() / "data"  # relative to repo root
 source_csv_path = source_csv_dir / "SWC_brain-list_for-atlases_2024-04-15.csv"
 df = pd.read_csv(source_csv_path)
 
@@ -68,12 +66,13 @@ df["subject_id"] = (
 # Assert that subject IDs are unique
 assert len(df["subject_id"].unique()) == len(df), "Non-unique subject IDs"
 
-df["Data path (raw)"] = df["Data path (raw)"].apply(
+data_path_col = "Data path (raw)"
+df[data_path_col] = df[data_path_col].apply(
     lambda x: x.replace("nfs/ceph", "ceph")
 )
 df["subject_path"] = df.apply(
     lambda x: get_unique_folder_in_dir(
-        Path("/" + x["Data path (raw)"]), x["subject_id"]
+        Path("/" + x[data_path_col]), x["subject_id"]
     ),
     axis=1,
 )
@@ -152,8 +151,9 @@ for sub in df["subject_id"]:
 # %%
 # Save dataframes and images to rawdata
 # -------------------------------------
-# Save the dataframes to the output rawdata directory.
+# Save the dataframes to the species rawdata directory.
 
+rawdata_dir = species_dir / "rawdata"
 subjects_csv = rawdata_dir / f"{today}_subjects.csv"
 df.to_csv(subjects_csv, index=False)
 logger.info(f"Saved subject information to csv: {subjects_csv}")
@@ -163,7 +163,7 @@ images_df.to_csv(images_csv, index=False)
 logger.info(f"Saved image information to csv: {images_csv}")
 
 # %%
-# Save images to the output rawdata directory
+# Save images to the species rawdata directory
 # (doesn't overwrite existing images).
 # High-resolution images (10um) are just symlinked to avoid duplication
 # of large files.
@@ -213,8 +213,11 @@ logger.info(
 # The resolution to use for visual inspection + preprocessing
 lowres = "50um"
 
+template_dir = species_dir / "templates"
+deriv_dir = species_dir / "derivatives"
+
 # Check for the .csv file
-use_for_template_csv = deriv_dir / "use_for_template.csv"
+use_for_template_csv = template_dir / "use_for_template.csv"
 if use_for_template_csv.exists():
     use_for_template = pd.read_csv(use_for_template_csv)
 
