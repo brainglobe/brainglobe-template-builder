@@ -10,6 +10,9 @@ Build unbiased anatomical templates from individual images
 
 - [Overview](#overview)
 - [Installation](#installation)
+  - [Pre-requisites](#pre-requisites)
+  - [Create a `conda` environment](#create-a-conda-environment)
+  - [Install `brainglobe-template-builder` with `pip`](#install-brainglobe-template-builder-with-pip)
 - [Background](#background)
   - [On templates and atlases](#on-templates-and-atlases)
   - [Single-subject vs population templates](#single-subject-vs-population-templates)
@@ -32,32 +35,49 @@ Build unbiased anatomical templates from individual images
 
 ## Installation
 
-> **Warning**
-> - [ANTs](http://stnava.github.io/ANTs/), which [we depend on](#template-construction-with-ants), is a large package. The installation may take a while.
-> - ANTs is only available for Linux and macOS. If you are on Windows, you can use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
+### Pre-requisites
 
+- A Unix-like operating system (Linux or MacOS)
+- A `bash` shell (if you are using MacOS, where `zsh` is the default, you may need to install `bash` via Homebrew).
+- A working installation of [Advanced Normalisation Tools (ANTs)](http://stnava.github.io/ANTs/). We recommend following [these instructions](https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS) to compile ANTs from source and to follow all recommended post-installation steps.
+- The scripts from the [optimised ANTs template construction pipeline](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master), which should be available in your `PATH`. According to the instructions in that repository's README, you should do the following:
+
+  ```sh
+  git clone --recursive https://github.com/CoBrALab/  optimized_antsMultivariateTemplateConstruction.git
+  cd optimized_antsMultivariateTemplateConstruction
+  echo "export PATH=$(pwd):$PATH" >> $HOME/.bashrc
+  source $HOME/.bashrc  # or restart your terminal
+  ```
+
+  If you are on MacOS, you may need to replace `$HOME/.bashrc` with `$HOME/.bash_profile`.
+
+
+
+### Create a `conda` environment
 We recommend installing `brainglobe-template-builder` within a [conda](https://docs.conda.io/en/latest/) or [mamba](https://mamba.readthedocs.io/en/latest/index.html) environment. Instructions assume `conda` usage, but `mamba`/`micromamba` are interchangeable.
 
-Use the provided `environment.yaml` file to create a new environment.
+
+```sh
+conda create -n template-builder -c conda-forge python=3.11 parallel
+conda activate template-builder
+```
+
+We have called the environment "template-builder", but you can choose any name you like.
+
+### Install `brainglobe-template-builder` with `pip`
+
+```sh
+To install the latest development version of `brainglobe-template-builder`, first clone the repository:
 
 ```sh
 git clone https://github.com/brainglobe/brainglobe-template-builder
 cd brainglobe-template-builder
-conda env create -f environment.yaml -n template-builder
-conda activate template-builder
 ```
-
-We have called the environment `template-builder`, but you can choose any name you like.
-
-To install the latest development version of `brainglobe-template-builder`,
+  
+Then, install the package in editable mode with the following command:
 
 ```sh
 pip install -e .[dev]
-```
-For zsh users (default shell on macOS):
-
-```sh
-pip install -e '.[dev]'
 ```
 
 ## Background
