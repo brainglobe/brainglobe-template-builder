@@ -31,7 +31,7 @@ TEMP_NAMES=($TEMP_NAME1 $TEMP_NAME2 $TEMP_NAME3)
 CURRENT_TEMP_NAME=${TEMP_NAMES[$SLURM_ARRAY_TASK_ID]}
 
 # Path to the bash script that builds the template
-BUILD_SCRIPT="${ATLAS_DIR}/BlackCap/BlackCap_build_template.sh"
+BUILD_SCRIPT="${ATLAS_DIR}/${SPECIES}/scripts/BlackCap_build_template.sh"
 
 # Run the script to build the template
 bash $BUILD_SCRIPT --atlas_dir $ATLAS_DIR --species $SPECIES --template_name $CURRENT_TEMP_NAME
