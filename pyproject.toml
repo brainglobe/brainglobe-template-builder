@@ -26,7 +26,6 @@ dependencies = [
     "loguru",
     "simpleitk",
     "vtk",
-    "qbatch",
     "antspyx",
 ]
 

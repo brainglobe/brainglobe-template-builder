@@ -58,7 +58,7 @@ We recommend installing `brainglobe-template-builder` within a [conda](https://d
 
 
 ```sh
-conda create -n template-builder -c conda-forge python=3.11 parallel
+conda create -n template-builder -c conda-forge python=3.11 parallel qbatch
 conda activate template-builder
 ```
 
@@ -73,7 +73,7 @@ To install the latest development version of `brainglobe-template-builder`, firs
 git clone https://github.com/brainglobe/brainglobe-template-builder
 cd brainglobe-template-builder
 ```
-  
+
 Then, install the package in editable mode with the following command:
 
 ```sh
