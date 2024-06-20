@@ -15,13 +15,13 @@ average_type="median"
 
 # Function to display help message
 usage() {
-  echo "Usage: $0 --atlas_dir <path> --species <string> --template_name <string> --average-type <string>"
+  echo "Usage: $0 --atlas_dir <path> --species <string> --template_name <string> --average_type <string>"
   echo ""
   echo "Options:"
   echo "  --atlas_dir <path>         Path to the atlas-forge directory (default: /ceph/neuroinformatics/neuroinformatics/atlas-forge)"
   echo "  --species <string>         Species name (e.g., BlackCap)"
   echo "  --template_name <string>   The name of the appropriate subfolder within templates (e.g., template_asym_res-50um_n-8)"
-  echo "  --average-type <string>    The type of average to use (default: median)."
+  echo "  --average_type <string>    The type of average to use (default: median)."
   exit 1
 }
 

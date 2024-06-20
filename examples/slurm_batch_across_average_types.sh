@@ -43,4 +43,4 @@ cp ${ATLAS_DIR}/${SPECIES}/templates/${TEMP_NAME_ORIG}/mask_paths.txt ${ATLAS_DI
 BUILD_SCRIPT="${ATLAS_DIR}/${SPECIES}/scripts/BlackCap_build_template.sh"
 
 # Run the script to build the template
-bash $BUILD_SCRIPT --atlas_dir $ATLAS_DIR --species $SPECIES --template_name $TEMP_NAME --average-type $AVE_TYPE
+bash $BUILD_SCRIPT --atlas_dir $ATLAS_DIR --species $SPECIES --template_name $TEMP_NAME --average_type $AVE_TYPE
