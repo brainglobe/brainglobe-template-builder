@@ -73,6 +73,13 @@ species_dir="${atlas_dir}/${species}"
 templates_dir="${species_dir}/templates"
 working_dir="${templates_dir}/${template_name}"
 
+# If average type is trimmed_mean or efficient_trimean, we need python
+average_prog="ANTs"
+if [ "${average_type}" == "trimmed_mean" ] || [ "${average_type}" == "efficient_trimean" ]; then
+  average_prog="python"
+fi
+
+
 # Verify that the working directory exists before changing directory
 if [ ! -d "${working_dir}" ]; then
   echo "The working directory does not exist: ${working_dir}"
@@ -90,6 +97,7 @@ bash modelbuild.sh --output-dir "${working_dir}" \
     --stages rigid,similarity,affine,nlin \
     --masks "${working_dir}/mask_paths.txt" \
     --average-type "${average_type}" \
+    --average-prog "${average_prog}" \
     --reuse-affines \
     --dry-run \
     "${working_dir}/brain_paths.txt"
