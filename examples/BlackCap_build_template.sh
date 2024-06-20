@@ -11,15 +11,17 @@ start_time=$(date +%s)
 atlas_dir="/ceph/neuroinformatics/neuroinformatics/atlas-forge"
 species=""
 template_name=""
+average_type="median"
 
 # Function to display help message
 usage() {
-  echo "Usage: $0 --atlas_dir <path> --species <string> --template_name <string>"
+  echo "Usage: $0 --atlas_dir <path> --species <string> --template_name <string> --average-type <string>"
   echo ""
   echo "Options:"
   echo "  --atlas_dir <path>         Path to the atlas-forge directory (default: /ceph/neuroinformatics/neuroinformatics/atlas-forge)"
   echo "  --species <string>         Species name (e.g., BlackCap)"
   echo "  --template_name <string>   The name of the appropriate subfolder within templates (e.g., template_asym_res-50um_n-8)"
+  echo "  --average-type <string>    The type of average to use (default: median)."
   exit 1
 }
 
@@ -40,6 +42,14 @@ while [[ $# -gt 0 ]]; do
       template_name="$2"
       shift
       shift
+      ;;
+    ---average_type)
+      average_type="$2"
+      shift
+      shift
+      ;;
+    --help)
+      usage
       ;;
     *)
       usage
@@ -76,6 +86,7 @@ bash modelbuild.sh --output-dir "${working_dir}" \
     --starting-target first \
     --stages rigid,similarity,affine,nlin \
     --masks "${working_dir}"/mask_paths.txt \
+    --average-type "${average_type}" \
     --reuse-affines \
     --dry-run \
     "${working_dir}"/brain_paths.txt
