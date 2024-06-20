@@ -1,0 +1,11 @@
+name: cobralab
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - parallel
+  - qbatch
+  - simpleitk
+  - vtk
+  - vtk-base
+  - vtk-io-ffmpeg
