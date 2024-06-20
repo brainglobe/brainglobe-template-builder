@@ -4,7 +4,7 @@
 #SBATCH -p cpu # partition
 #SBATCH -N 1   # number of nodes
 #SBATCH --mem 128G # memory pool for all cores
-#SBATCH -n 32 # number of cores
+#SBATCH -n 20 # number of cores
 #SBATCH -t 5-00:00 # time (D-HH:MM)
 #SBATCH -o slurm.%x.%N.%j.out # write STDOUT
 #SBATCH -e slurm.%x.%N.%j.err # write STDERR
