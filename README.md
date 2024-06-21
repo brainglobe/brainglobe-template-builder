@@ -58,7 +58,7 @@ We recommend installing `brainglobe-template-builder` within a [conda](https://d
 
 
 ```sh
-conda create -n template-builder -c conda-forge python=3.11 parallel qbatch
+conda create -n template-builder -c conda-forge python=3.11 pip parallel qbatch simpleitk vtk
 conda activate template-builder
 ```
 
