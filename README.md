@@ -45,7 +45,7 @@ Build unbiased anatomical templates from individual images
   ```sh
   git clone --recursive https://github.com/CoBrALab/  optimized_antsMultivariateTemplateConstruction.git
   cd optimized_antsMultivariateTemplateConstruction
-  echo "export PATH=$(pwd):$PATH" >> $HOME/.bashrc
+  echo "export PATH=$(pwd):\$PATH" >> $HOME/.bashrc
   source $HOME/.bashrc  # or restart your terminal
   ```
 
@@ -58,15 +58,18 @@ We recommend installing `brainglobe-template-builder` within a [conda](https://d
 
 
 ```sh
-conda create -n template-builder -c conda-forge python=3.11 pip parallel qbatch simpleitk vtk
+conda env create -n template-builder -f environment.yaml
 conda activate template-builder
 ```
 
 We have called the environment "template-builder", but you can choose any name you like.
 
+This environment contains all dependencies for running the optimised ANTs template construction pipeline, but if you want to use the pre- and
+post-processing funcitonalities of `brainglobe-template-builder`, you will need to also pip install the package in editable mode (see below).
+
 ### Install `brainglobe-template-builder` with `pip`
 
-```sh
+
 To install the latest development version of `brainglobe-template-builder`, first clone the repository:
 
 ```sh

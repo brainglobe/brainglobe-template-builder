@@ -15,7 +15,7 @@
 # Load the required modules
 module load miniconda
 module load ants
-# Activate the conda environment (becaue we need parallel and qbatch)
+# Activate the conda environment
 conda activate template-builder
 
 # Define the atlas-forge directory and species name

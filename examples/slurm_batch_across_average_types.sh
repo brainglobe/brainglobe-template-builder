@@ -16,8 +16,8 @@
 module load miniconda
 module load ants
 
-# Activate the conda environmen
-conda activate cobralab
+# Activate the conda environment
+conda activate template-builder
 
 # Define the atlas-forge directory and species name
 ATLAS_DIR="/ceph/neuroinformatics/neuroinformatics/atlas-forge"

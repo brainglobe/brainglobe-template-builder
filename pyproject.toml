@@ -24,8 +24,6 @@ dependencies = [
     "brainglobe-utils>=0.5",
     "brainglobe-atlasapi>=2.0.7",
     "loguru",
-    "simpleitk",
-    "vtk",
     "antspyx",
 ]
 
