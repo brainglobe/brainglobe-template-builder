@@ -79,7 +79,6 @@ if [ "${average_type}" == "trimmed_mean" ] || [ "${average_type}" == "efficient_
   average_prog="python"
 fi
 
-
 # Verify that the working directory exists before changing directory
 if [ ! -d "${working_dir}" ]; then
   echo "The working directory does not exist: ${working_dir}"
