@@ -43,7 +43,7 @@ Build unbiased anatomical templates from individual images
 - The scripts from the [optimised ANTs template construction pipeline](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master), which should be available in your `PATH`. According to the instructions in that repository's README, you should do the following:
 
   ```sh
-  git clone --recursive https://github.com/CoBrALab/  optimized_antsMultivariateTemplateConstruction.git
+  git clone --recursive https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction.git
   cd optimized_antsMultivariateTemplateConstruction
   echo "export PATH=$(pwd):\$PATH" >> $HOME/.bashrc
   source $HOME/.bashrc  # or restart your terminal
