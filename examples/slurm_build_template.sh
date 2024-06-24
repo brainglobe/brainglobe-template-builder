@@ -17,13 +17,14 @@ module load ants
 # Activate the conda environment
 conda activate template-builder
 
-# Define the atlas-forge directory, species name and template name
+# Define atlas-forge directory, species and template names, and average type
 ATLAS_DIR="/ceph/neuroinformatics/neuroinformatics/atlas-forge"
 SPECIES="BlackCap"
 TEMP_NAME="template_sym_res-50um_n-18"
+AVE_TYPE="mean"
 
 # Path to the bash script that builds the template
 BUILD_SCRIPT="${ATLAS_DIR}/${SPECIES}/scripts/BlackCap_build_template.sh"
 
 # Run the script to build the template
-bash $BUILD_SCRIPT --atlas-dir $ATLAS_DIR --species $SPECIES --template-name $TEMP_NAME
+bash $BUILD_SCRIPT --atlas-dir $ATLAS_DIR --species $SPECIES --template-name $TEMP_NAME --average-type $AVE_TYPE

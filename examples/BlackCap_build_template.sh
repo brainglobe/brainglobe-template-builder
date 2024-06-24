@@ -11,7 +11,7 @@ start_time=$(date +%s)
 atlas_dir="/ceph/neuroinformatics/neuroinformatics/atlas-forge"
 species=""
 template_name=""
-average_type="median"
+average_type="mean"
 
 # Function to display help message
 usage() {
@@ -21,7 +21,7 @@ usage() {
   echo "  --atlas-dir <path>         Path to the atlas-forge directory (default: /ceph/neuroinformatics/neuroinformatics/atlas-forge)"
   echo "  --species <string>         Species name (e.g., BlackCap) [REQUIRED]"
   echo "  --template-name <string>   The name of the appropriate subfolder within templates (e.g., template_asym_res-50um_n-8) [REQUIRED]"
-  echo "  --average-type <string>    The type of average to use (default: median)."
+  echo "  --average-type <string>    The type of average to use (default: mean)."
   exit 1
 }
 
