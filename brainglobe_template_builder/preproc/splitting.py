@@ -61,10 +61,6 @@ def generate_arrays_4template(
     - asym-mask: the input aligned mask (asymmetric mask)
     - right-hemi-brain: the right hemisphere of the image
     - right-hemi-mask: the right hemisphere of the mask
-    - right-hemi-xflip-brain: the reflection of the right hemisphere
-    - right-hemi-xflip-mask: the reflection of the right hemisphere mask
-    - left-hemi-brain: the left hemisphere of the image
-    - left-hemi-mask: the left hemisphere of the mask
     - left-hemi-xflip-brain: the reflection of the left hemisphere
     - left-hemi-xflip-mask: the reflection of the left hemisphere mask
     - right-sym-brain: the right hemisphere merged with its reflection
@@ -98,8 +94,6 @@ def generate_arrays_4template(
         out_dict.update(
             {
                 f"{subject}_right-hemi-{label}": right_half_arr,
-                f"{subject}_right-hemi-xflip-{label}": right_half_arr_xflip,
-                f"{subject}_left-hemi-{label}": left_half_arr,
                 f"{subject}_left-hemi-xflip-{label}": left_half_arr_xflip,
                 f"{subject}_right-sym-{label}": right_sym_arr,
                 f"{subject}_left-sym-{label}": left_sym_arr,
