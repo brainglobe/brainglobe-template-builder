@@ -46,6 +46,7 @@ Build unbiased anatomical templates from individual images
   git clone --recursive https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction.git
   cd optimized_antsMultivariateTemplateConstruction
   echo "export PATH=$(pwd):\$PATH" >> $HOME/.bashrc
+  echo "export PATH=$(pwd)/minc-toolkit-extras:\$PATH" >> $HOME/.bashrc
   source $HOME/.bashrc  # or restart your terminal
   ```
 
