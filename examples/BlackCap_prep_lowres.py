@@ -140,9 +140,7 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
 
     # Bias field correction (to homogenise intensities)
     image_ants = ants.image_read(nii_path.as_posix())
-    image_n4 = ants.n4_bias_field_correction(
-        image_ants, rescale_intensities=True
-    )
+    image_n4 = ants.n4_bias_field_correction(image_ants)
     image_n4_path = file_path_with_suffix(nii_path, "_N4")
     ants.image_write(image_n4, image_n4_path.as_posix())
     logger.debug(
