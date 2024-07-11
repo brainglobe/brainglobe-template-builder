@@ -83,6 +83,9 @@ ANTs includes a template construction piepline - implemented in the [antsMultiva
 
 An [optimsed implementation of the above pipeline](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master), developed by the [CoBra lab](https://www.cobralab.ca/), lies at the core of the `brainglobe-template-builder`'s functionality.
 
+## Seeking help or contributing
+We are always happy to help users of our tools, and welcome any contributions. If you would like to get in contact with us for any reason, please see the [contact page of our website](https://brainglobe.info/contact.html).
+
 ## License
 ⚖️ [BSD 3-Clause](https://opensource.org/license/bsd-3-clause/)
 
