@@ -8,3 +8,4 @@ dependencies:
   - scipy
   - simpleitk
   - vtk
+  - numpy<2.0
