@@ -34,11 +34,15 @@ from brainglobe_template_builder.preproc.masking import create_mask
 atlas_dir = Path("/media/ceph-niu/neuroinformatics/atlas-forge")
 species_id = "BlackCap"
 species_dir = atlas_dir / species_id
+res_um = 25  # resolution in microns
 
 # Define the path to the final template file to use as the atlas reference
-template_name = "template_sym_res-50um_n-18"
-vox_sizes = [0.05, 0.05, 0.05]
-res_str = "res-50um"
+res_str = f"res-{res_um}um"
+template_name = f"template_sym_{res_str}_n-18"
+# Voxel size in mm (as in nifti)
+res_mm = res_um * 1e-3
+vox_sizes = [res_mm, res_mm, res_mm]
+
 template_build_dir = species_dir / "templates" / template_name
 template_final_dir = template_build_dir / "final" / "average"
 template_file = template_final_dir / "template_sharpen_shapeupdate.nii.gz"
