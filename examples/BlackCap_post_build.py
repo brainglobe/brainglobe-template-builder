@@ -31,7 +31,7 @@ from brainglobe_template_builder.preproc.masking import create_mask
 # -----
 
 # Species-specific atlas-forge directory
-atlas_dir = Path("/media/ceph-niu/neuroinformatics/atlas-forge")
+atlas_dir = Path("/ceph/neuroinformatics/neuroinformatics/atlas-forge")
 species_id = "BlackCap"
 species_dir = atlas_dir / species_id
 res_um = 25  # resolution in microns

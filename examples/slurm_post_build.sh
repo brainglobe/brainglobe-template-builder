@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH -J postabuild # job name
+#SBATCH -J postbuild # job name
 #SBATCH -p cpu # partition
 #SBATCH -N 1   # number of nodes
 #SBATCH --mem 64G # memory pool for all cores
