@@ -27,7 +27,7 @@ Build unbiased anatomical templates from individual images
 `brainglobe-template-builder` aims to:
 - Offer an intuitive Python interface to the [optimised ANTs template construction pipeline](#template-construction-with-ants).
 - Support 3D volumetric microscopy images, such as STPT and LSM.
-- Generate templates compatible with the [BrainGlobe ecosystem](https://brainglobe.info/), especially the [BrainGlobe Atlas API](https://brainglobe.info/documentation/bg-atlasapi/index.html).
+- Generate templates compatible with the [BrainGlobe ecosystem](https://brainglobe.info/), especially the [BrainGlobe Atlas API](https://brainglobe.info/documentation/brainglobe-atlasapi/index.html).
 
 > **Warning**
 > - Early development phase. Stay tuned
@@ -106,6 +106,9 @@ Templates can be derived in two primary ways. A *single-subject* template is bas
 ANTs includes a template construction piepline - implemented in the [antsMultivariateTemplateConstruction2.sh](https://github.com/ANTsX/ANTs/blob/master/Scripts/antsMultivariateTemplateConstruction2.sh) script - that iteratively aligns and averages multiple images to produce an unbiased population template (see [this issue](https://github.com/ANTsX/ANTs/issues/520) for details).
 
 An [optimsed implementation of the above pipeline](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master), developed by the [CoBra lab](https://www.cobralab.ca/), lies at the core of the `brainglobe-template-builder`'s functionality.
+
+## Seeking help or contributing
+We are always happy to help users of our tools, and welcome any contributions. If you would like to get in contact with us for any reason, please see the [contact page of our website](https://brainglobe.info/contact.html).
 
 ## License
 ⚖️ [BSD 3-Clause](https://opensource.org/license/bsd-3-clause/)

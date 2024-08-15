@@ -3,7 +3,7 @@ name = "brainglobe-template-builder"
 authors = [{ name = "Niko Sirmpilatze", email = "niko.sirbiladze@gmail.com" }]
 description = "Build unbiased anatomical templates from individual images"
 readme = "README.md"
-requires-python = ">=3.9.0"
+requires-python = ">=3.10.0"
 dynamic = ["version"]
 
 license = { text = "BSD-3-Clause" }
@@ -12,9 +12,9 @@ classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: BSD License",
 ]
@@ -65,7 +65,7 @@ exclude = ["tests", "docs*"]
 addopts = "--cov=brainglobe_template_builder"
 
 [tool.black]
-target-version = ['py39', 'py310', 'py311']
+target-version = ['py310', 'py311', 'py312']
 skip-string-normalization = false
 line-length = 79
 
@@ -90,23 +90,17 @@ exclude = ["__init__.py", "build", ".eggs", "scripts"]
 select = ["I", "E", "F"]
 fix = true
 
-[tool.cibuildwheel]
-build = "cp39-* cp310-* cp311-*"
-
-[tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
-
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{39,310,311}
+envlist = py{310,311,312}
 isolated_build = True
 
 [gh-actions]
 python =
-    3.9: py39
     3.10: py310
     3.11: py311
+    3.12: py312
 
 [testenv]
 extras =
