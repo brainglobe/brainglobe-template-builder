@@ -77,7 +77,7 @@ venv/
 .python-version
 
 # OS
-.DS_Store
+**/.DS_Store
 
 # written by setuptools_scm
 **/_version.py

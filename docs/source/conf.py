@@ -13,7 +13,7 @@ import setuptools_scm
 
 # Used when building API docs, put the dependencies
 # of any class you are documenting here
-autodoc_mock_imports = []
+autodoc_mock_imports: list[str] = []
 
 # Add the module path to sys.path here.
 # If the directory is relative to the documentation root,
@@ -97,7 +97,7 @@ html_theme_options = {
             # Label for this link
             "name": "GitHub",
             # URL where the link will redirect
-            "url": "https://github.com/brainglobe/brainglobe-template-builder",  # required
+            "url": "https://github.com/brainglobe/brainglobe-template-builder",
             # Icon class (if "type": "fontawesome"),
             # or path to local image (if "type": "local")
             "icon": "fa-brands fa-github",

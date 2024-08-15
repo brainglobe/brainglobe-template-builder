@@ -1,11 +1,11 @@
 channels:
-  - aramislab
   - conda-forge
-  - defaults
 dependencies:
-  - python=3.10
-  - conda-forge::parallel
-  - conda-forge::napari
-  - conda-forge::pyqt
-  - aramislab::ants
+  - python=3.11
   - pip
+  - parallel
+  - qbatch
+  - scipy
+  - simpleitk
+  - vtk
+  - numpy<2.0

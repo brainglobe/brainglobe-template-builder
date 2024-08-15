@@ -1,0 +1,19 @@
+name: brainglobe-template-builder
+display_name: brainglobe-template-builder
+contributions:
+  commands:
+    - id: brainglobe-template-builder.get_reader
+      python_name: brainglobe_template_builder.napari._reader:napari_get_reader
+      title: Open data with brainglobe-template-builder
+    - id: brainglobe-template-builder.make_preproc_widget
+      python_name: brainglobe_template_builder.napari._widget:PreprocWidgets
+      title: Preprocess
+  readers:
+    - command: brainglobe-template-builder.get_reader
+      accepts_directories: false
+      filename_patterns:
+      - '*.tif'
+      - '*.tiff'
+  widgets:
+    - command: brainglobe-template-builder.make_preproc_widget
+      display_name: Preprocess
