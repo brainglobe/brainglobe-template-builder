@@ -5,6 +5,7 @@ It implements the Reader specification, but your plugin may choose to
 implement multiple readers or even other plugin contributions. see:
 https://napari.org/stable/plugins/guides.html?#readers
 """
+
 from pathlib import Path
 
 from brainglobe_utils.IO.image.load import load_any
