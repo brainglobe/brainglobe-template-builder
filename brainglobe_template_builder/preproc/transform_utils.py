@@ -67,8 +67,7 @@ def apply_transform(
 
     transformed = affine_transform(
         data,
-        np.linalg.inv(transform[:3, :3]),
-        offset=-transform[:3, 3],
+        np.linalg.inv(transform),
     )
     # Preserve original data range and type
     transformed = np.clip(transformed, data.min(), data.max())
