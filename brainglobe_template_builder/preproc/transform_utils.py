@@ -53,7 +53,7 @@ def apply_transform(
 
     Notes
     -----
-    This function inverts the affine and flips the offset when passing the
+    This function inverts the affine and when passing the
     data to `scipy.ndimage.affine_transform`. This is because the
     transforms are given in the 'forward' direction, transforming input
     to output, whereas `scipy.ndimage.affine_transform` does 'backward'
