@@ -38,7 +38,6 @@ class MidplaneEstimator:
 
         self._validate_inputs()
         self.symmetry_axis_idx = NAPARI_AXIS_ORDER.index(symmetry_axis)
-        print("Axis index:", self.symmetry_axis_idx)
 
     def _validate_inputs(self):
         """Validate the inputs to the aligner."""
@@ -57,9 +56,7 @@ class MidplaneEstimator:
         dimensions of the mask's bounding box (in pixels)."""
         props = measure.regionprops(measure.label(self.mask))[0]
         self.centroid = np.array(props.centroid)
-        bbox = np.array(props.bbox).reshape(2, 3).T
-        self.mask_dims = bbox[:, 1] - bbox[:, 0]
-        print("Mask dims:", self.mask_dims)
+        self.bbox = np.array(props.bbox).reshape(2, 3).T
 
     def get_points(self):
         """Estimate 9 points along the midplane of the mask.
@@ -73,11 +70,16 @@ class MidplaneEstimator:
         self._get_mask_properties()
         # Find middle of the symmetry axis
         mid_plane = self.centroid[self.symmetry_axis_idx]
-        # Find slices at 1/4, 2/4, and 3/4 of the two other dimensions
+        # Find slices at 1/4, 2/4, and 3/4 of the mask extents along the
+        # other two (non-symmetry) axes
         a, b = [i for i in range(3) if i != self.symmetry_axis_idx]
-        print("Other axes:", a, b)
-        other_planes_a = [self.mask_dims[a] / 4 * i for i in [1, 2, 3]]
-        other_planes_b = [self.mask_dims[b] / 4 * i for i in [1, 2, 3]]
+        mask_extents = self.bbox[:, 1] - self.bbox[:, 0]  # (3,) per axis
+        other_planes_a = [
+            self.bbox[a, 0] + mask_extents[a] / 4 * i for i in [1, 2, 3]
+        ]
+        other_planes_b = [
+            self.bbox[b, 0] + mask_extents[b] / 4 * i for i in [1, 2, 3]
+        ]
         # Find points at the intersection the symmetry axis midplane
         # with quarter-planes of the other two axes (produces 9 points)
         points = list(product(other_planes_a, other_planes_b, [mid_plane]))
