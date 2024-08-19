@@ -156,7 +156,7 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
 
     # Save the reoriented image as nifti
     nii_path = deriv_subj_dir / f"{file_prefix}_orig-asr.nii.gz"
-    save_nii(image_asr, highres_vox_sizes, nii_path, kind="image")
+    save_nii(image_asr, highres_vox_sizes, nii_path)
     logger.debug(f"Saved reoriented image as {nii_path.name}.")
 
     # Bias field correction (to homogenise intensities)

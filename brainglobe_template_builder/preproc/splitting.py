@@ -120,6 +120,8 @@ def save_array_dict_to_nii(
         A dictionary containing numpy arrays to save. The keys should be the
         filenames (without extension) and the values should be the arrays.
         If the arrays are masks, the keys should contain the string "mask".
+        Masks will be saved as uint8, while other arrays will be saved as
+        float32.
     save_dir : Path
         Directory to save the files to.
     vox_sizes : tuple
@@ -131,6 +133,7 @@ def save_array_dict_to_nii(
     for key, data in array_dict.items():
         file_path = save_dir / f"{key}.nii.gz"
         if "mask" in key:
-            save_nii(data, vox_sizes, file_path, kind="label")
+            data = data.astype("uint8")
         else:
-            save_nii(data, vox_sizes, file_path, kind="image")
+            data = data.astype("float32")
+        save_nii(data, vox_sizes, file_path)

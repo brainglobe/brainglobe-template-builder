@@ -92,7 +92,7 @@ logger.debug(f"Template zero-padded to shape: {template_padded.shape}.")
 # Save the padded template to the output directory
 # Henceforth we will refer to it as the atlas reference image.
 atlas_reference_file = output_dir / f"reference_{res_str}_image.nii.gz"
-save_nii(template_padded, vox_sizes, atlas_reference_file, kind="image")
+save_nii(template_padded, vox_sizes, atlas_reference_file)
 logger.debug(f"Saved atlas reference image as {atlas_reference_file.name}.")
 
 # Plot the atlas reference image to check
