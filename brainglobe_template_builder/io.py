@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Literal
 
 import nibabel as nib
 import numpy as np
@@ -75,11 +74,10 @@ def save_3d_points_to_csv(points: np.ndarray, file_path: Path):
     points_df.to_csv(file_path, index=False)
 
 
-def save_nii(
+def save_as_asr_nii(
     stack: np.ndarray,
     vox_sizes: list,
     dest_path: Path,
-    kind: Literal["image", "label"] = "image",
 ):
     """
     Save 3D image stack to dest_path as a nifti image.
@@ -96,13 +94,7 @@ def save_nii(
         list of voxel dimensions in mm. The order is 'x', 'y', 'z'
     dest_path : pathlib.Path
         path to save the nifti image
-    kind : Literal["image", "label"]
-        Whether the stack is an image or a label. If label, the dtype
-        is converted to uint8.
     """
-    if kind == "label":
-        stack = stack.astype(np.uint8)
-
     affine = _get_transf_matrix_from_res(vox_sizes)
     nii_img = nib.Nifti1Image(stack, affine, dtype=stack.dtype)
     # Set qform and sform to match axes orientation, assuming ASR
@@ -188,7 +180,7 @@ def tiff_to_nifti(tiff_path: Path, nifti_path: Path, vox_sizes: list):
         list of voxel dimensions in mm. The order is 'x', 'y', 'z'
     """
     stack = load_any(tiff_path.as_posix())
-    save_nii(stack, vox_sizes, nifti_path)
+    save_as_asr_nii(stack, vox_sizes, nifti_path)
 
 
 def nifti_to_tiff(nifti_path: Path, tiff_path: Path):

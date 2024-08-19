@@ -30,7 +30,7 @@ from tqdm import tqdm
 from brainglobe_template_builder.io import (
     file_path_with_suffix,
     load_tiff,
-    save_nii,
+    save_as_asr_nii,
 )
 from brainglobe_template_builder.preproc.splitting import (
     generate_arrays_4template,
@@ -156,7 +156,7 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
 
     # Save the reoriented image as nifti
     nii_path = deriv_subj_dir / f"{file_prefix}_orig-asr.nii.gz"
-    save_nii(image_asr, highres_vox_sizes, nii_path, kind="image")
+    save_as_asr_nii(image_asr, highres_vox_sizes, nii_path)
     logger.debug(f"Saved reoriented image as {nii_path.name}.")
 
     # Bias field correction (to homogenise intensities)
