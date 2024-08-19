@@ -74,7 +74,7 @@ def save_3d_points_to_csv(points: np.ndarray, file_path: Path):
     points_df.to_csv(file_path, index=False)
 
 
-def save_nii(
+def save_as_asr_nii(
     stack: np.ndarray,
     vox_sizes: list,
     dest_path: Path,
@@ -180,7 +180,7 @@ def tiff_to_nifti(tiff_path: Path, nifti_path: Path, vox_sizes: list):
         list of voxel dimensions in mm. The order is 'x', 'y', 'z'
     """
     stack = load_any(tiff_path.as_posix())
-    save_nii(stack, vox_sizes, nifti_path)
+    save_as_asr_nii(stack, vox_sizes, nifti_path)
 
 
 def nifti_to_tiff(nifti_path: Path, tiff_path: Path):

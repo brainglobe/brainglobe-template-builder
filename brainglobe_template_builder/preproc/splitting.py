@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from brainglobe_template_builder.io import save_nii
+from brainglobe_template_builder.io import save_as_asr_nii
 
 
 def get_right_and_left_slices(array: np.ndarray) -> tuple:
@@ -136,4 +136,4 @@ def save_array_dict_to_nii(
             data = data.astype("uint8")
         else:
             data = data.astype("float32")
-        save_nii(data, vox_sizes, file_path)
+        save_as_asr_nii(data, vox_sizes, file_path)

@@ -13,7 +13,10 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from brainglobe_template_builder.io import save_3d_points_to_csv, save_nii
+from brainglobe_template_builder.io import (
+    save_3d_points_to_csv,
+    save_as_asr_nii,
+)
 
 
 class SaveFiles(QWidget):
@@ -114,7 +117,7 @@ class SaveFiles(QWidget):
                 # native napari save to tif
                 layer.save(tif_path)
                 # save to nii
-                save_nii(
+                save_as_asr_nii(
                     layer.data,
                     vox_sizes=vox_sizes,
                     dest_path=nii_path,
