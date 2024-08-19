@@ -219,11 +219,12 @@ class MidplaneAligner:
         np.ndarray
             An array of the same shape as the input image, with each half
             labelled with a different integer value (2 and 3).
+            The output data type is uint8.
         """
         axi = self.symmetry_axis_idx
         axis_len = image.shape[axi]
         half_len = axis_len // 2
-        labelled_halves = np.zeros_like(image, dtype=int)
+        labelled_halves = np.zeros_like(image, dtype=np.uint8)
 
         # Create slicing objects for each half
         slicer_half1 = [slice(None)] * image.ndim
