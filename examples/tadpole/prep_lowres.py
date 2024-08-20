@@ -33,6 +33,7 @@ from brainglobe_template_builder.io import (
     load_tiff,
     save_as_asr_nii,
 )
+from brainglobe_template_builder.preproc.cropping import crop_to_mask
 from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.splitting import (
     generate_arrays_4template,
@@ -95,6 +96,33 @@ target_halves_mask = ants.image_read(
     (target_dir / f"{target_prefix}_label-halves_aligned.nii.gz").as_posix()
 )
 
+# crop to mask, with 10 pixel padding
+target_image_numpy, target_mask_numpy = crop_to_mask(
+    target_image.numpy(), target_mask.numpy(), padding=10
+)
+target_image = ants.from_numpy(
+    target_image_numpy,
+    origin=target_image.origin,
+    spacing=target_image.spacing,
+    direction=target_image.direction,
+    has_components=False,
+    is_rgb=False,
+)
+
+target_mask = target_image.new_image_like(target_mask_numpy)
+target_halves = np.ones_like(target_image.numpy())
+target_halves[:, :, : target_halves.shape[2] // 2] = 2
+target_halves_mask = target_image.new_image_like(target_halves)
+
+ants.image_write(
+    target_image,
+    (project_dir / "templates/test-cropped-target.nii.gz").as_posix(),
+)
+ants.image_write(
+    target_halves_mask,
+    (project_dir / "templates/test-cropped-target-halves.nii.gz").as_posix(),
+)
+
 # %%
 # Load a dataframe with image paths to use for the template
 # ---------------------------------------------------------
@@ -153,15 +181,39 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     # Bias field correction (to homogenise intensities)
     image_ants = ants.image_read(nii_path.as_posix())
     image_n4 = ants.n4_bias_field_correction(image_ants)
+
+    # Generate a brain mask based on the N4-corrected image
+    mask_data = create_mask(image_n4.numpy(), **mask_params)  # type: ignore
+    mask_path = file_path_with_suffix(nii_path, "_N4_mask")
+
+    old_image_n4_path = file_path_with_suffix(nii_path, "_N4_pre-crop")
+    old_mask_path = file_path_with_suffix(nii_path, "_N4_mask_pre-crop")
+    ants.image_write(image_n4, old_image_n4_path.as_posix())
+    ants.image_write(
+        image_n4.new_image_like(mask_data.astype(np.uint8)),
+        old_mask_path.as_posix(),
+    )
+
+    # crop to mask, with 10 pixel padding
+    image_n4_numpy, mask_data = crop_to_mask(
+        image_n4.numpy(), mask_data, padding=10
+    )
+    image_n4 = ants.from_numpy(
+        image_n4_numpy,
+        origin=image_n4.origin,
+        spacing=image_n4.spacing,
+        direction=image_n4.direction,
+        has_components=False,
+        is_rgb=False,
+    )
+
+    # write mask and image_n4 to file
     image_n4_path = file_path_with_suffix(nii_path, "_N4")
     ants.image_write(image_n4, image_n4_path.as_posix())
     logger.debug(
         f"Created N4 bias field corrected image as {image_n4_path.name}."
     )
 
-    # Generate a brain mask based on the N4-corrected image
-    mask_data = create_mask(image_n4.numpy(), **mask_params)  # type: ignore
-    mask_path = file_path_with_suffix(nii_path, "_N4_mask")
     mask = image_n4.new_image_like(mask_data.astype(np.uint8))
     ants.image_write(mask, mask_path.as_posix())
     logger.debug(
