@@ -5,7 +5,7 @@ def crop_to_mask(
     stack: np.ndarray, mask: np.ndarray, padding: np.uint8 = 0
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Crops stack and mask to the mask extent, and pad with zeros.
+    Crop stack and mask to the mask extent, and pad with zeros.
 
     Args:
         Stack (np.ndarray): Stack
