@@ -23,7 +23,7 @@ def crop_to_mask(
         mask == 0
     ), "The mask is invalid because it does not contain foreground."
     # Find the bounding box of the mask
-    mask_indices = np.where(mask)
+    mask_indices = np.nonzero(mask)
     min_z = np.min(mask_indices[0])
     max_z = np.max(mask_indices[0])
     min_y = np.min(mask_indices[1])
