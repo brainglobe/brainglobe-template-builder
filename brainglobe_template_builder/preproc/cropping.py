@@ -7,14 +7,19 @@ def crop_to_mask(
     """
     Crop stack and mask to the mask extent, and pad with zeros.
 
-    Args:
-        Stack (np.ndarray): Stack
-        Mask (np.ndarray): Mask
-        padding (np.uint8):
-            number of pixels to pad with on all sides. Default is 0.
+    Parameters
+    ----------
+    stack : np.ndarray
+        Stack
+    mask : np.ndarray
+        Mask
+    padding : np.uint8, optional
+        Number of pixels to pad with on all sides. Default is 0.
 
-    Returns:
-        tuple[np.ndarray, np.ndarray]: the cropped, padded stack and mask.
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        The cropped, padded stack and mask.
     """
     assert (
         stack.shape == mask.shape
