@@ -190,7 +190,7 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     cmd = "antsRegistration_affine_SyN.sh "
     cmd += f"--moving-mask {mask_path.as_posix()} "
     cmd += f"--fixed-mask {target_mask_path.as_posix()} "
-    cmd += "--linear-type rigid "  # Use rigid registration
+    cmd += "--linear-type affine "  # Use similarity registration
     cmd += "--skip-nonlinear "  # Skip non-linear registration
     cmd += "--clobber "  # Overwrite existing files
     cmd += f"{image_n4_path.as_posix()} "  # moving image
@@ -204,13 +204,35 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     )
 
     # Load the computed rigid transformation
-    rigid_transform_path = file_path_with_suffix(
-        output_prefix, "0GenericAffine.mat"
-    )
+    transform_path = file_path_with_suffix(output_prefix, "0GenericAffine.mat")
     assert (
-        rigid_transform_path.exists()
-    ), f"Could not find the rigid transformation at {rigid_transform_path}."
+        transform_path.exists()
+    ), f"Could not find the rigid transformation at {transform_path}."
     # Use the rigid transformation to align the image
+
+    transform = ants.read_transform(transform_path)
+    R = np.array(transform.parameters[:9])
+    R = R.reshape((3, 3))
+    t = transform.parameters[9:]
+
+    from scipy.linalg import polar
+
+    # Perform polar decomposition to extract the rotation matrix
+    R_rot, _ = polar(R)
+
+    # Construct the rigid transformation matrix
+    print(f"Rotation: {R_rot}")
+    parameters = np.concatenate([R_rot.flatten(), t])
+    print(parameters)
+
+    # fudge the transform type due to numerical errors
+    # maybe assert np.allclose(np.eye(3, np.matmul(matrix, matrix.T), 1e-7)
+    # and then fudge?
+    rigid_transform = ants.new_ants_transform(transform_type="AffineTransform")
+    rigid_transform.set_parameters(parameters)
+    rigid_transform_path = file_path_with_suffix(output_prefix, "0Rigid3D.mat")
+    ants.write_transform(rigid_transform, rigid_transform_path.as_posix())
+
     aligned_image = ants.apply_transforms(
         fixed=target_image,
         moving=image_n4,
