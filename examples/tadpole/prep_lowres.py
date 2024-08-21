@@ -17,23 +17,18 @@ prepare them for template construction:
 # Imports
 # -------
 import os
-import subprocess
 from datetime import date
 from pathlib import Path
 
 import ants
 import numpy as np
 import pandas as pd
-from brainglobe_space import AnatomicalSpace
 from loguru import logger
 from tqdm import tqdm
 
 from brainglobe_template_builder.io import (
     file_path_with_suffix,
-    load_tiff,
-    save_as_asr_nii,
 )
-from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.splitting import (
     generate_arrays_4template,
     save_array_dict_to_nii,
@@ -62,7 +57,7 @@ mask_params = {
 # Prepare directory structure
 atlas_forge_dir = Path("/media/ceph-niu/neuroinformatics/atlas-forge")
 project_dir = (
-    atlas_forge_dir / "Tadpole" / "tadpole-template-starter" / "young-tadpole"
+    atlas_forge_dir / "Tadpole" / "tadpole-template-starter" / "old-tadpole"
 )
 raw_dir = project_dir / "rawdata"
 deriv_dir = project_dir / "derivatives"
@@ -86,7 +81,7 @@ logger.add(project_dir / "logs" / f"{today}_{current_script_name}.log")
 # and prepared the masks accordingly.
 
 target_dir = project_dir / "templates" / "initial-target"
-target_prefix = f"sub-najva4_{res_str}_channel-orange_orig-asr"
+target_prefix = f"sub-topro54_{res_str}_channel-orange_orig-asr"
 target_image_path = target_dir / f"{target_prefix}_aligned.nii.gz"
 target_image = ants.image_read(target_image_path.as_posix())
 target_mask_path = target_dir / f"{target_prefix}_label-brain_aligned.nii.gz"
@@ -132,23 +127,10 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     logger.info(f"Starting to process {file_prefix}...")
     logger.info(f"Will save outputs to {deriv_subj_dir}/")
 
-    # Load the image
-    image = load_tiff(tiff_path)
-    logger.debug(f"Loaded image {tiff_path.name} with shape: {image.shape}.")
-
-    # Reorient the image to ASR
-    target_origin = "asr"
-    source_space = AnatomicalSpace(source_origin, shape=image.shape)
-    image_asr = source_space.map_stack_to(target_origin, image)
-    logger.debug(f"Reoriented image from {source_origin} to {target_origin}.")
-    logger.debug(f"Reoriented image shape: {image_asr.shape}.")
-
-    # Save the reoriented image as nifti
+    # Load the manually aligned nifti
     nii_path = file_path_with_suffix(
-        deriv_subj_dir / tiff_path.name, f"_{target_origin}", new_ext=".nii.gz"
+        deriv_subj_dir / tiff_path.name, "_orig-asr_aligned", new_ext=".nii.gz"
     )
-    save_as_asr_nii(image_asr, vox_sizes, nii_path)
-    logger.debug(f"Saved reoriented image as {nii_path.name}.")
 
     # Bias field correction (to homogenise intensities)
     image_ants = ants.image_read(nii_path.as_posix())
@@ -159,14 +141,16 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
         f"Created N4 bias field corrected image as {image_n4_path.name}."
     )
 
-    # Generate a brain mask based on the N4-corrected image
-    mask_data = create_mask(image_n4.numpy(), **mask_params)  # type: ignore
-    mask_path = file_path_with_suffix(nii_path, "_N4_mask")
-    mask = image_n4.new_image_like(mask_data.astype(np.uint8))
-    ants.image_write(mask, mask_path.as_posix())
+    # Read the manually adjusted brain mask
+    # Save the reoriented image as nifti
+    mask_path = file_path_with_suffix(
+        deriv_subj_dir / tiff_path.name,
+        "_orig-asr_label-brain_aligned",
+        new_ext=".nii.gz",
+    )
+    mask = ants.image_read(mask_path.as_posix())
     logger.debug(
-        f"Generated brain mask with shape: {mask.shape} "
-        f"and saved as {mask_path.name}."
+        f"Read brain mask with shape: {mask.shape} " f"from {mask_path.name}."
     )
 
     # Plot the mask over the image to check
@@ -183,63 +167,10 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     )
     logger.debug("Plotted overlay to visually check mask.")
 
-    # Rigid-register the reoriented image to an already aligned target
-    output_prefix = file_path_with_suffix(nii_path, "_N4_aligned_", new_ext="")
-
-    # Call the antsRegistration_affine_SyN.sh script with provided parameters
-    cmd = "antsRegistration_affine_SyN.sh "
-    cmd += f"--moving-mask {mask_path.as_posix()} "
-    cmd += f"--fixed-mask {target_mask_path.as_posix()} "
-    cmd += "--linear-type rigid "  # Use rigid registration
-    cmd += "--skip-nonlinear "  # Skip non-linear registration
-    cmd += "--clobber "  # Overwrite existing files
-    cmd += f"{image_n4_path.as_posix()} "  # moving image
-    cmd += f"{target_image_path.as_posix()} "  # fixed image
-    cmd += f"{output_prefix.as_posix()}"  # output prefix
-
-    logger.debug(f"Running the following ANTs registration script: {cmd}")
-    subprocess.run(cmd, shell=True, check=True)
-    logger.debug(
-        "Computed rigid transformation to align image to initial target."
-    )
-
-    # Load the computed rigid transformation
-    rigid_transform_path = file_path_with_suffix(
-        output_prefix, "0GenericAffine.mat"
-    )
-    assert (
-        rigid_transform_path.exists()
-    ), f"Could not find the rigid transformation at {rigid_transform_path}."
-    # Use the rigid transformation to align the image
-    aligned_image = ants.apply_transforms(
-        fixed=target_image,
-        moving=image_n4,
-        transformlist=rigid_transform_path.as_posix(),
-        interpolator="bSpline",
-    )
-    logger.debug("Transformed image to aligned space.")
-    # Also align the mask
-    aligned_mask = ants.apply_transforms(
-        fixed=target_image,
-        moving=mask,
-        transformlist=rigid_transform_path.as_posix(),
-        interpolator="nearestNeighbor",
-    )
-    logger.debug("Transformed brain mask to aligned space.")
-
-    # Plot the aligned image over the target to check registration
-    ants.plot(
-        target_image,
-        aligned_image,
-        overlay_alpha=0.5,
-        overlay_cmap="plasma",
-        axis=1,
-        title="Aligned image over target (rigid registration)",
-        filename=output_prefix.as_posix() + "target-overlay.png",
-    )
     # Plot the halves mask over the aligned image to check the split
+    output_prefix = file_path_with_suffix(nii_path, "_N4_aligned_", new_ext="")
     ants.plot(
-        aligned_image,
+        image_n4,
         target_halves_mask,
         overlay_alpha=0.5,
         axis=1,
@@ -258,7 +189,7 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     use4template_dir.mkdir(exist_ok=True)
 
     array_dict = generate_arrays_4template(
-        subject, aligned_image.numpy(), aligned_mask.numpy(), pad=2
+        subject, image_n4.numpy(), mask.numpy(), pad=2
     )
     save_array_dict_to_nii(array_dict, use4template_dir, vox_sizes)
     use4template_dirs[subject] = use4template_dir
