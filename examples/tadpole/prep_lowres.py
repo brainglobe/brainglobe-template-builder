@@ -132,15 +132,6 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
         deriv_subj_dir / tiff_path.name, "_orig-asr_aligned", new_ext=".nii.gz"
     )
 
-    # Bias field correction (to homogenise intensities)
-    image_ants = ants.image_read(nii_path.as_posix())
-    image_n4 = ants.n4_bias_field_correction(image_ants)
-    image_n4_path = file_path_with_suffix(nii_path, "_N4")
-    ants.image_write(image_n4, image_n4_path.as_posix())
-    logger.debug(
-        f"Created N4 bias field corrected image as {image_n4_path.name}."
-    )
-
     # Read the manually adjusted brain mask
     # Save the reoriented image as nifti
     mask_path = file_path_with_suffix(
@@ -151,6 +142,17 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     mask = ants.image_read(mask_path.as_posix())
     logger.debug(
         f"Read brain mask with shape: {mask.shape} " f"from {mask_path.name}."
+    )
+
+    # Bias field correction (to homogenise intensities)
+    image_ants = ants.image_read(nii_path.as_posix())
+    image_n4 = ants.n4_bias_field_correction(image_ants)
+    image_n4_masked_numpy = image_n4.numpy() * mask.numpy()
+    image_n4_path = file_path_with_suffix(nii_path, "_N4")
+    image_n4 = image_n4.new_image_like(image_n4_masked_numpy)
+    ants.image_write(image_n4, image_n4_path.as_posix())
+    logger.debug(
+        f"Created N4 bias field corrected image as {image_n4_path.name}."
     )
 
     # Plot the mask over the image to check
