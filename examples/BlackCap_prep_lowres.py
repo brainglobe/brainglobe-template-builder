@@ -242,7 +242,7 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     use4template_dir.mkdir(exist_ok=True)
 
     array_dict = generate_arrays_4template(
-        subject, aligned_image.numpy(), aligned_mask.numpy(), pad=2
+        subject, aligned_image.numpy(), aligned_mask.numpy(), padding=2
     )
     save_array_dict_to_nii(array_dict, use4template_dir, vox_sizes)
     use4template_dirs[subject] = use4template_dir
