@@ -30,7 +30,6 @@ from brainglobe_template_builder.io import (
     load_tiff,
     save_as_asr_nii,
 )
-from brainglobe_template_builder.preproc.cropping import crop_to_mask
 from brainglobe_template_builder.preproc.splitting import (
     generate_arrays_4template,
     save_array_dict_to_nii,
@@ -176,10 +175,8 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     )
     logger.debug("Plotted overlay to visually check mask.")
 
-    # Mask the brain and crop image to mask extends (with some padding)
-    aligned_masked_cropped_data, cropped_mask_data = crop_to_mask(
-        aligned_image.numpy() * mask.numpy(), mask.numpy(), padding=10
-    )
+    # Mask the brain (remove image background)
+    aligned_masked_data = aligned_image.numpy() * mask.numpy()
 
     # Generate arrays for template construction and save as niftis
     output_prefix = file_path_with_suffix(
@@ -194,7 +191,7 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     use4template_dir.mkdir(exist_ok=True)
 
     array_dict = generate_arrays_4template(
-        subject, aligned_masked_cropped_data, cropped_mask_data, pad=0
+        subject, aligned_masked_data, mask.numpy(), crop=True, padding=10
     )
     save_array_dict_to_nii(array_dict, use4template_dir, highres_vox_sizes)
 
@@ -267,10 +264,25 @@ for _, row in df.iterrows():
 # %%
 # Save the file paths to text files, each in a separate directory
 
+# Modify the atlas-forge path before writing the paths
+# if we want to use these paths on a different machine (HPC cluster)
+hpc_atlas_forge_path = Path(
+    "/ceph/neuroinformatics/neuroinformatics/atlas-forge"
+)
+
 for key, paths in filepath_lists.items():
     kind, label = key.split("-")  # e.g. "asym" and "brain"
     n_images = len(paths)
     template_name = f"template_{kind}_{highres_str}_n-{n_images}"
     template_dir = atlas_dir / "templates" / template_name
     template_dir.mkdir(exist_ok=True)
+
+    paths = [
+        p.as_posix().replace(
+            atlas_forge_path.as_posix(), hpc_atlas_forge_path.as_posix()
+        )
+        for p in paths
+    ]
     np.savetxt(template_dir / f"{label}_paths.txt", paths, fmt="%s")
+
+# %%

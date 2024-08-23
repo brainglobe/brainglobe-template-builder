@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from brainglobe_template_builder.io import save_as_asr_nii
+from brainglobe_template_builder.preproc.cropping import crop_to_mask
 
 
 def get_right_and_left_slices(array: np.ndarray) -> tuple:
@@ -32,9 +33,16 @@ def get_right_and_left_slices(array: np.ndarray) -> tuple:
 
 
 def generate_arrays_4template(
-    subject: str, brain: np.ndarray, mask: np.ndarray, pad: int = 0
+    subject: str,
+    brain: np.ndarray,
+    mask: np.ndarray,
+    crop: bool = False,
+    padding: int = 0,
 ) -> dict[str, np.ndarray]:
     """Generate all needed arrays for the template building process.
+
+    The generated arrays are optionally cropped to the smallest bounding box
+    around the mask, and subsequently padded with zeros if requested.
 
     Parameters
     ----------
@@ -46,9 +54,12 @@ def generate_arrays_4template(
     mask : np.ndarray
         The aligned mask to split into hemispheres and symmetrise.
         Must be a binary mask and have the same shape as the image.
-    pad : int, optional
-        Number of planes to zero-pad arrays with. Default is 0 (no padding).
-        The same number of planes will be added to all arrays, along each axis.
+    crop : bool, optional
+        Whether to crop the arrays to the smallest bounding box around
+        the mask. Default is False.
+    padding : int, optional
+        Number of voxels to zero-pad arrays with, Default is 0 (no padding).
+        The same number of voxels will be added to all arrays, along each axis.
         This is useful to ensure that registration algorithms can correctly
         handle the array edges.
 
@@ -100,9 +111,29 @@ def generate_arrays_4template(
             }
         )
 
-    if pad > 0:
+    # For image type, crop to mask if requested
+    if crop:
+        image_types = [
+            "asym",
+            "right-hemi",
+            "left-hemi-xflip",
+            "right-sym",
+            "left-sym",
+        ]
+        for image_type in image_types:
+            cropped_brain, cropped_mask = crop_to_mask(
+                out_dict[f"{subject}_{image_type}-brain"],
+                out_dict[f"{subject}_{image_type}-mask"],
+                padding=padding,
+            )
+            out_dict[f"{subject}_{image_type}-brain"] = cropped_brain
+            out_dict[f"{subject}_{image_type}-mask"] = cropped_mask
+    elif padding > 0:
         for key, arr in out_dict.items():
-            out_dict[key] = np.pad(arr, pad_width=pad, mode="constant")
+            out_dict[key] = np.pad(arr, pad_width=padding, mode="constant")
+    else:
+        # if not crop and no padding, just pass
+        pass
 
     return out_dict
 
