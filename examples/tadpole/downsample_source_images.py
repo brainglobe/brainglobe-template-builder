@@ -37,14 +37,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--source_data",
         type=str,
-        help="Path to the source data folder. The source data should " \
+        help="Path to the source data folder. The source data should "
         "contain a subfolder per subject, and tiffs within it.",
         required=True,
     )
     parser.add_argument(
         "--template_building_root",
         type=str,
-        help="Path to the template-building root folder. Results will " \
+        help="Path to the template-building root folder. Results will "
         "be written to the rawdata subfolder.",
         required=True,
     )
