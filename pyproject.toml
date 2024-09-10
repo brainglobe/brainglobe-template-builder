@@ -47,6 +47,8 @@ dev = [
     "pre-commit",
     "ruff",
     "setuptools_scm",
+    "types-pyyaml",
+    "types-setuptools",
 ]
 
 [build-system]

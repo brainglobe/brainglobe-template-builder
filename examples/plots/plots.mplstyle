@@ -1,0 +1,6 @@
+pdf.fonttype : 42
+ps.fonttype  : 42
+svg.fonttype : none
+font.family  : sans-serif
+font.sans-serif : Barlow
+savefig.dpi : 300

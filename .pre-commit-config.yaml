@@ -29,6 +29,7 @@ repos:
           - id: mypy
             additional_dependencies:
                 - types-setuptools
+                - types-pyyaml
     - repo: https://github.com/mgedmin/check-manifest
       rev: "0.49"
       hooks:
