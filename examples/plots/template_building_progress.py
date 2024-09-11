@@ -1,10 +1,17 @@
+"""Create plots showing the progress of template building
+
+This script creates two plots:
+1. A grid of images showing the progress across transform types and iterations.
+2. An animation showing the progress across transform types and iterations.
+"""
 # Imports
 import os
 from pathlib import Path
 
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-from utils import (
+
+from brainglobe_template_builder.plots import (
     collect_coronal_slices,
     collect_template_paths,
     compute_vmin_vmax_across_slices,
@@ -13,6 +20,7 @@ from utils import (
     setup_directories,
 )
 
+# -----------------------------------------------------------------------------
 # get path of this script's parent directory
 current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 # Load matplotlib parameters (to allow for proper font export)
@@ -30,12 +38,17 @@ n_iter = config["num_iterations"]
 print("transform types: ", transform_types)
 print("number of iterations: ", n_iter)
 
+# -----------------------------------------------------------------------------
 # Collect template images for each iteration and transform type
 template_paths = collect_template_paths(template_dir, transform_types, n_iter)
 
 # Collect coronal slices for each iteration and transform type
-show_coronal_slice = config["show_coronal_slice"]
+show_coronal_slice = config["show_slices"][0]
 template_slices = collect_coronal_slices(template_paths, show_coronal_slice)
+print(
+    f"Collected coronal slice {show_coronal_slice} for each "
+    f"transform type and iteration"
+)
 
 # Calculate vmin and vmax for all slices to ensure consistent scaling
 vmin, vmax = compute_vmin_vmax_across_slices(
@@ -49,6 +62,7 @@ width = template_slices["rigid iter-0"].shape[1]
 height = template_slices["rigid iter-0"].shape[0]
 aspect = width / height
 
+# ----------------------------------------------------------------------------
 # Plot all transform types and iterations in a grid
 # Rows: transform types, Columns: iterations
 figs, axs = plt.subplots(
@@ -71,6 +85,8 @@ for t, transform_type in enumerate(transform_types):
         ax.set_ylabel(ylabel, fontsize="x-large")
         ax.set_xticks([])
         ax.set_yticks([])
+        for spine in ax.spines.values():
+            spine.set_visible(False)
 
 figs.subplots_adjust(
     left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.05, hspace=0.05
@@ -78,9 +94,11 @@ figs.subplots_adjust(
 save_figure(
     figs,
     plots_dir,
-    "template_across_transform_types_and_iterations",
+    "template_building_progress_grid",
 )
+print("Saved template building progress grid plot")
 
+# ----------------------------------------------------------------------------
 # Create animation of template building progress
 
 # Create figure and axis
@@ -100,7 +118,9 @@ def update(frame_index):
     transform, iteration = frame_names[frame_index].split()
     transform = transform.replace("nlin", "non-linear")
     ax.set_ylabel(transform, fontsize="x-large")
-    ax.set_title(f"iter {iteration}", fontsize="x-large")
+    ax.set_title(iteration, fontsize="x-large")
+    for spine in ax.spines.values():
+        spine.set_visible(False)
     return [img]
 
 
@@ -111,15 +131,19 @@ ani = FuncAnimation(
     fig,  # The figure object
     update,  # The update function
     frames=len(template_slices),  # Number of frames
-    interval=200,  # Interval between frames in milliseconds
-    blit=True,  # Use blitting for better performance
+    blit=True,  # Optimize drawing by only updating changed parts
 )
 
 # Save the animation as a gif
 for fps in config["animation_fps"]:
     ani.save(
-        plots_dir / f"transforms_iterations_animation_fps-{fps}.gif",
+        plots_dir / f"template_building_progress_fps-{fps}.gif",
         writer="ffmpeg",
         dpi=150,
         fps=fps,
     )
+
+print(
+    "Saved template building progress gifs for fps: "
+    f"{config['animation_fps']}"
+)

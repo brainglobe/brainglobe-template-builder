@@ -2,19 +2,19 @@
 import os
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-from brainglobe_space import AnatomicalSpace
 from brainglobe_utils.IO.image import load_nii
 from matplotlib import pyplot as plt
-from utils import (
+
+from brainglobe_template_builder.plots import (
     collect_coronal_slices,
     collect_template_paths,
     collect_use4template_dirs,
     load_config,
     pad_with_zeros,
+    plot_orthographic,
+    plot_slices_single_column,
     plot_slices_single_row,
-    save_figure,
     setup_directories,
 )
 
@@ -41,6 +41,7 @@ template_paths = collect_template_paths(template_dir, transform_types, n_iter)
 # Get the path to the final template
 final_stage = transform_types[-1]
 final_template_path = template_paths[f"{final_stage} iter-{n_iter-1}"]
+print("Final template path: ", final_template_path)
 
 # %%
 # Load the csv file containing the images used for template building
@@ -57,65 +58,58 @@ asym_inputs_paths = {
     subject: folder / f"{subject}_asym-brain.nii.gz"
     for subject, folder in use4template_dirs.items()
 }
-# add the final template to the list of images
-asym_inputs_paths["final_template"] = final_template_path
 
-# %%
 # Collect coronal slices for each asymmetric input image
 asym_inputs_slices = collect_coronal_slices(
-    asym_inputs_paths, config["show_coronal_slice"]
+    asym_inputs_paths, config["show_slices"][0]
 )
+print(
+    f"Collected coronal slice {config['show_slices'][0]} "
+    "from each subject's asymmetric brain image"
+)
+
+# %%
 plot_slices_single_row(
     asym_inputs_slices,
     vmin_perc=config["vmin_percentile"],
     vmax_perc=config["vmax_percentile"],
-    save_path=plots_dir / "inputs_asym_brain",
+    save_path=plots_dir / "inputs_asym_brain_single_row",
 )
+
+# %%
+plot_slices_single_column(
+    asym_inputs_slices,
+    vmin_perc=config["vmin_percentile"],
+    vmax_perc=config["vmax_percentile"],
+    save_path=plots_dir / "inputs_asym_brain_single_column",
+)
+print("Plotted individual subjects' asymmetric brain images")
 
 
 # %%
 # Plot the final average template alongside and example subject
+
+# Find the maximum dimension size
 template_img = load_nii(final_template_path, as_array=True, as_numpy=True)
-template_img, pad_sizes = pad_with_zeros(template_img, target=512)
+target_size = max(template_img.shape)
+template_img, pad_sizes = pad_with_zeros(template_img, target=target_size)
 
 example_subject = config["example_subject"]
 subject_path = asym_inputs_paths[example_subject]
 subject_img = load_nii(subject_path, as_array=True, as_numpy=True)
-subject_img, _ = pad_with_zeros(subject_img, target=512)
+subject_img, _ = pad_with_zeros(subject_img, target=target_size)
 
-sc = AnatomicalSpace("ASR")
-
-# %%
-
-fig, axs = plt.subplots(2, 3, figsize=(12, 8))
-axis_names = ["z", "y", "x"]
-show_slices = [256, 183, 252]  # coronal, sagittal, horizontal
-
-for i, img in enumerate([template_img, subject_img]):
-    for j, (plane, labels) in enumerate(zip(sc.sections, sc.axis_labels)):
-        slice_j = show_slices[j]
-        ax = axs[i, j]
-        ax.imshow(
-            img.take(slice_j + pad_sizes[j], axis=j),
-            cmap="gray",
-            vmin=np.percentile(img, 1),
-            vmax=np.percentile(img, 99.9),
-        )
-        if i == 0:
-            ax.set_title(f"{plane.capitalize()} view", color="w")
-            ax.text(256, 20, f"slice {slice_j}", color="w", ha="center")
-        ax.set_ylabel(labels[0], color="w")
-        if i == 1:
-            ax.set_xlabel(labels[1], color="w")
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-# Make the figure background black
-fig.patch.set_facecolor("black")
-fig.subplots_adjust(
-    left=0.05, right=0.95, top=0.95, bottom=0.05, wspace=0.1, hspace=0
+fig, axs = plot_orthographic(
+    template_img,
+    config["show_slices"],
+    pad_sizes=pad_sizes,
+    save_path=plots_dir / "final_template_orthographic",
 )
-save_figure(fig, plots_dir, "final_template_and_example_subject")
 
-
-# %%
+fig, axs = plot_orthographic(
+    subject_img,
+    config["show_slices"],
+    pad_sizes=pad_sizes,
+    save_path=plots_dir / f"{example_subject}_orthographic",
+)
+print("Plotted final template and example subject in orthographic view")

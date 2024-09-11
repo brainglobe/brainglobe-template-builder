@@ -3,8 +3,20 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yaml
+from brainglobe_space import AnatomicalSpace
 from brainglobe_utils.IO.image import load_nii
 from matplotlib import pyplot as plt
+from matplotlib.colors import ListedColormap
+
+
+def grey_cmap_transparent(n: int = 10) -> ListedColormap:
+    """Create a custom colormap based on 'gray' but with the bottom
+    ``n`` values set to be transparent."""
+    cmap = plt.get_cmap("gray").copy()
+    colors = cmap(np.linspace(0, 1, cmap.N))
+    # Set the alpha channel of the bottom values to 0 (transparent)
+    colors[:n, -1] = 0
+    return ListedColormap(colors)
 
 
 def load_config(config_path: Path) -> dict:
@@ -56,7 +68,7 @@ def collect_template_paths(
 
 
 def collect_coronal_slices(
-    file_paths: dict[str, Path], show_coronal_slice: int
+    file_paths: dict[str, Path], slice_idx: int
 ) -> dict[str, np.ndarray]:
     """Load and extract coronal slices for all file paths.
 
@@ -66,7 +78,7 @@ def collect_coronal_slices(
     slices = {}
     for img_name, img_path in file_paths.items():
         img = load_nii(img_path, as_array=False)
-        slc = img.slicer[show_coronal_slice : show_coronal_slice + 1, :, :]
+        slc = img.slicer[slice_idx : slice_idx + 1, :, :]
         slices[img_name] = slc.get_fdata().squeeze()
     return slices
 
@@ -114,8 +126,10 @@ def plot_slices_single_row(
     slices: dict[str, np.ndarray],
     vmin_perc: float = 1,
     vmax_perc: float = 99,
+    n_transparent: int = 0,
     save_path: Path | None = None,
 ):
+    """Plot slices in a single row."""
     n_slices = len(slices)
     fig, ax = plt.subplots(1, n_slices, figsize=(2 * n_slices, 2))
 
@@ -123,7 +137,7 @@ def plot_slices_single_row(
         frame = slices[label]
         ax[i].imshow(
             frame,
-            cmap="gray",
+            cmap=grey_cmap_transparent(n_transparent),
             vmin=np.percentile(frame, vmin_perc),
             vmax=np.percentile(frame, vmax_perc),
         )
@@ -142,16 +156,19 @@ def plot_slices_single_column(
     slices: dict[str, np.ndarray],
     vmin_perc: float = 1,
     vmax_perc: float = 99,
+    n_transparent: int = 0,
     save_path: Path | None = None,
 ):
+    """Plot slices in a single column."""
     n_slices = len(slices)
-    fig, ax = plt.subplots(n_slices, 1, figsize=(2, 2 * n_slices))
+    fig, ax = plt.subplots(n_slices, 1, figsize=(2.4, 1.3 * n_slices))
 
     for i, label in enumerate(slices):
         frame = slices[label]
+
         ax[i].imshow(
             frame,
-            cmap="gray",
+            cmap=grey_cmap_transparent(n_transparent),
             vmin=np.percentile(frame, vmin_perc),
             vmax=np.percentile(frame, vmax_perc),
         )
@@ -162,7 +179,7 @@ def plot_slices_single_column(
             spine.set_visible(False)
 
     fig.subplots_adjust(
-        left=0.05, right=0.95, top=0.99, bottom=0.01, wspace=0, hspace=0
+        left=0.15, right=0.95, top=0.99, bottom=0.01, wspace=0, hspace=0
     )
     if save_path:
         save_dir, save_name = save_path.parent, save_path.name.split(".")[0]
@@ -184,3 +201,59 @@ def pad_with_zeros(
         mode="constant",
     )
     return padded_stack, pad_sizes
+
+
+def plot_orthographic(
+    img: np.ndarray,
+    show_slices: list[int],
+    pad_sizes: list[int] | None = None,
+    save_path: Path | None = None,
+) -> tuple[plt.Figure, np.ndarray]:
+    """Plot orthographic views of a 3D image,
+    including a maximum intensity projection (MIP)."""
+
+    sc = AnatomicalSpace("ASR")
+    if pad_sizes is None:
+        pad_sizes = [0, 0, 0]
+    max_size = max(img.shape)
+
+    fig, axs = plt.subplots(1, 4, figsize=(14, 4))
+    sections = [s.capitalize() for s in sc.sections] + ["MIP"]
+    axis_labels = [*sc.axis_labels, sc.axis_labels[1]]
+    frames = [
+        img.take(slc + pad_sizes[i], axis=i)
+        for i, slc in enumerate(show_slices)
+    ]
+    mip = np.max(img, axis=1)
+    frames.append(mip)
+    slice_texts = [f"slice {slc}" for slc in show_slices] + [""]
+
+    for j, (view, labels) in enumerate(zip(sections, axis_labels)):
+        ax = axs[j]
+        ax.imshow(
+            frames[j],
+            cmap="gray",
+            vmin=np.percentile(img, 1),
+            vmax=np.percentile(img, 99.9),
+        )
+        ax.set_title(view)
+        ax.text(
+            max_size / 2,
+            max_size / 20,
+            slice_texts[j],
+            ha="center",
+            va="top",
+            color="w",
+        )
+        ax.set_ylabel(labels[0])
+        ax.set_xlabel(labels[1])
+        ax.set_xticks([])
+        ax.set_yticks([])
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+    fig.subplots_adjust(
+        left=0.025, right=0.975, top=0.95, bottom=0.05, wspace=0.1, hspace=0
+    )
+    if save_path:
+        save_figure(fig, save_path.parent, save_path.name.split(".")[0])
+    return fig, axs
