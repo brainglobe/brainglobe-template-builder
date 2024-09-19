@@ -206,6 +206,7 @@ def pad_with_zeros(
 def plot_orthographic(
     img: np.ndarray,
     show_slices: list[int],
+    slice_label_offset: int = 0,
     pad_sizes: list[int] | None = None,
     save_path: Path | None = None,
 ) -> tuple[plt.Figure, np.ndarray]:
@@ -226,7 +227,8 @@ def plot_orthographic(
     ]
     mip = np.max(img, axis=1)
     frames.append(mip)
-    slice_texts = [f"slice {slc}" for slc in show_slices] + [""]
+    slice_labels = [slc + slice_label_offset for slc in show_slices]
+    slice_texts = [f"Slice {slc}" for slc in slice_labels] + [""]
 
     for j, (view, labels) in enumerate(zip(sections, axis_labels)):
         ax = axs[j]

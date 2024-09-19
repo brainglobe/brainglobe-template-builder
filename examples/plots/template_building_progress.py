@@ -143,6 +143,10 @@ for fps in config["animation_fps"]:
         fps=fps,
     )
 
+# Delete the fps-1 gif
+# because the first one we save always comes out mangled for some reason
+os.remove(plots_dir / "template_building_progress_fps-1.gif")
+
 print(
     "Saved template building progress gifs for fps: "
     f"{config['animation_fps']}"

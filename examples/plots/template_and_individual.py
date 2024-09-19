@@ -94,22 +94,27 @@ template_img = load_nii(final_template_path, as_array=True, as_numpy=True)
 target_size = max(template_img.shape)
 template_img, pad_sizes = pad_with_zeros(template_img, target=target_size)
 
-example_subject = config["example_subject"]
-subject_path = asym_inputs_paths[example_subject]
-subject_img = load_nii(subject_path, as_array=True, as_numpy=True)
-subject_img, _ = pad_with_zeros(subject_img, target=target_size)
-
+# Plot the final template in orthographic view
 fig, axs = plot_orthographic(
     template_img,
     config["show_slices"],
+    slice_label_offset=config["slice_label_offset"],
     pad_sizes=pad_sizes,
     save_path=plots_dir / "final_template_orthographic",
 )
+print("Plotted final template in orthographic view")
 
-fig, axs = plot_orthographic(
-    subject_img,
-    config["show_slices"],
-    pad_sizes=pad_sizes,
-    save_path=plots_dir / f"{example_subject}_orthographic",
-)
-print("Plotted final template and example subject in orthographic view")
+# Plot an example subjects in orthographic view
+for example_subject in config["example_subjects"]:
+    subject_path = asym_inputs_paths[example_subject]
+    subject_img = load_nii(subject_path, as_array=True, as_numpy=True)
+    subject_img, _ = pad_with_zeros(subject_img, target=target_size)
+
+    fig, axs = plot_orthographic(
+        subject_img,
+        config["show_slices"],
+        slice_label_offset=config["slice_label_offset"],
+        pad_sizes=pad_sizes,
+        save_path=plots_dir / f"{example_subject}_orthographic",
+    )
+print("Plotted example subjects in orthographic view")
