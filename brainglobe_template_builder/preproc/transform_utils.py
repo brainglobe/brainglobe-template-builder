@@ -1,5 +1,8 @@
+from pathlib import Path
+
 import dask.array as da
 import numpy as np
+from brainglobe_utils.IO.image import read_z_stack, save_any
 from scipy.ndimage import affine_transform
 from skimage import transform
 
@@ -132,3 +135,19 @@ def downsample_anisotropic_image_stack(
         dtype=np.float64,
     )
     return downsampled_axial.compute()
+
+
+def downsample(
+    sample_folder: Path,
+    downsampled_path: Path,
+    in_plane_factor: int,
+    axial_factor: int,
+) -> None:
+    """Convenience function to read, downsample and write
+    an anisotropic stack of images"""
+    stack = read_z_stack(str(sample_folder))
+
+    downsampled = downsample_anisotropic_image_stack(
+        stack, in_plane_factor=in_plane_factor, axial_factor=axial_factor
+    )
+    save_any(downsampled, downsampled_path)
