@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/badge/License-BSD_3--Clause-orange.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-orange.svg)](https://opensource.org/license/bsd-3-clause/)
 ![CI](https://img.shields.io/github/actions/workflow/status/brainglobe/brainglobe-template-builder/test_and_deploy.yml?label=CI)
 [![codecov](https://codecov.io/gh/brainglobe/brainglobe-template-builder/branch/main/graph/badge.svg?token=P8CCH3TI8K)](https://codecov.io/gh/brainglobe/brainglobe-template-builder)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json)](https://github.com/charliermarsh/ruff)

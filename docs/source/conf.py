@@ -85,6 +85,13 @@ exclude_patterns = [
     "**/includes/**",
 ]
 
+
+# A list of links (or regex) that match URIs that should not be checked
+# during sphinx-build linkcheck
+linkcheck_ignore = [
+    "https://opensource.org/license/*",  # to avoid odd 403 error
+]
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 html_theme = "pydata_sphinx_theme"
