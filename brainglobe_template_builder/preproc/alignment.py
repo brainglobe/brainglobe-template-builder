@@ -183,7 +183,7 @@ class MidplaneAligner:
             translation_to_mid_axis @ rotation @ translation_to_origin
         )
 
-    def transform_image(self, image: np.ndarray = None):
+    def transform_image(self, image: np.ndarray | None = None):
         """Transform the image using the transformation matrix.
 
         Parameters
