@@ -83,6 +83,9 @@ ignore = [
     "scripts/",
 ]
 
+[tool.mypy]
+ignore_missing_imports = true
+exclude = 'examples'
 
 [tool.ruff]
 line-length = 79
