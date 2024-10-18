@@ -1,13 +1,16 @@
 """
 Prepare low-resolution BlackCap images for template construction
 ================================================================
-The following operations are performed on the lowest-resolution images to
-prepare them for template construction:
-- Import each image as tiff, re-orient to ASR and save as nifti
-- Perform N4 Bias field correction using ANTs
-- Generate brain mask based on N4-corrected image
-- Rigid-register the re-oriented image to an already aligned target (with ANTs)
-- Transform the image and mask into the aligned space
+The ``brainglobe-template-builder`` Preprocess widget was used to perform
+the following operations on each subject's low-resolution image, ahead of
+running this script:
+- Load each image from tiff, re-orient to ASR and save as nifti
+- Generate a brain mask automatically and modify it manually, if necessary
+- Find the mid-sagittal plane and align the image and mask accordingly
+- Save the aligned image, brain mask, and halves mask as nifti files
+
+This script will:
+- Perform N4 Bias field correction on the aligned image using ANTs
 - Split the image and mask into hemispheres and reflect each hemisphere
 - Generate symmetric brains using either the left or right hemisphere
 - Save all resulting images as nifti files to be used for template construction
@@ -69,28 +72,6 @@ current_script_name = os.path.basename(__file__).replace(".py", "")
 logger.add(project_dir / "logs" / f"{today}_{current_script_name}.log")
 
 # %%
-# Define registration target
-# --------------------------
-# We need three images, all in ASR orientation and nifti format:
-# 1. An initial target aligned to the mid-sagittal plane
-# 2. The brain mask of the initial target image
-# 3. The mask of the halves of the initial target image (left and right)
-
-# Here we used one of the young tadpole images (sub-najva4) as initial target.
-# We have manually aligned the target to the mid-sagittal plane with napari
-# and prepared the masks accordingly.
-
-target_dir = project_dir / "templates" / "initial-target"
-target_prefix = f"sub-topro54_{res_str}_channel-orange_orig-asr"
-target_image_path = target_dir / f"{target_prefix}_aligned.nii.gz"
-target_image = ants.image_read(target_image_path.as_posix())
-target_mask_path = target_dir / f"{target_prefix}_label-brain_aligned.nii.gz"
-target_mask = ants.image_read(target_mask_path.as_posix())
-target_halves_mask = ants.image_read(
-    (target_dir / f"{target_prefix}_label-halves_aligned.nii.gz").as_posix()
-)
-
-# %%
 # Load a dataframe with image paths to use for the template
 # ---------------------------------------------------------
 
@@ -122,30 +103,46 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     file_prefix = f"{subject}_{res_str}_{channel_str}"
     deriv_subj_dir = deriv_dir / subject
     deriv_subj_dir.mkdir(exist_ok=True)
-    tiff_path = raw_dir / f"{file_prefix}.tif"
+    tiff_path = raw_dir / f"{file_prefix}.tif"  # original tiff image
+    nii_ext = ".nii.gz"  # extension for nifti files
 
     logger.info(f"Starting to process {file_prefix}...")
     logger.info(f"Will save outputs to {deriv_subj_dir}/")
 
-    # Load the manually aligned nifti
+    # Load the manually aligned nifti image
     nii_path = file_path_with_suffix(
-        deriv_subj_dir / tiff_path.name, "_orig-asr_aligned", new_ext=".nii.gz"
+        deriv_subj_dir / tiff_path.name, "_orig-asr_aligned", new_ext=nii_ext
+    )
+    image_ants = ants.image_read(nii_path.as_posix())
+    logger.debug(
+        f"Read image with shape: {image_ants.shape} from {nii_path.name}."
     )
 
-    # Read the manually adjusted brain mask
-    # Save the reoriented image as nifti
+    # Load the manually adjusted brain mask for the image
     mask_path = file_path_with_suffix(
         deriv_subj_dir / tiff_path.name,
         "_orig-asr_label-brain_aligned",
-        new_ext=".nii.gz",
+        new_ext=nii_ext,
     )
     mask = ants.image_read(mask_path.as_posix())
     logger.debug(
-        f"Read brain mask with shape: {mask.shape} " f"from {mask_path.name}."
+        f"Read brain mask with shape: {mask.shape} from {mask_path.name}."
+    )
+
+    # Load the halves mask for the image (also pre-generated via the widget)
+    # This will be later used for diagnostic plotting
+    halves_mask_path = file_path_with_suffix(
+        deriv_subj_dir / tiff_path.name,
+        "_orig-asr_label-halves_aligned",
+        new_ext=nii_ext,
+    )
+    halves_mask = ants.image_read(halves_mask_path.as_posix())
+    logger.debug(
+        f"Read halves mask with shape: {halves_mask.shape} from "
+        f"{halves_mask_path.name}."
     )
 
     # Bias field correction (to homogenise intensities)
-    image_ants = ants.image_read(nii_path.as_posix())
     image_n4 = ants.n4_bias_field_correction(image_ants)
     image_n4_masked_numpy = image_n4.numpy() * mask.numpy()
     image_n4_path = file_path_with_suffix(nii_path, "_N4")
@@ -173,7 +170,7 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
     output_prefix = file_path_with_suffix(nii_path, "_N4_aligned_", new_ext="")
     ants.plot(
         image_n4,
-        target_halves_mask,
+        halves_mask,
         overlay_alpha=0.5,
         axis=1,
         title="Aligned image split into right and left halves",
