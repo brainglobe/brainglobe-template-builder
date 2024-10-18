@@ -85,7 +85,7 @@ ignore = [
 
 [tool.mypy]
 ignore_missing_imports = true
-exclude = 'examples'
+explicit_package_bases = true
 
 [tool.ruff]
 line-length = 79
