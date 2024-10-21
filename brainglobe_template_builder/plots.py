@@ -9,7 +9,6 @@ from matplotlib import pyplot as plt
 def plot_orthographic(
     img: np.ndarray,
     anat_space: str = "ASR",
-    voxel_sizes: tuple[float, float, float] = (1.0, 1.0, 1.0),
     show_slices: tuple[int, int, int] | None = None,
     mip_attenuation: float = 0.01,
     save_path: Path | None = None,
@@ -17,8 +16,9 @@ def plot_orthographic(
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot image volume in three orthogonal views, plus a surface rendering.
 
-    The surface rendering is a maximum intensity projection (MIP) along the
-    vertical (superior-inferior) axis and is shown from the top.
+    The function assumes isotropic voxels (otherwise the proportions of the
+    image will be distorted). The surface rendering is a maximum intensity
+    projection (MIP) along the vertical (superior-inferior) axis.
 
     Parameters
     ----------
@@ -27,9 +27,6 @@ def plot_orthographic(
     anat_space : str, optional
         Anatomical space of of the image volume according to the Brainglobe
         definition (origin and order of axes), by default "ASR".
-    voxel_sizes : tuple, optional
-        Voxels sizes in micrometers per dimension, by default (1.0, 1.0, 1.0).
-        The relative sizes of the axes will be preserved in the plot.
     show_slices : tuple, optional
         Which slice to show per dimension. If None (default), show the middle
         slice along each dimension.
