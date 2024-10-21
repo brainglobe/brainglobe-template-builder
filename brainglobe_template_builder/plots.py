@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 def plot_orthographic(
     img: np.ndarray,
     anat_space: str = "ASR",
+    voxel_sizes: tuple[float, float, float] = (1.0, 1.0, 1.0),
     show_slices: tuple[int, int, int] | None = None,
     mip_attenuation: float = 0.01,
     save_path: Path | None = None,
@@ -16,17 +17,19 @@ def plot_orthographic(
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot image volume in three orthogonal views, plus a surface rendering.
 
-    The function assumes isotropic voxels (otherwise the proportions of the
-    image will be distorted). The surface rendering is a maximum intensity
-    projection (MIP) along the vertical (superior-inferior) axis.
+    The surface rendering is a maximum intensity projection (MIP) along the
+    vertical (superior-inferior) axis and is shown from the top.
 
     Parameters
     ----------
     img : np.ndarray
         Image volume to plot.
     anat_space : str, optional
-        Anatomical space of the image volume according to the Brainglobe
+        Anatomical space of of the image volume according to the Brainglobe
         definition (origin and order of axes), by default "ASR".
+    voxel_sizes : tuple, optional
+        Voxels sizes in micrometers per dimension, by default (1.0, 1.0, 1.0).
+        The relative sizes of the axes will be preserved in the plot.
     show_slices : tuple, optional
         Which slice to show per dimension. If None (default), show the middle
         slice along each dimension.
@@ -55,7 +58,6 @@ def plot_orthographic(
         slices_list = list(show_slices)
 
     # Pad the image with zeros to make it cubic
-    # so projections along different axes have the same size
     img, pad_sizes = _pad_with_zeros(img, target=max(img.shape))
     slices_list = [s + pad_sizes[i] for i, s in enumerate(slices_list)]
 
@@ -99,24 +101,19 @@ def plot_grid(
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot image volume as a grid of slices along a given anatomical section.
 
-    Image contrast is auto-adjusted to 1-99% of range unless overridden by
-    ``vmin`` and ``vmax`` passed as keyword arguments.
-
     Parameters
     ----------
     img : np.ndarray
         Image volume to plot.
     anat_space : str, optional
-        Anatomical space of the image volume according to the Brainglobe
+        Anatomical space of of the image volume according to the Brainglobe
         definition (origin and order of axes), by default "ASR".
     section : str, optional
         Section to show, must be one of "frontal", "horizontal", or "sagittal",
         by default "frontal".
     n_slices : int, optional
         Number of slices to show, by default 12. Slices will be evenly spaced,
-        starting from the first and ending with the last slice. If a higher
-        value than the number of slices in the image is chosen, all slices
-        are shown.
+        starting from the first and ending with the last slice.
     save_path : Path, optional
         Path to save the plot, by default None (no saving).
     **kwargs
@@ -247,11 +244,10 @@ def _set_imshow_defaults(img: np.ndarray, kwargs: dict) -> dict:
 
     These apply only if the user does not provide them explicitly.
     """
-    missing_keys = [key for key in ("vmin", "vmax") if key not in kwargs]
-    if missing_keys:
-        defaults = _auto_adjust_contrast(img)
-        for key in missing_keys:
-            kwargs.setdefault(key, defaults[key])
+    if "vmin" not in kwargs and "vmax" not in kwargs:
+        vmin, vmax = _auto_adjust_contrast(img)
+        kwargs.setdefault("vmin", vmin)
+        kwargs.setdefault("vmax", vmax)
 
     kwargs.setdefault("cmap", "gray")
     kwargs.setdefault("aspect", "equal")
@@ -313,20 +309,15 @@ def _pad_with_zeros(
     return padded_img, tuple(pad_sizes)
 
 
-def _auto_adjust_contrast(img: np.ndarray) -> dict:
-    """Adjust contrast of an image using percentile-based scaling.
-
-    Uses the 1-99% range of the image intensity values to set vmin and vmax."""
+def _auto_adjust_contrast(img, lower_percentile=1, upper_percentile=99):
+    """Adjust contrast of an image using percentile-based scaling."""
     # Mask near-zero voxels to exclude background
     if np.issubdtype(img.dtype, np.integer):
         background_threshold = 1
     else:
         background_threshold = np.finfo(img.dtype).eps
-    brain_mask = img > background_threshold
 
-    # Hard-coded percentiles for default contrast adjustment
-    lower_percentile = 1
-    upper_percentile = 99
+    brain_mask = img > background_threshold
 
     # Exclude bright artifacts
     vmax = np.percentile(img[brain_mask], upper_percentile)
@@ -337,4 +328,4 @@ def _auto_adjust_contrast(img: np.ndarray) -> dict:
     vmin = np.percentile(img[combined_mask], lower_percentile)
     vmax = np.percentile(img[combined_mask], upper_percentile)
 
-    return {"vmin": vmin, "vmax": vmax}
+    return vmin, vmax
