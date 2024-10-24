@@ -1,0 +1,35 @@
+subject_id,color,hemi,comment
+CAP01,red,both,chipped cerebellum and cortex
+CAP02,red,both ,dark tiles & a few labelled cells
+CAP03,green,both,looks ok
+CAP04,green,both ,looks ok
+CAP05,red,both,left cortical damage & some labelled cells
+CAP08,green,both ,missing tiles & some labelled neurons
+CAP09,red,both,labelled cells in the cerebellum & SNR not great
+CAP11,red,both ,missing tiles
+CAP12,red,both,missing tiles & some labelled cells
+CAP14,green,both ,few missing tiles
+CAP18,green,both,missing tiles & chipped cortex
+CAP22,red,both ,missing tiles
+CAP24,red,both,chipped cerebellum & missing tiles & few labelled cells
+CAP25,red,both ,chipped cortex & mangled OB
+CAP26,red,both,bands of different brightness
+CAP27,red,both ,missing tiles & bleedthrough
+CAP28,green,both,labelled cells in the cerebellum
+CAP29,red,none,very poor SNR & one hemisphere darker
+CAP30,red,both,bands of different brightness
+CAP31,red,both,chipped cerebellum & one very bright spot
+CAP32,red,both,maybe a few missing slices otherwise OK
+CAP33,red,both,looks very good
+CAP34,red,both,few missing tiles but looks ok
+CAP35,red,both,chipped brainstem & fully present OB
+CAP38,green,none,extensive cortex damage and deformations
+CAP40,red,left,right cortex is severely damaged
+CAP42,green,none,cortex is damaged from recording & frontal pole missing
+CAP43,red,both,some cortical damage & missing slices
+CAP44,green,both,few dark tiles & some cortical damage
+CAP45,red,both,cortical damage
+CAP48,red,both,image is a bit dark
+CAP49,green,both,chipped cortex
+CAP50,green,both,damaged cerebellum and cortex
+CAP54,green,both,little cerebellar damage but otherwise ok

@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+from typing import Literal
 
 import nibabel as nib
 import numpy as np
@@ -7,7 +9,11 @@ from brainglobe_utils.IO.image.load import load_any
 from brainglobe_utils.IO.image.save import to_tiff
 
 
-def get_unique_folder_in_dir(search_dir: Path, search_str: str) -> Path:
+def get_unique_folder_in_dir(
+    search_dir: Path,
+    search_str: str,
+    str_position: Literal["start", "end"] | None = None,
+) -> Path:
     """
     Find a folder in a directory that contains a unique string.
 
@@ -17,6 +23,10 @@ def get_unique_folder_in_dir(search_dir: Path, search_str: str) -> Path:
         Directory to search in
     search_str : str
         String to search for in folder names
+    str_position: Literal["start", "end"] | None
+        If None (default), ``search_str`` can be anywhere in the folder name.
+        If "start", ``search_str`` must be at the start of the folder name.
+        If "end", ``search_str`` must be at the end of the folder name.
 
     Returns
     -------
@@ -25,6 +35,15 @@ def get_unique_folder_in_dir(search_dir: Path, search_str: str) -> Path:
     """
     all_folders = [x for x in search_dir.iterdir() if x.is_dir()]
     folders_with_str = [x for x in all_folders if search_str in x.name]
+    if str_position == "start":
+        folders_with_str = [
+            x for x in folders_with_str if x.name.startswith(search_str)
+        ]
+    elif str_position == "end":
+        folders_with_str = [
+            x for x in folders_with_str if x.name.endswith(search_str)
+        ]
+
     if len(folders_with_str) == 0:
         raise ValueError(f"No folders with {search_str} found")
     if len(folders_with_str) > 1:
@@ -196,3 +215,27 @@ def nifti_to_tiff(nifti_path: Path, tiff_path: Path):
     """
     stack = load_any(nifti_path.as_posix())
     to_tiff(stack, tiff_path.as_posix())
+
+
+def get_path_from_env_variable(env_var: str, default_path: str) -> Path:
+    """
+    Get a path from an environment variable, with a default fall-back path.
+
+    This could be useful for debugging a script locally - i.e. by setting
+    and environment variable on your machine, you can override the default
+    path used in the script (which might point to a shared cluster directory).
+
+    Parameters
+    ----------
+    env_var : str
+        The name of the environment variable to read, e.g. "ATLAS_FORGE_DIR"
+    default_path : str
+        The default path to use if the environment variable is not set,
+        e.g. "/ceph/neuroinformatics/neuroinformatics/atlas-forge"
+
+    Returns
+    -------
+    atlas_dir : Path
+        The path to the directory
+    """
+    return Path(os.getenv(env_var, default_path))
