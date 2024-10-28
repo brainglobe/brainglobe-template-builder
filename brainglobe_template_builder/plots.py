@@ -25,7 +25,7 @@ def plot_orthographic(
     img : np.ndarray
         Image volume to plot.
     anat_space : str, optional
-        Anatomical space of of the image volume according to the Brainglobe
+        Anatomical space of the image volume according to the Brainglobe
         definition (origin and order of axes), by default "ASR".
     show_slices : tuple, optional
         Which slice to show per dimension. If None (default), show the middle
@@ -99,23 +99,24 @@ def plot_grid(
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot image volume as a grid of slices along a given anatomical section.
 
-    Image contrast is auto-adjusted to 1-99% of range unless `vmin` and `vmax` are specified
-    as keyword arguments.
+    Image contrast is auto-adjusted to 1-99% of range unless `vmin` and `vmax`
+    are specified as keyword arguments.
 
     Parameters
     ----------
     img : np.ndarray
         Image volume to plot.
     anat_space : str, optional
-        Anatomical space of of the image volume according to the Brainglobe
+        Anatomical space of the image volume according to the Brainglobe
         definition (origin and order of axes), by default "ASR".
     section : str, optional
         Section to show, must be one of "frontal", "horizontal", or "sagittal",
         by default "frontal".
     n_slices : int, optional
         Number of slices to show, by default 12. Slices will be evenly spaced,
-        starting from the first and ending with the last slice. If a higher value
-        than the number of slices in the image is chosen, all slices are shown.
+        starting from the first and ending with the last slice. If a higher
+        value than the number of slices in the image is chosen, all slices
+        are shown.
     save_path : Path, optional
         Path to save the plot, by default None (no saving).
     **kwargs
