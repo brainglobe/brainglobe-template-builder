@@ -55,6 +55,7 @@ def plot_orthographic(
         slices_list = list(show_slices)
 
     # Pad the image with zeros to make it cubic
+    # so projections along different axes have the same size
     img, pad_sizes = _pad_with_zeros(img, target=max(img.shape))
     slices_list = [s + pad_sizes[i] for i, s in enumerate(slices_list)]
 
@@ -97,6 +98,9 @@ def plot_grid(
     **kwargs,
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot image volume as a grid of slices along a given anatomical section.
+    
+    Image contrast is auto-adjusted to 1-99% of range unless `vmin` and `vmax` are specified 
+    as keyword arguments.
 
     Parameters
     ----------
@@ -110,7 +114,8 @@ def plot_grid(
         by default "frontal".
     n_slices : int, optional
         Number of slices to show, by default 12. Slices will be evenly spaced,
-        starting from the first and ending with the last slice.
+        starting from the first and ending with the last slice. If a higher value
+        than the number of slices in the image is chosen, all slices are shown.
     save_path : Path, optional
         Path to save the plot, by default None (no saving).
     **kwargs
