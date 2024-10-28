@@ -98,8 +98,8 @@ def plot_grid(
     **kwargs,
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot image volume as a grid of slices along a given anatomical section.
-    
-    Image contrast is auto-adjusted to 1-99% of range unless `vmin` and `vmax` are specified 
+
+    Image contrast is auto-adjusted to 1-99% of range unless `vmin` and `vmax` are specified
     as keyword arguments.
 
     Parameters
