@@ -99,8 +99,8 @@ def plot_grid(
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot image volume as a grid of slices along a given anatomical section.
 
-    Image contrast is auto-adjusted to 1-99% of range unless `vmin` and `vmax`
-    are specified as keyword arguments.
+    Image contrast is auto-adjusted to 1-99% of range unless overridden by
+    ``vmin`` and ``vmax`` passed as keyword arguments.
 
     Parameters
     ----------
@@ -247,10 +247,11 @@ def _set_imshow_defaults(img: np.ndarray, kwargs: dict) -> dict:
 
     These apply only if the user does not provide them explicitly.
     """
-    if "vmin" not in kwargs and "vmax" not in kwargs:
-        vmin, vmax = _auto_adjust_contrast(img)
-        kwargs.setdefault("vmin", vmin)
-        kwargs.setdefault("vmax", vmax)
+    missing_keys = [key for key in ("vmin", "vmax") if key not in kwargs]
+    if missing_keys:
+        defaults = _auto_adjust_contrast(img)
+        for key in missing_keys:
+            kwargs.setdefault(key, defaults[key])
 
     kwargs.setdefault("cmap", "gray")
     kwargs.setdefault("aspect", "equal")
@@ -312,15 +313,20 @@ def _pad_with_zeros(
     return padded_img, tuple(pad_sizes)
 
 
-def _auto_adjust_contrast(img, lower_percentile=1, upper_percentile=99):
-    """Adjust contrast of an image using percentile-based scaling."""
+def _auto_adjust_contrast(img: np.ndarray) -> dict:
+    """Adjust contrast of an image using percentile-based scaling.
+
+    Uses the 1-99% range of the image intensity values to set vmin and vmax."""
     # Mask near-zero voxels to exclude background
     if np.issubdtype(img.dtype, np.integer):
         background_threshold = 1
     else:
         background_threshold = np.finfo(img.dtype).eps
-
     brain_mask = img > background_threshold
+
+    # Hard-coded percentiles for default contrast adjustment
+    lower_percentile = 1
+    upper_percentile = 99
 
     # Exclude bright artifacts
     vmax = np.percentile(img[brain_mask], upper_percentile)
@@ -331,4 +337,4 @@ def _auto_adjust_contrast(img, lower_percentile=1, upper_percentile=99):
     vmin = np.percentile(img[combined_mask], lower_percentile)
     vmax = np.percentile(img[combined_mask], upper_percentile)
 
-    return vmin, vmax
+    return {"vmin": vmin, "vmax": vmax}
