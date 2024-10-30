@@ -1,21 +1,17 @@
 atlas_forge_dir: "/media/ceph-niu/neuroinformatics/atlas-forge"
 species: "BlackCap"
-template_name: "template_sym_res-25um_n-18_average-trimean"
-resolution_um: 25
+template_name: "template_sym_res-50um_n-18_average-trimean"
+resolution_um: 50
 transform_types: ["rigid", "similarity", "affine", "nlin"]
 num_iterations: 4
 
 # Slice indices are for NiFTI images as output by ANTs
 # Order: sagittal, coronal, axial
-show_slices: [256, 184, 252] # coronal, transverse, sagittal
-# The offset is necessary to translate the above indices
-# to the packaged reference space, becasue of the padding
-# added during post-processing.
-# This offset is only used for printing slide indices in plots
-slice_label_offset: 6
+show_slices: [128, 92, 122] # coronal, transverse, sagittal
 
 vmin_percentile: 1
 vmax_percentile: 99.9
+mip_attenuation: 0.02
 animation_fps: [1, 2, 4, 8]
 use4template_dir_suffix: "orig-asr_N4_aligned_padded_use4template"
 example_subjects: ["sub-BC41o", "sub-BC63", "sub-BC71"]

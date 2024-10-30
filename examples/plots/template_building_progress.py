@@ -26,7 +26,7 @@ current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 # Load matplotlib parameters (to allow for proper font export)
 plt.style.use(current_dir / "plots.mplstyle")
 # Load config file containing template building parameters
-config = load_config(current_dir / "config.yaml")
+config = load_config(current_dir / "config_25um.yaml")
 
 # Setup directories based on config file
 atlas_dir, template_dir, plots_dir = setup_directories(config)

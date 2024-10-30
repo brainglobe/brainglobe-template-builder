@@ -24,7 +24,7 @@ current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 # Load matplotlib parameters (to allow for proper font export)
 plt.style.use(current_dir / "plots.mplstyle")
 # Load config file containing template building parameters
-config = load_config(current_dir / "config.yaml")
+config = load_config(current_dir / "config_25um.yaml")
 
 # Setup directories based on config file
 atlas_dir, template_dir, plots_dir = setup_directories(config)
@@ -97,9 +97,9 @@ template_img, pad_sizes = pad_with_zeros(template_img, target=target_size)
 # Plot the final template in orthographic view
 fig, axs = plot_orthographic(
     template_img,
-    config["show_slices"],
-    slice_label_offset=config["slice_label_offset"],
+    show_slices=config["show_slices"],
     pad_sizes=pad_sizes,
+    mip_attenuation=config["mip_attenuation"],
     save_path=plots_dir / "final_template_orthographic",
 )
 print("Plotted final template in orthographic view")
@@ -112,9 +112,11 @@ for example_subject in config["example_subjects"]:
 
     fig, axs = plot_orthographic(
         subject_img,
-        config["show_slices"],
-        slice_label_offset=config["slice_label_offset"],
+        show_slices=config["show_slices"],
         pad_sizes=pad_sizes,
+        mip_attenuation=config["mip_attenuation"],
         save_path=plots_dir / f"{example_subject}_orthographic",
     )
 print("Plotted example subjects in orthographic view")
+
+# %%
