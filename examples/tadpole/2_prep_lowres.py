@@ -1,5 +1,5 @@
 """
-Prepare low-resolution BlackCap images for template construction
+Prepare low-resolution tadpole images for template construction
 ================================================================
 The ``brainglobe-template-builder`` Preprocess widget was used to perform
 the following operations on each subject's low-resolution image, ahead of
