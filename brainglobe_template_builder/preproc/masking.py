@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Callable, Literal, Union
 
 import numpy as np
 from skimage import filters, measure, morphology
@@ -44,7 +44,7 @@ def _threshold_image(
         A binary mask.
     """
 
-    method_to_func = {
+    method_to_func: dict[str, Callable] = {
         "triangle": filters.threshold_triangle,
         "otsu": filters.threshold_otsu,
         "isodata": filters.threshold_isodata,

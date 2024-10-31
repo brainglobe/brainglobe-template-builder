@@ -118,7 +118,7 @@ def downsample_anisotropic_image_stack(
 
     # we have xy slices as chunks, so apply downscaling in xy first
     downsampled_inplane = stack.map_blocks(
-        transform.downscale_local_mean,
+        transform.downscale_local_mean,  # type: ignore
         (1, in_plane_factor, in_plane_factor),
         dtype=np.float64,
     )

@@ -2,7 +2,7 @@ import numpy as np
 
 
 def crop_to_mask(
-    stack: np.ndarray, mask: np.ndarray, padding: np.uint8 = 0
+    stack: np.ndarray, mask: np.ndarray, padding: np.uint8 = np.uint8(0)
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Crop stack and mask to the mask extent, and pad with zeros.
