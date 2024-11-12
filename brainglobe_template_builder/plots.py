@@ -268,6 +268,69 @@ def plot_orthographic(
     return fig, axs
 
 
+def plot_inset_comparison(
+    img1: tuple[str, np.ndarray],
+    img2: tuple[str, np.ndarray],
+    z: int,
+    y_min: int,
+    x_min: int,
+    size: int,
+    save_path: Path | None = None,
+):
+    """Plot the same inset from two images side by side.
+
+    A 2D square inset is extracted from the specified z-slice of each image
+    and displayed side by side. The inset extents are
+    ``(y_min, y_min + size, x_min, x_min + size)``. The axis
+    order is assumed to be (z, y, x) in ASR orientation.
+
+    Parameters
+    ----------
+    img1 : tuple[str, np.ndarray]
+        Tuple containing the image name and 3D image data for the first image.
+    img2 : tuple[str, np.ndarray]
+        Tuple containing the image name and 3D image data for the second image.
+    z : int
+        Index of the z-slice to extract the inset from.
+    y_min : int
+        Minimum y-coordinate of the inset.
+    x_min : int
+        Minimum x-coordinate of the inset.
+    size : int
+        Size of the square inset to extract in pixels.
+        (same in y and x dimensions).
+    save_path : Path, optional
+        Path to save the figure, by default None.
+
+    Returns
+    -------
+    tuple
+        Figure and axes objects.
+    """
+    fig, axs = plt.subplots(1, 2, figsize=(7, 4))
+
+    for i, img_tuple in enumerate([img1, img2]):
+        name, img = img_tuple
+        img_inset = _extract_inset(img, z, y_min, x_min, size)
+        ax = axs[i]
+
+        vmin, vmax = np.percentile(img, (1, 99.9))
+        ax.imshow(
+            img_inset,
+            cmap="gray",
+            aspect="equal",
+            vmin=vmin,
+            vmax=vmax,
+        )
+        ax.axis("off")
+        ax.set_title(name)
+
+    fig.tight_layout()
+    if save_path:
+        save_figure(fig, save_path.parent, save_path.name.split(".")[0])
+    return fig, axs
+
+
 def _compute_attenuated_mip(
     img: np.ndarray, axis: int, attenuation_factor: float
 ) -> tuple[np.ndarray, str]:
@@ -336,3 +399,27 @@ def _clear_spines_and_ticks(ax: plt.Axes) -> plt.Axes:
     for spine in ax.spines.values():
         spine.set_visible(False)
     return ax
+
+
+def _extract_inset(
+    img: np.ndarray, z: int, y_min: int, x_min: int, size: int
+) -> np.ndarray:
+    """Extract a 2D square inset from a 3D image.
+
+    Axis order is assumed to be (z, y, x) in ASR orientation and
+    indices are expected to be given in pixel units.
+
+    Parameters
+    ----------
+    img : np.ndarray
+        3D image from which to extract the inset.
+    z : int
+        Index of the z-slice to extract the inset from.
+    y_min : int
+        Minimum y-coordinate of the inset.
+    x_min : int
+        Minimum x-coordinate of the inset.
+    size : int
+        Size of the square inset to extract in pixels.
+        (same in y and x dimensions)."""
+    return img[z, y_min : y_min + size, x_min : x_min + size]

@@ -12,6 +12,7 @@ from brainglobe_template_builder.plots import (
     collect_use4template_dirs,
     load_config,
     pad_with_zeros,
+    plot_inset_comparison,
     plot_orthographic,
     plot_slices_single_column,
     plot_slices_single_row,
@@ -104,8 +105,8 @@ fig, axs = plot_orthographic(
 )
 print("Plotted final template in orthographic view")
 
-# Plot an example subjects in orthographic view
 for example_subject in config["example_subjects"]:
+    # Plot an example subjects in orthographic view
     subject_path = asym_inputs_paths[example_subject]
     subject_img = load_nii(subject_path, as_array=True, as_numpy=True)
     subject_img, _ = pad_with_zeros(subject_img, target=target_size)
@@ -117,6 +118,18 @@ for example_subject in config["example_subjects"]:
         mip_attenuation=config["mip_attenuation"],
         save_path=plots_dir / f"{example_subject}_orthographic",
     )
-print("Plotted example subjects in orthographic view")
+    print(f"Plotted {example_subject} in orthographic view")
+
+    # Plot inset comparison between the final template and example subject
+    inset_params = config["insets"]
+    for inset_name, inset_param in inset_params.items():
+        plot_file_name = f"{example_subject}_vs_template_inset-{inset_name}"
+        plot_inset_comparison(
+            img1=(example_subject, subject_img),
+            img2=("template", template_img),
+            **inset_param,
+            save_path=plots_dir / plot_file_name,
+        )
+    print(f"Plotted inset comparison between {example_subject} and template")
 
 # %%
