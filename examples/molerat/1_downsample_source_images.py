@@ -8,6 +8,8 @@ from brainglobe_utils.IO.image import load_any, save_any
 from loguru import logger
 from skimage import transform
 
+from brainglobe_template_builder.plots import plot_grid, plot_orthographic
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Downsample source images")
     parser.add_argument(
@@ -75,7 +77,7 @@ if __name__ == "__main__":
         rawdata_filename = (
             f"sub-{subject_id}_"
             f"hemi-{hemisphere}_"
-            f"res-{target_isotropic_resolution}.tif"
+            f"res-{target_isotropic_resolution}um.tif"
         )
 
         # we can't use our usual transform utils function here,
@@ -88,14 +90,36 @@ if __name__ == "__main__":
             sample["image_orientation"] == "RPI"
         ), "Image orientation is not RPI"
         stack = load_any(str(source_file))
+        # Find the last few slices of stack that contain all zeros
+        zero_slices = 0
+        for i in range(stack.shape[0] - 1, -1, -1):
+            if np.all(stack[i] == 0):
+                zero_slices += 1
+            else:
+                break
+        if zero_slices:
+            logger.info(f"Last zero slices: {zero_slices}")
+            stack = stack[: stack.shape[0] - zero_slices, :, :]
+
+        # mirror BEFORE downsampling
+        # (because otherwise midline gets blurred by zeros!)
+        stack = np.concatenate((stack, np.flip(stack, axis=0)), axis=0)
         downsampled = transform.downscale_local_mean(
             stack, (axial_factor, in_plane_factor, in_plane_factor)
-        )
-        downsampled = np.concatenate(
-            (downsampled, np.flip(downsampled, axis=0)), axis=0
         )
         original_space = AnatomicalSpace("RPI")
         downsampled = original_space.map_stack_to("ASR", downsampled)
         save_any(downsampled, subject_folder / rawdata_filename)
 
+        plots_folder = (
+            Path.home() / "dev/brainglobe-template-builder/test-images/"
+        )
+        plot_grid(
+            downsampled,
+            save_path=plots_folder / f"grid-{rawdata_filename}.png",
+        )
+        plot_orthographic(
+            downsampled,
+            save_path=plots_folder / f"ortho-{rawdata_filename}.png",
+        )
         logger.info(f"{rawdata_filename} downsampled.")
