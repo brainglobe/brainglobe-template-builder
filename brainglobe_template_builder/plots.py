@@ -307,7 +307,7 @@ def plot_inset_comparison(
     tuple
         Figure and axes objects.
     """
-    fig, axs = plt.subplots(1, 2, figsize=(7, 4))
+    fig, axs = plt.subplots(1, 2, figsize=(6, 3))
 
     for i, img_tuple in enumerate([img1, img2]):
         name, img = img_tuple

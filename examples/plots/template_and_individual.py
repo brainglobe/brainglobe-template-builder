@@ -131,5 +131,3 @@ for example_subject in config["example_subjects"]:
             save_path=plots_dir / plot_file_name,
         )
     print(f"Plotted inset comparison between {example_subject} and template")
-
-# %%

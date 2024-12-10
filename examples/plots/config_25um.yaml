@@ -14,10 +14,15 @@ insets:
     y_min: 260
     x_min: 60
     size: 160
-  nidopallium:
+  entopallium:
     z: 240
     y_min: 180
     x_min: 0
+    size: 160
+  midline:
+    z: 204
+    y_min: 90
+    x_min: 178
     size: 160
   injection:
     z: 274
