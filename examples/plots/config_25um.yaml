@@ -7,7 +7,7 @@ num_iterations: 4
 
 # All indices are for NiFTI images as output by ANTs
 # Assumes orientation is ASR
-show_slices: [256, 184, 244]
+show_slices: [256, 184, 256]
 insets:
   tectum:
     z: 296
