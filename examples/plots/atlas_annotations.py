@@ -108,7 +108,7 @@ ref_slices = [reference_img.take(s, axis=0) for s in slices]
 height, width = ref_slices[0].shape
 fig_width = width / 100
 fig_height = height / 100 * n_slices
-fig, ax = plt.subplots(n_slices, 1, figsize=(fig_width, fig_height))
+fig, axs = plt.subplots(n_slices, 1, figsize=(fig_width, fig_height))
 
 ann_slices = [atlas_overlay.take(s, axis=0) for s in slices]
 for ann_slice in ann_slices:
@@ -116,7 +116,8 @@ for ann_slice in ann_slices:
 
 for i in range(n_slices):
     ref_frame = ref_slices[i]
-    ax[i].imshow(
+    ax = axs if n_slices == 1 else axs[i]
+    ax.imshow(
         ref_frame,
         cmap="gray",
         vmin=np.percentile(ref_frame, 1),
@@ -124,13 +125,13 @@ for i in range(n_slices):
     )
 
     ann_frame = ann_slices[i]
-    ax[i].imshow(
+    ax.imshow(
         ann_frame,
         cmap=atlas_cmap,
         norm=atlas_cmap_norm,
         interpolation="nearest",
     )
-    ax[i].axis("off")
+    ax.axis("off")
 
 fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0, hspace=0)
 save_figure(fig, save_dir, "annotations_overlaid_on_reference")
