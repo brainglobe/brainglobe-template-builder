@@ -115,7 +115,7 @@ We are always happy to help users of our tools, and welcome any contributions. I
 
 If you find the BrainGlobe Template Builder useful, please cite it in your work:
 
->Niko Sirmpilatze, Alessandro Felder, Igor Tatarnikov, viktorpm, & Adam Tyson. (2025). brainglobe/brainglobe-template-builder: v0.0.13 (v0.0.13). Zenodo. https://doi.org/10.5281/zenodo.14608574
+>Niko Sirmpilatze, Alessandro Felder, Igor Tatarnikov, viktorpm, & Adam Tyson. (2025). brainglobe/brainglobe-template-builder, Zenodo. https://doi.org/10.5281/zenodo.14608573
 
 ## License
 ⚖️ [BSD 3-Clause](https://opensource.org/license/bsd-3-clause/)
