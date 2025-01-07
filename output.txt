@@ -1,4 +1,3 @@
 index.rst:1: [redirected permanently] https://codecov.io/gh/brainglobe/brainglobe-template-builder to https://app.codecov.io/gh/brainglobe/brainglobe-template-builder
 index.rst:1: [redirected permanently] https://github.com/charliermarsh/ruff to https://github.com/astral-sh/ruff
 index.rst:1: [redirected permanently] https://github.com/python/black to https://github.com/psf/black
-index.rst:1: [redirected permanently] https://opensource.org/licenses/BSD-3-Clause to https://opensource.org/license/bsd-3-clause/
