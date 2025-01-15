@@ -29,7 +29,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     atlas_forge_molerat_path = Path(
-        "/media/ceph-neuroinformatics/neuroinformatics/atlas-forge/MoleRat/"
+        "/media/ceph/neuroinformatics/neuroinformatics/atlas-forge/MoleRat/"
     )
     source_data = (
         atlas_forge_molerat_path
@@ -64,9 +64,6 @@ if __name__ == "__main__":
                 f"Unexpected slice direction {original_slice_direction}"
             )
         assert source_file.exists(), f"File {source_file} not found"
-        if sample["comments"] != "good":
-            logger.info(f"Skipping {source_file.name} for now")
-            continue
 
         subject_id = sample["subject_id"]
         hemisphere = sample["hemisphere"]
@@ -83,13 +80,16 @@ if __name__ == "__main__":
         # we can't use our usual transform utils function here,
         # because it's not a dask array,
         # and we additionally need to mirror and reorient the stack to ASR
-        assert sample[
-            "looks_like_right_hemisphere"
-        ], f"TODO: flip sample {source_file}"
         assert (
             sample["image_orientation"] == "RPI"
         ), "Image orientation is not RPI"
         stack = load_any(str(source_file))
+
+        if sample["looks_like_right_hemisphere"] == "no":
+            logger.info(
+                f"Flipping left hemisphere to right for {str(source_file)}"
+            )
+            stack = np.flip(stack, axis=0)
         # Find the last few slices of stack that contain all zeros
         zero_slices = 0
         for i in range(stack.shape[0] - 1, -1, -1):

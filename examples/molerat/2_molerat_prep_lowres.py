@@ -26,6 +26,7 @@ from brainglobe_template_builder.io import (
 )
 from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.splitting import (
+    get_right_and_left_slices,
     save_array_dict_to_nii,
 )
 
@@ -43,7 +44,7 @@ res_str = f"res-{lowres}um"
 vox_sizes = [lowres * 1e-3] * 3  # in mm
 
 # Prepare directory structure
-atlas_dir = Path("/media/ceph-neuroinformatics/neuroinformatics/atlas-forge")
+atlas_dir = Path("/media/ceph/neuroinformatics/neuroinformatics/atlas-forge")
 species_id = "MoleRat"
 species_dir = atlas_dir / species_id
 raw_dir = species_dir / "rawdata"
@@ -137,12 +138,22 @@ for raw_subj_dir in raw_dir.iterdir():
             file.unlink()
     use4template_dir.mkdir(exist_ok=True)
 
+    image_n4 = image_n4.numpy()
+    mask = mask.numpy()
+    right_hemi_slices, _ = get_right_and_left_slices(image_n4)
+
     array_dict = {
         f"{use4template_dir}/{file_prefix}_sym-brain": np.pad(
-            image_n4.numpy(), pad_width=2, mode="constant"
+            image_n4, pad_width=2, mode="constant"
         ),
         f"{use4template_dir}/{file_prefix}_sym-mask": np.pad(
-            mask.numpy(), pad_width=2, mode="constant"
+            mask, pad_width=2, mode="constant"
+        ),
+        f"{use4template_dir}/{file_prefix}_right-hemi-brain": np.pad(
+            image_n4[right_hemi_slices], pad_width=2, mode="constant"
+        ),
+        f"{use4template_dir}/{file_prefix}_right-hemi-mask": np.pad(
+            mask[right_hemi_slices], pad_width=2, mode="constant"
         ),
     }
     save_array_dict_to_nii(array_dict, use4template_dir, vox_sizes)
@@ -170,12 +181,17 @@ for raw_subj_dir in raw_dir.iterdir():
 filepath_lists: dict[str, list] = {
     "sym-brain": [],
     "sym-mask": [],
+    "hemi-brain": [],
+    "hemi-mask": [],
 }
 
 for subject, use4template_dir in use4template_dirs.items():
     for label in ["brain", "mask"]:
         filepath_lists[f"sym-{label}"].append(
             use4template_dir / f"{subject}_sym-{label}.nii.gz"
+        )
+        filepath_lists[f"hemi-{label}"].append(
+            use4template_dir / f"{subject}_right-hemi-{label}.nii.gz"
         )
 
 # %%
