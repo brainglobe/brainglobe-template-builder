@@ -25,7 +25,7 @@ current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 # Load matplotlib parameters (to allow for proper font export)
 plt.style.use(current_dir / "plots.mplstyle")
 # Load config file containing template building parameters
-config = load_config(current_dir / "config_25um.yaml")
+config = load_config(current_dir / "config_50um.yaml")
 
 # Setup directories based on config file
 atlas_dir, template_dir, plots_dir = setup_directories(config)
@@ -101,6 +101,8 @@ fig, axs = plot_orthographic(
     show_slices=config["show_slices"],
     pad_sizes=pad_sizes,
     mip_attenuation=config["mip_attenuation"],
+    scale_bar=True,
+    resolution=config["resolution_um"] * 1e-3,  # convert to mm
     save_path=plots_dir / "final_template_orthographic",
 )
 print("Plotted final template in orthographic view")
@@ -116,6 +118,8 @@ for example_subject in config["example_subjects"]:
         show_slices=config["show_slices"],
         pad_sizes=pad_sizes,
         mip_attenuation=config["mip_attenuation"],
+        scale_bar=True,
+        resolution=config["resolution_um"] * 1e-3,  # convert to mm
         save_path=plots_dir / f"{example_subject}_orthographic",
     )
     print(f"Plotted {example_subject} in orthographic view")
@@ -129,5 +133,7 @@ for example_subject in config["example_subjects"]:
             img2=("template", template_img),
             **inset_param,
             save_path=plots_dir / plot_file_name,
+            scale_bar=True,
+            resolution=config["resolution_um"] * 1e-3,  # convert to mm
         )
     print(f"Plotted inset comparison between {example_subject} and template")

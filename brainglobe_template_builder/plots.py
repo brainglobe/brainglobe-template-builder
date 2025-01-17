@@ -215,6 +215,8 @@ def plot_orthographic(
     show_slices: list[int] | None = None,
     pad_sizes: list[tuple[int, int]] | None = None,
     mip_attenuation: float = 0.01,
+    scale_bar: bool = False,
+    resolution: float = 0.025,
     save_path: Path | None = None,
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot orthographic views of a 3D image,
@@ -258,6 +260,29 @@ def plot_orthographic(
             ax.axhline(slice_idxs[h], color="r", linestyle="--", alpha=0.5)
             ax.axvline(slice_idxs[v], color="r", linestyle="--", alpha=0.5)
 
+        # Add scale bar equal to 1mm to each view
+        if scale_bar:
+            bar_length = 1 / resolution
+            bar_x = frames[j].shape[1] - bar_length - 20
+            bar_y = frames[j].shape[0] - 10
+            ax.plot(
+                [bar_x, bar_x + bar_length],
+                [bar_y, bar_y],
+                color="w",
+                linewidth=2,
+                clip_on=False,
+            )
+            # Add the text on if it's the top view
+            if j == 3:
+                ax.text(
+                    bar_x + bar_length / 2,
+                    bar_y - 5,
+                    "1 mm",
+                    color="w",
+                    ha="center",
+                    va="bottom",
+                )
+
         ax = _clear_spines_and_ticks(ax)
 
     fig.subplots_adjust(
@@ -275,6 +300,8 @@ def plot_inset_comparison(
     y_min: int,
     x_min: int,
     size: int,
+    scale_bar: bool = False,
+    resolution: float = 0.025,
     save_path: Path | None = None,
 ):
     """Plot the same inset from two images side by side.
@@ -324,6 +351,27 @@ def plot_inset_comparison(
         )
         ax.axis("off")
         ax.set_title(name)
+
+        if scale_bar:
+            bar_length = 1 / resolution
+            bar_x = img_inset.shape[1] - bar_length - 5
+            bar_y = img_inset.shape[0] - 5
+            ax.plot(
+                [bar_x, bar_x + bar_length],
+                [bar_y, bar_y],
+                color="w",
+                linewidth=2,
+                clip_on=False,
+            )
+            if i == 1:  # Add the text on the second image only
+                ax.text(
+                    bar_x + bar_length / 2,
+                    bar_y - 2.5,
+                    "1 mm",
+                    color="w",
+                    ha="center",
+                    va="bottom",
+                )
 
     fig.tight_layout()
     if save_path:
