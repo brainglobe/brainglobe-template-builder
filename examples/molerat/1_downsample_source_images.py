@@ -31,10 +31,7 @@ if __name__ == "__main__":
     atlas_forge_molerat_path = Path(
         "/media/ceph/neuroinformatics/neuroinformatics/atlas-forge/MoleRat/"
     )
-    source_data = (
-        atlas_forge_molerat_path
-        / "Mole-rat brain atlas (Fukomys anselli)_MalkemperLab"
-    )
+    source_data = atlas_forge_molerat_path / "new_d06"
     source_info_file = atlas_forge_molerat_path / "molerat_brains_info_PM.csv"
 
     template_building_root = Path(args.template_building_root)
@@ -52,6 +49,8 @@ if __name__ == "__main__":
     logger.info(f"Loaded source info with {len(source_info)} entries.")
     counter = 0
     for _, sample in source_info.iterrows():
+        if sample["comments"] != "restitched":
+            continue
         original_slice_direction = sample["original_slice_direction"]
         if original_slice_direction == "horizontal":
             source_file = (
@@ -104,9 +103,13 @@ if __name__ == "__main__":
         # mirror BEFORE downsampling
         # (because otherwise midline gets blurred by zeros!)
         stack = np.concatenate((stack, np.flip(stack, axis=0)), axis=0)
-        downsampled = transform.downscale_local_mean(
-            stack, (axial_factor, in_plane_factor, in_plane_factor)
-        )
+        if target_isotropic_resolution != 20:
+            downsampled = transform.downscale_local_mean(
+                stack, (axial_factor, in_plane_factor, in_plane_factor)
+            )
+        else:
+            logger.info("No downsampling needed!")
+            downsampled = stack
         original_space = AnatomicalSpace("RPI")
         downsampled = original_space.map_stack_to("ASR", downsampled)
         save_any(downsampled, subject_folder / rawdata_filename)
