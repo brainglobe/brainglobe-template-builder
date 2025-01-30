@@ -7,6 +7,10 @@ from brainglobe_template_builder.preproc.transform_utils import downsample_aniso
 from brainglobe_utils.IO.image import load_any, save_any
 from dask import array as da
 
+from image_preprocessor import load_images
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Download source image')
     parser.add_argument(
@@ -54,10 +58,10 @@ if __name__ == '__main__':
             f"um_channel-{channel}.tif"
         )
         assert Path(sample_folder).exists(), f"{sample_folder} not found"
-        original_file_path = Path(sample_folder) / f"{sample_id}_overview-Airyscan-Processing-0{sample_id[-1]}_C1.tif"
+        original_file_path = Path(sample_folder) / f"{sample_id}_overview-Airyscan-Processing-0{sample_id[-1]}.czi"
         assert Path(original_file_path).exists(), f"Filepath {original_file_path} not found"
-        original_image = load_any(original_file_path)
-        original_image_dask = da.from_array(original_image,chunks={0: 1, 1: -1, 2: -1})
-        down_sampled_image = downsample_anisotropic_image_stack(original_image_dask,in_plane_factor,axial_factor)
+        czi_array_channel_1 = load_images(original_file_path,file_type='czi',channel=1)
+        channel_1_image_dask = da.from_array(czi_array_channel_1,chunks={0: 1, 1: -1, 2: -1})
+        down_sampled_image = downsample_anisotropic_image_stack(channel_1_image_dask,in_plane_factor,axial_factor)
         save_any(down_sampled_image,template_raw_data/sample_filename)
         logger.info(f"{sample_filename} downsampled.")
