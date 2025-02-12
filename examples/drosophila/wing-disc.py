@@ -3,7 +3,7 @@ from pathlib import Path
 
 from brainglobe_utils.IO.image import save_any
 from dask import array as da
-from image_preprocessor import load_images
+from brainglobe_template_builder.preproc.load_wingdisc import load_images
 from loguru import logger
 
 from brainglobe_template_builder.preproc.transform_utils import (

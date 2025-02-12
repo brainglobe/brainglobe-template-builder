@@ -3,6 +3,7 @@ import bioio_czi
 from pathlib import Path
 import bioio_sldy
 import numpy as np
+import tifffile as tiff
 
 def load_images(path:Path,file_type:str,channel:int):
     if file_type == 'czi':
