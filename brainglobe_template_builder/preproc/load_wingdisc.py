@@ -5,13 +5,15 @@ import bioio_sldy
 import numpy as np
 import tifffile as tiff
 
-def load_images(path:Path,file_type:str,channel:int):
+def load_images(path:Path,file_type:str):
     if file_type == 'czi':
         array = BioImage(path, reader=bioio_czi.Reader)
-        channel_array = array.get_image_data("ZYX", T=0, C=channel) # will only read channel 1 into memory
+        channel_array = array.get_image_data("ZYX", T=0) # will only read channel 1 into memory
     elif file_type == 'sldy':
         array = BioImage(path, reader=bioio_sldy.Reader)
-        channel_array = array.get_image_data("ZYX", T=0, C=channel)
+        channel_array = array.get_image_data("ZYX", T=0)
+    elif file_type == 'tif':
+        channel_array = tiff.imread(path)
     else:
         print('File format not supported!')
     return channel_array
@@ -50,9 +52,10 @@ def load_channel_data(
     return bio_image.get_image_data("ZYX", T=0, C=channel)
 
 
-
+'''
 # Check the image dimensions
 original_file_path = Path('D:/UCL/Postgraduate_programme/wing_disc_imaging_data/wd2_overview-Airyscan-Processing-02/wd2_overview-Airyscan-Processing-02.czi')
 assert original_file_path.exists()
 czi_array = load_channel_data(original_file_path,image_format='czi',channel=1)
 print(czi_array.shape)
+'''
