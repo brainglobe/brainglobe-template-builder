@@ -1,6 +1,8 @@
 import argparse
+import ants
 from pathlib import Path
 import pandas as pd
+import numpy as np
 
 from brainglobe_utils.IO.image import save_any, load_any
 from dask import array as da
@@ -9,6 +11,15 @@ from loguru import logger
 
 from brainglobe_template_builder.preproc.transform_utils import (
     downsample_anisotropic_image_stack,
+)
+from brainglobe_template_builder.io import (
+    file_path_with_suffix,
+    save_as_asr_nii,
+)
+from brainglobe_template_builder.preproc.masking import create_mask
+from brainglobe_template_builder.preproc.splitting import (
+    generate_arrays_4template,
+    save_array_dict_to_nii,
 )
 
 if __name__ == "__main__":
@@ -85,7 +96,7 @@ if __name__ == "__main__":
         sample_id = str(sample_folder.name).split("_")[0].lower()
         channel = "membrane"
         downsampled_filename = (
-            f"sub-{sample_id}_res-{target_isotropic_resolution}"
+            f"{sample_id}_res-{target_isotropic_resolution}"
             f"um_channel-{channel}.tif"
         )
         assert Path(sample_folder).exists(), f"{sample_folder} not found"
@@ -107,11 +118,56 @@ if __name__ == "__main__":
             image_dask, in_plane_factor, axial_factor
         )
 
-        saving_path = template_raw_data / f'{source_data.name}'/ downsampled_filename.split('.')[0]
-        saving_path.mkdir(exist_ok=True, parents=True)
+        saving_folder = template_raw_data / f'{source_data.name}'/ downsampled_filename.split('.')[0]
+        saving_folder.mkdir(exist_ok=True, parents=True)
         assert Path(
-            saving_path
-        ).exists(), f"Filepath {saving_path} not found"
-        save_any(down_sampled_image, saving_path/downsampled_filename)
+            saving_folder
+        ).exists(), f"Filepath {saving_folder} not found"
+        saving_path = saving_folder / downsampled_filename
+        save_any(down_sampled_image, saving_path)
         logger.info(f"{sample_folder} downsampled, saved as {downsampled_filename}")
+
+        # Save the reoriented image as nifti
+        nii_path = file_path_with_suffix(saving_path, "_downsampled", new_ext=".nii.gz")
+        vox_sizes = [target_isotropic_resolution,] * 3
+        save_as_asr_nii(down_sampled_image, vox_sizes, nii_path)
+        logger.info(f"Saved downsampled image as {nii_path.name}.")
+
+        # Bias field correction (to homogenise intensities)
+        image_ants = ants.image_read(nii_path.as_posix())
+        image_n4 = ants.n4_bias_field_correction(image_ants)
+        image_n4_path = file_path_with_suffix(nii_path, "_N4")
+        ants.image_write(image_n4, image_n4_path.as_posix())
+        logger.info(
+            f"Created N4 bias field corrected image as {image_n4_path.name}."
+        )
+
+        mask_data = create_mask(
+            image_n4.numpy(),
+            gauss_sigma=5,
+            threshold_method="triangle",
+            closing_size=8,
+        )
+        mask_path = file_path_with_suffix(nii_path, "_N4_mask")
+        mask = image_n4.new_image_like(mask_data.astype(np.uint8))
+        ants.image_write(mask, mask_path.as_posix())
+        logger.debug(
+            f"Generated brain mask with shape: {mask.shape} "
+            f"and saved as {mask_path.name}."
+        )
+
+        # Plot the mask over the image to check
+        mask_plot_path = (
+                saving_folder / f"{sample_id}_downsampled_N4_mask-overlay.png"
+        )
+        ants.plot(
+            image_n4,
+            mask,
+            overlay_alpha=0.5,
+            axis=1,
+            title="Brain mask over image",
+            filename=mask_plot_path.as_posix(),
+        )
+        logger.debug("Plotted overlay to visually check mask.")
+
 
