@@ -1,0 +1,5 @@
+python examples/drosophila/wing-disc.py --source_data_root /d/UCL/Postgraduate_programme/wing_disc_imaging_data/startup_test --template_building_root /d/UCL/Postgraduate_programme/downsampled_imaging_data --target_isotropic_resolution 6
+Second test
+python examples/drosophila/wing-disc.py --source_data_root /d/UCL/Postgraduate_programme/wing_disc_imaging_data/2025.2.13_tests --template_building_root /d/UCL/Postgraduate_programme/downsampled_imaging_data --target_isotropic_resolution 1
+Third test with datacatlog
+python examples/drosophila/wing-disc.py --source_data_root /d/UCL/Postgraduate_programme/wing_disc_imaging_data/2025.2.13_tests --template_building_root /d/UCL/Postgraduate_programme/preprocessed_images --target_isotropic_resolution 1 --data_catalog /d/UCL/Postgraduate_programme/wing_disc_imaging_data/wing-disc_data-catalog.csv --dataset 2025.2.13_tests

@@ -86,7 +86,6 @@ if __name__ == "__main__":
     template_building_root = Path(args.template_building_root)
     target_isotropic_resolution = int(args.target_isotropic_resolution)
 
-
     in_plane_resolution = 0.55
     out_of_plane_resolution = 1
 
@@ -160,6 +159,7 @@ if __name__ == "__main__":
         save_as_asr_nii(down_sampled_image, vox_sizes, nii_path)
         logger.info(f"Saved downsampled image as {nii_path.name}.")
 
+        '''
         # Bias field correction (to homogenise intensities)
         image_ants = ants.image_read(nii_path.as_posix())
         image_n4 = ants.n4_bias_field_correction(image_ants)
@@ -168,15 +168,18 @@ if __name__ == "__main__":
         logger.info(
             f"Created N4 bias field corrected image as {image_n4_path.name}."
         )
+        '''
+
         # Generate the wingdisc mask
+        image_ants = ants.image_read(nii_path.as_posix())
         mask_data = create_mask(
-            image_n4.numpy(),
-            gauss_sigma=3,
+            image_ants.numpy(),
+            gauss_sigma=5,
             threshold_method="triangle",
             closing_size=5,
         )
-        mask_path = file_path_with_suffix(nii_path, "_N4_mask")
-        mask = image_n4.new_image_like(mask_data.astype(np.uint8))
+        mask_path = file_path_with_suffix(nii_path, "_mask")
+        mask = image_ants.new_image_like(mask_data.astype(np.uint8))
         ants.image_write(mask, mask_path.as_posix())
         logger.debug(
             f"Generated brain mask with shape: {mask.shape} "
@@ -185,10 +188,10 @@ if __name__ == "__main__":
 
         # Plot the mask over the image to check
         mask_plot_path = (
-                saving_folder / f"{sample_id}_downsampled_N4_mask-overlay.png"
+                saving_folder / f"{sample_id}_downsampled_mask-overlay.png"
         )
         ants.plot(
-            image_n4,
+            image_ants,
             mask,
             overlay_alpha=0.5,
             axis=1,
@@ -196,5 +199,7 @@ if __name__ == "__main__":
             filename=mask_plot_path.as_posix(),
         )
         logger.debug("Plotted overlay to visually check mask.")
+
+        # Split the image into 4 arrays
 
 
