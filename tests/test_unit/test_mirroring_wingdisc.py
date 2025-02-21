@@ -1,5 +1,6 @@
-from brainglobe_template_builder.preproc.mirroring_wingdisc import mirroring
 import numpy as np
+
+from brainglobe_template_builder.preproc.mirroring_wingdisc import mirroring
 
 
 def test_mirroring():

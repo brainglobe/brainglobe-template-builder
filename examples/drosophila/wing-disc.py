@@ -1,25 +1,20 @@
 import argparse
-import ants
 from pathlib import Path
-import pandas as pd
-import numpy as np
 
-from brainglobe_utils.IO.image import save_any, load_any
+import ants
+import numpy as np
+import pandas as pd
+from brainglobe_utils.IO.image import load_any, save_any
 from dask import array as da
-from brainglobe_template_builder.preproc.mirroring_wingdisc import mirroring
 from loguru import logger
 
-from brainglobe_template_builder.preproc.transform_utils import (
-    downsample_anisotropic_image_stack,
-)
 from brainglobe_template_builder.io import (
     file_path_with_suffix,
     save_as_asr_nii,
 )
 from brainglobe_template_builder.preproc.masking import create_mask
-from brainglobe_template_builder.preproc.splitting import (
-    generate_arrays_4template,
-    save_array_dict_to_nii,
+from brainglobe_template_builder.preproc.transform_utils import (
+    downsample_anisotropic_image_stack,
 )
 
 if __name__ == "__main__":
@@ -59,7 +54,7 @@ if __name__ == "__main__":
         required=True,
     )
 
-    '''
+    """
     parser.add_argument(
         "--binning",
         type=str,
@@ -78,7 +73,7 @@ if __name__ == "__main__":
         help="The camera exposure time specific for the data required",
         required=True,
     )
-    '''
+    """
 
     args = parser.parse_args()
 
@@ -95,22 +90,22 @@ if __name__ == "__main__":
     template_raw_data = template_building_root / "rawdata"
     template_raw_data.mkdir(exist_ok=True, parents=True)
 
-    #Load the data catalog from argument
+    # Load the data catalog from argument
     data_catalog_path = Path(args.data_catalog)
     data_catalog = pd.read_csv(data_catalog_path)
     dataset = args.dataset
 
-    #Specified the dataset to process
-    dataset_catalog = data_catalog[data_catalog['dataset'] == dataset]
+    # Specified the dataset to process
+    dataset_catalog = data_catalog[data_catalog["dataset"] == dataset]
     logger.debug(f"Loaded {dataset} dataset catalog from {data_catalog_path}.")
 
-    #Check if there are right wing discs is in the dataset
-    right_wingdisc_catalog = dataset_catalog[dataset_catalog['is_left'] == 'n']
+    # Check if there are right wing discs is in the dataset
+    right_wingdisc_catalog = dataset_catalog[dataset_catalog["is_left"] == "n"]
     if right_wingdisc_catalog.empty:
         logger.info(f"No right wing discs found in {dataset} dataset.")
 
     for sample_folder in source_data.iterdir():
-        #Load the images and specify the filename of processed images
+        # Load the images and specify the filename of processed images
         logger.info(f"Downsampling {sample_folder}...")
         sample_id = str(sample_folder.name).split("_")[0].lower()
         channel = "membrane"
@@ -119,47 +114,53 @@ if __name__ == "__main__":
             f"um_channel-{channel}.tif"
         )
         assert Path(sample_folder).exists(), f"{sample_folder} not found"
-        original_file_path = (
-            Path(sample_folder)
-            / f"{sample_folder.name}.tif"
-        )
+        original_file_path = Path(sample_folder) / f"{sample_folder.name}.tif"
         assert Path(
             original_file_path
         ).exists(), f"Filepath {original_file_path} not found"
-        image_array = load_any(
-            original_file_path
-        )
+        image_array = load_any(original_file_path)
 
-        #Do mirroring if the sample is right wing disc
-        if str(sample_folder.name) in right_wingdisc_catalog['filename'].astype(str).tolist():
-            image_array = np.flip(image_array,axis=2)
+        # Do mirroring if the sample is right wing disc
+        if (
+            str(sample_folder.name)
+            in right_wingdisc_catalog["filename"].astype(str).tolist()
+        ):
+            image_array = np.flip(image_array, axis=2)
             logger.info(f"Mirrored {sample_folder.name}.")
 
-        #Downsample the image array
-        image_dask = da.from_array(
-            image_array, chunks={0: 1, 1: -1, 2: -1}
-        )
+        # Downsample the image array
+        image_dask = da.from_array(image_array, chunks={0: 1, 1: -1, 2: -1})
         down_sampled_image = downsample_anisotropic_image_stack(
             image_dask, in_plane_factor, axial_factor
         )
 
-        #Save the downsampled image as tif
-        saving_folder = template_raw_data / f'{source_data.name}'/ downsampled_filename.split('.')[0]
+        # Save the downsampled image as tif
+        saving_folder = (
+            template_raw_data
+            / f"{source_data.name}"
+            / downsampled_filename.split(".")[0]
+        )
         saving_folder.mkdir(exist_ok=True, parents=True)
         assert Path(
             saving_folder
         ).exists(), f"Filepath {saving_folder} not found"
         saving_path = saving_folder / downsampled_filename
         save_any(down_sampled_image, saving_path)
-        logger.info(f"{sample_folder} downsampled, saved as {downsampled_filename}")
+        logger.info(
+            f"{sample_folder} downsampled, saved as {downsampled_filename}"
+        )
 
         # Save the downsampled image as nifti
-        nii_path = file_path_with_suffix(saving_path, "_downsampled", new_ext=".nii.gz")
-        vox_sizes = [target_isotropic_resolution,] * 3
+        nii_path = file_path_with_suffix(
+            saving_path, "_downsampled", new_ext=".nii.gz"
+        )
+        vox_sizes = [
+            target_isotropic_resolution,
+        ] * 3
         save_as_asr_nii(down_sampled_image, vox_sizes, nii_path)
         logger.info(f"Saved downsampled image as {nii_path.name}.")
 
-        '''
+        """
         # Bias field correction (to homogenise intensities)
         image_ants = ants.image_read(nii_path.as_posix())
         image_n4 = ants.n4_bias_field_correction(image_ants)
@@ -168,7 +169,7 @@ if __name__ == "__main__":
         logger.info(
             f"Created N4 bias field corrected image as {image_n4_path.name}."
         )
-        '''
+        """
 
         # Generate the wingdisc mask
         image_ants = ants.image_read(nii_path.as_posix())
@@ -188,7 +189,7 @@ if __name__ == "__main__":
 
         # Plot the mask over the image to check
         mask_plot_path = (
-                saving_folder / f"{sample_id}_downsampled_mask-overlay.png"
+            saving_folder / f"{sample_id}_downsampled_mask-overlay.png"
         )
         ants.plot(
             image_ants,
@@ -201,5 +202,3 @@ if __name__ == "__main__":
         logger.debug("Plotted overlay to visually check mask.")
 
         # Split the image into 4 arrays
-
-
