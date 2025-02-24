@@ -84,8 +84,12 @@ if __name__ == "__main__":
     in_plane_resolution = 0.55
     out_of_plane_resolution = 1
 
-    in_plane_factor = int(np.ceil(target_isotropic_resolution / in_plane_resolution))
-    axial_factor = int(np.ceil(target_isotropic_resolution / out_of_plane_resolution))
+    in_plane_factor = int(
+        np.ceil(target_isotropic_resolution / in_plane_resolution)
+    )
+    axial_factor = int(
+        np.ceil(target_isotropic_resolution / out_of_plane_resolution)
+    )
 
     template_raw_data = template_building_root / "rawdata"
     template_raw_data.mkdir(exist_ok=True, parents=True)
