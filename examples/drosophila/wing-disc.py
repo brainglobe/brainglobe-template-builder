@@ -89,8 +89,8 @@ if __name__ == "__main__":
     in_plane_resolution = 0.55
     out_of_plane_resolution = 1
 
-    in_plane_factor = int(target_isotropic_resolution / in_plane_resolution)
-    axial_factor = int(target_isotropic_resolution / out_of_plane_resolution)
+    in_plane_factor = int(np.ceil(target_isotropic_resolution / in_plane_resolution))
+    axial_factor = int(np.ceil(target_isotropic_resolution / out_of_plane_resolution))
 
     template_raw_data = template_building_root / "rawdata"
     template_raw_data.mkdir(exist_ok=True, parents=True)
@@ -142,6 +142,7 @@ if __name__ == "__main__":
         down_sampled_image = downsample_anisotropic_image_stack(
             image_dask, in_plane_factor, axial_factor
         )
+        down_sampled_image = down_sampled_image.astype(np.uint16)
 
         #Save the downsampled image as tif
         saving_folder = template_raw_data / f'{source_data.name}'/ downsampled_filename.split('.')[0]
@@ -174,7 +175,7 @@ if __name__ == "__main__":
         image_ants = ants.image_read(nii_path.as_posix())
         mask_data = create_mask(
             image_ants.numpy(),
-            gauss_sigma=5,
+            gauss_sigma=10,
             threshold_method="triangle",
             closing_size=5,
         )
@@ -195,7 +196,7 @@ if __name__ == "__main__":
             mask,
             overlay_alpha=0.5,
             axis=1,
-            title="Brain mask over image",
+            title="Wingdisc mask over image",
             filename=mask_plot_path.as_posix(),
         )
         logger.debug("Plotted overlay to visually check mask.")
