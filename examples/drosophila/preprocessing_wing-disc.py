@@ -174,12 +174,14 @@ if __name__ == "__main__":
         )
         logger.debug("Plotted overlay to visually check mask.")
 
-        #Write a text file to record the file path to the downsampled image and mask created
-        with open('brain_path.txt','a') as f:
+        # Write a text file to record the file path to the downsampled image and mask created
+        with open("brain_path.txt", "a") as f:
             f.write(f"{nii_path} + \n")
-        with open('mask_path.txt','a') as f:
+        with open("mask_path.txt", "a") as f:
             f.write(f"{mask_path} + \n")
-        logger.debug("Recorded the file path to the brain_path.txt and mask_path.txt created.")
+        logger.debug(
+            "Recorded the file path to the brain_path.txt and mask_path.txt created."
+        )
 
         # Write a text file to record the file path to the downsampled image and mask created
         nii_path_str = str(nii_path)
@@ -187,29 +189,33 @@ if __name__ == "__main__":
         downsampled_txt_file_path = (
             template_raw_data
             / f"{source_data.name}"
-            /downsampled_txt_file_name
+            / downsampled_txt_file_name
         )
         mask_path_str = str(mask_path)
         mask_txt_file_name = "mask_paths.txt"
         mask_txt_file_path = (
-                template_raw_data
-                / f"{source_data.name}"
-                / mask_txt_file_name
+            template_raw_data / f"{source_data.name}" / mask_txt_file_name
         )
         # Read the file(if exist first) to check if the path already exists
         try:
             with open(downsampled_txt_file_path, "r", encoding="utf-8") as f:
-                lines_downsampled = f.read().splitlines()  # Read lines without newlines
+                lines_downsampled = (
+                    f.read().splitlines()
+                )  # Read lines without newlines
             with open(mask_txt_file_path, "r", encoding="utf-8") as f:
                 lines_mask = f.read().splitlines()
         except FileNotFoundError:
             lines_downsampled = []
-            lines_mask = [] # If file doesn't exist, start with an empty list
+            lines_mask = []  # If file doesn't exist, start with an empty list
         if nii_path_str not in lines_downsampled:
-            with open(downsampled_txt_file_path, 'a', encoding="utf-8") as f:
+            with open(downsampled_txt_file_path, "a", encoding="utf-8") as f:
                 f.write(f"{nii_path_str}\n")
-                logger.debug(f"Recorded {nii_path_str} in {downsampled_txt_file_path}.")
+                logger.debug(
+                    f"Recorded {nii_path_str} in {downsampled_txt_file_path}."
+                )
         if mask_path_str not in lines_mask:
-            with open(mask_txt_file_path, 'a', encoding="utf-8") as f:
+            with open(mask_txt_file_path, "a", encoding="utf-8") as f:
                 f.write(f"{mask_path_str}\n")
-                logger.debug(f"Recorded {mask_path_str} in {mask_txt_file_path}.")
+                logger.debug(
+                    f"Recorded {mask_path_str} in {mask_txt_file_path}."
+                )
