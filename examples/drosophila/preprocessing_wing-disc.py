@@ -54,27 +54,6 @@ if __name__ == "__main__":
         required=True,
     )
 
-    """
-    parser.add_argument(
-        "--binning",
-        type=str,
-        help="Whether the required data should be binned first. Options are 'y' for yes and 'n' for no",
-        required=True,
-    )
-    parser.add_argument(
-        "--average",
-        type=int,
-        help="Whether the required data should be averaged first. Options are 'y' for yes and 'n' for no",
-        required=True,
-    )
-    parser.add_argument(
-        "--camera_exposure_time",
-        type=int,
-        help="The camera exposure time specific for the data required",
-        required=True,
-    )
-    """
-
     args = parser.parse_args()
 
     source_data = Path(args.source_data_root)
@@ -161,17 +140,6 @@ if __name__ == "__main__":
         save_as_asr_nii(down_sampled_image, vox_sizes, nii_path)
         logger.info(f"Saved downsampled image as {nii_path.name}.")
 
-        """
-        # Bias field correction (to homogenise intensities)
-        image_ants = ants.image_read(nii_path.as_posix())
-        image_n4 = ants.n4_bias_field_correction(image_ants)
-        image_n4_path = file_path_with_suffix(nii_path, "_N4")
-        ants.image_write(image_n4, image_n4_path.as_posix())
-        logger.info(
-            f"Created N4 bias field corrected image as {image_n4_path.name}."
-        )
-        """
-
         # Generate the wingdisc mask
         image_ants = ants.image_read(nii_path.as_posix())
         mask_data = create_mask(
@@ -201,6 +169,13 @@ if __name__ == "__main__":
             filename=mask_plot_path.as_posix(),
         )
         logger.debug("Plotted overlay to visually check mask.")
+
+        #Write a text file to record the file path to the downsampled image and mask created
+        with open('brain_path.txt','a') as f:
+            f.write(f"{nii_path} + \n")
+        with open('mask_path.txt','a') as f:
+            f.write(f"{mask_path} + \n")
+        logger.debug("Recorded the file path to the brain_path.txt and mask_path.txt created.")
 
         # Write a text file to record the file path to the downsampled image and mask created
         nii_path_str = str(nii_path)
