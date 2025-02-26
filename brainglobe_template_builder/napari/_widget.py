@@ -1,5 +1,5 @@
-from brainglobe_utils.qtpy.collapsible_widget import CollapsibleWidgetContainer
 from napari.viewer import Viewer
+from qt_niu.collapsible_widget import CollapsibleWidgetContainer
 
 from brainglobe_template_builder.napari.align_widget import AlignMidplane
 from brainglobe_template_builder.napari.mask_widget import CreateMask
