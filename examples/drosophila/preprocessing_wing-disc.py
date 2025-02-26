@@ -175,15 +175,6 @@ if __name__ == "__main__":
         logger.debug("Plotted overlay to visually check mask.")
 
         # Write a text file to record the file path to the downsampled image and mask created
-        with open("brain_path.txt", "a") as f:
-            f.write(f"{nii_path} + \n")
-        with open("mask_path.txt", "a") as f:
-            f.write(f"{mask_path} + \n")
-        logger.debug(
-            "Recorded the file path to the brain_path.txt and mask_path.txt created."
-        )
-
-        # Write a text file to record the file path to the downsampled image and mask created
         nii_path_str = str(nii_path)
         downsampled_txt_file_name = "brain_paths.txt"
         downsampled_txt_file_path = (
