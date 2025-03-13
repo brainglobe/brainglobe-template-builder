@@ -7,14 +7,15 @@ import pandas as pd
 from brainglobe_utils.IO.image import load_any, save_any
 from dask import array as da
 from loguru import logger
+from skimage.util import img_as_uint
 
 from brainglobe_template_builder.io import (
     file_path_with_suffix,
     save_as_asr_nii,
 )
 from brainglobe_template_builder.preproc.masking import create_mask
-from brainglobe_template_builder.preproc.transform_utils import (
-    downsample_anisotropic_image_stack,
+from brainglobe_template_builder.preproc.wingdisc_utils import (
+    resize_anisotropic_image_stack,
 )
 
 if __name__ == "__main__":
@@ -56,19 +57,16 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    source_data = Path(args.source_data_root)
+    source_path = Path(args.source_data_root)
+    source_data = source_path / args.dataset
     template_building_root = Path(args.template_building_root)
     target_isotropic_resolution = int(args.target_isotropic_resolution)
 
     in_plane_resolution = 0.55
     out_of_plane_resolution = 1
 
-    in_plane_factor = int(
-        np.ceil(target_isotropic_resolution / in_plane_resolution)
-    )
-    axial_factor = int(
-        np.ceil(target_isotropic_resolution / out_of_plane_resolution)
-    )
+    in_plane_factor = in_plane_resolution / target_isotropic_resolution
+    axial_factor = out_of_plane_resolution / target_isotropic_resolution
 
     template_raw_data = template_building_root / "rawdata"
     template_raw_data.mkdir(exist_ok=True, parents=True)
@@ -80,6 +78,9 @@ if __name__ == "__main__":
 
     # Specified the dataset to process
     dataset_catalog = data_catalog[data_catalog["dataset"] == dataset]
+    assert (
+        not dataset_catalog.empty
+    ), f"No {dataset} dataset found in {data_catalog_path}."
     logger.debug(f"Loaded {dataset} dataset catalog from {data_catalog_path}.")
 
     # Check if there are right wing discs is in the dataset
@@ -89,7 +90,6 @@ if __name__ == "__main__":
 
     for sample_folder in source_data.iterdir():
         # Load the images and specify the filename of processed images
-        logger.info(f"Downsampling {sample_folder}...")
         sample_id = str(sample_folder.name).split("_")[0].lower()
         channel = "membrane"
         downsampled_filename = (
@@ -108,15 +108,17 @@ if __name__ == "__main__":
             str(sample_folder.name)
             in right_wingdisc_catalog["filename"].astype(str).tolist()
         ):
-            image_array = np.flip(image_array, axis=2)
+            image_array = np.flip(image_array, axis=0)
             logger.info(f"Mirrored {sample_folder.name}.")
 
         # Downsample the image array
+        logger.info(f"Downsampling {sample_folder}...")
+
         image_dask = da.from_array(image_array, chunks={0: 1, 1: -1, 2: -1})
-        down_sampled_image = downsample_anisotropic_image_stack(
+        down_sampled_image = resize_anisotropic_image_stack(
             image_dask, in_plane_factor, axial_factor
         )
-        down_sampled_image = down_sampled_image.astype(np.uint16)
+        down_sampled_image = img_as_uint(down_sampled_image, force_copy=False)
 
         # Save the downsampled image as tif
         saving_folder = (
@@ -154,6 +156,7 @@ if __name__ == "__main__":
         )
         mask_path = file_path_with_suffix(nii_path, "_mask")
         mask = image_ants.new_image_like(mask_data.astype(np.uint8))
+
         ants.image_write(mask, mask_path.as_posix())
         logger.debug(
             f"Generated brain mask with shape: {mask.shape} "
@@ -187,6 +190,7 @@ if __name__ == "__main__":
         mask_txt_file_path = (
             template_raw_data / f"{source_data.name}" / mask_txt_file_name
         )
+
         # Read the file(if exist first) to check if the path already exists
         try:
             with open(downsampled_txt_file_path, "r", encoding="utf-8") as f:
