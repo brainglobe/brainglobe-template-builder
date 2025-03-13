@@ -4,7 +4,7 @@ from skimage import transform
 
 
 def resize_anisotropic_image_stack(
-        stack: da.Array, in_plane_factor: float, axial_factor: float
+    stack: da.Array, in_plane_factor: float, axial_factor: float
 ) -> np.ndarray:
     """
 
