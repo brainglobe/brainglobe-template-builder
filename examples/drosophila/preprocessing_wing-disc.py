@@ -108,8 +108,11 @@ if __name__ == "__main__":
             str(sample_folder.name)
             in right_wingdisc_catalog["filename"].astype(str).tolist()
         ):
-            image_array = np.flip(image_array, axis=0)
+            image_array = np.flip(image_array, axis=2)
             logger.info(f"Mirrored {sample_folder.name}.")
+        else:
+            logger.info(f"{sample_folder.name} is not right wing disc.")
+            image_array = image_array
 
         # Downsample the image array
         logger.info(f"Downsampling {sample_folder}...")
