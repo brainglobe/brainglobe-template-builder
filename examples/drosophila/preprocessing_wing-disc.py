@@ -7,6 +7,7 @@ import pandas as pd
 from brainglobe_utils.IO.image import load_any, save_any
 from dask import array as da
 from loguru import logger
+from scipy.ndimage import median_filter
 from skimage.util import img_as_uint
 
 from brainglobe_template_builder.io import (
@@ -123,7 +124,12 @@ if __name__ == "__main__":
         )
         down_sampled_image = img_as_uint(down_sampled_image, force_copy=False)
 
-        # Save the downsampled image as tif
+        # Apply median filter to the downsampled image
+        median_filtered_image = median_filter(down_sampled_image, size=3)
+        median_filtered_image = median_filtered_image * (median_filtered_image > 104)
+        logger.debug("Applied median filter to the downsampled image and set the threshold as 104")
+
+        # Save the downsampled and filtered image as tif
         saving_folder = (
             template_raw_data
             / f"{source_data.name}"
@@ -134,28 +140,28 @@ if __name__ == "__main__":
             saving_folder
         ).exists(), f"Filepath {saving_folder} not found"
         saving_path = saving_folder / downsampled_filename
-        save_any(down_sampled_image, saving_path)
+        save_any(median_filtered_image, saving_path)
         logger.info(
-            f"{sample_folder} downsampled, saved as {downsampled_filename}"
+            f"{sample_folder} downsampled, filtered and padded, saved as {downsampled_filename}"
         )
 
-        # Save the downsampled image as nifti
+        # Save the downsampled,filtered and padded image as nifti
         nii_path = file_path_with_suffix(
-            saving_path, "_downsampled", new_ext=".nii.gz"
+            saving_path, "_downsampled_filtered_padded_normalized", new_ext=".nii.gz"
         )
         vox_sizes = [
             target_isotropic_resolution,
         ] * 3
-        save_as_asr_nii(down_sampled_image, vox_sizes, nii_path)
-        logger.info(f"Saved downsampled image as {nii_path.name}.")
+        save_as_asr_nii(median_filtered_image, vox_sizes, nii_path)
+        logger.info(f"Saved downsampled and filtered image as {nii_path.name}.")
 
         # Generate the wingdisc mask
         image_ants = ants.image_read(nii_path.as_posix())
         mask_data = create_mask(
             image_ants.numpy(),
-            gauss_sigma=10,
+            gauss_sigma=1,
             threshold_method="triangle",
-            closing_size=5,
+            closing_size=3,
         )
         mask_path = file_path_with_suffix(nii_path, "_mask")
         mask = image_ants.new_image_like(mask_data.astype(np.uint8))
@@ -165,6 +171,12 @@ if __name__ == "__main__":
             f"Generated brain mask with shape: {mask.shape} "
             f"and saved as {mask_path.name}."
         )
+
+        # Normalized the image
+        normalised_image = (median_filtered_image - np.min(median_filtered_image)) / (
+                    np.max(median_filtered_image) - np.min(median_filtered_image))
+        save_as_asr_nii(normalised_image, vox_sizes, nii_path)
+        logger.info(f"replace the pre-saved nii.gz image as normalized image .")
 
         # Plot the mask over the image to check
         mask_plot_path = (
