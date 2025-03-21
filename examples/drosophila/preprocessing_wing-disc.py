@@ -125,9 +125,10 @@ if __name__ == "__main__":
         down_sampled_image = img_as_uint(down_sampled_image, force_copy=False)
 
         # Apply median filter to the downsampled image
-        median_filtered_image = median_filter(down_sampled_image, size=3)
-        median_filtered_image = median_filtered_image * (median_filtered_image > 104)
-        logger.debug("Applied median filter to the downsampled image and set the threshold as 104")
+        mf_image = median_filter(down_sampled_image, size=3)
+        mf_image = np.pad(mf_image, ((15, 15), (0, 0), (0, 0)), mode='reflect')
+        mf_image = mf_image * (mf_image > 104)
+        logger.debug("Applied median filter and padding to the downsampled image and set the threshold as 104")
 
         # Save the downsampled and filtered image as tif
         saving_folder = (
@@ -140,7 +141,7 @@ if __name__ == "__main__":
             saving_folder
         ).exists(), f"Filepath {saving_folder} not found"
         saving_path = saving_folder / downsampled_filename
-        save_any(median_filtered_image, saving_path)
+        save_any(mf_image, saving_path)
         logger.info(
             f"{sample_folder} downsampled, filtered and padded, saved as {downsampled_filename}"
         )
@@ -152,7 +153,7 @@ if __name__ == "__main__":
         vox_sizes = [
             target_isotropic_resolution,
         ] * 3
-        save_as_asr_nii(median_filtered_image, vox_sizes, nii_path)
+        save_as_asr_nii(mf_image, vox_sizes, nii_path)
         logger.info(f"Saved downsampled and filtered image as {nii_path.name}.")
 
         # Generate the wingdisc mask
@@ -173,8 +174,8 @@ if __name__ == "__main__":
         )
 
         # Normalized the image
-        normalised_image = (median_filtered_image - np.min(median_filtered_image)) / (
-                    np.max(median_filtered_image) - np.min(median_filtered_image))
+        normalised_image = (mf_image - np.min(mf_image)) / (
+                np.max(mf_image) - np.min(mf_image))
         save_as_asr_nii(normalised_image, vox_sizes, nii_path)
         logger.info(f"replace the pre-saved nii.gz image as normalized image .")
 
