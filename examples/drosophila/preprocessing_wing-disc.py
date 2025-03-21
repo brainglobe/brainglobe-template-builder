@@ -126,9 +126,11 @@ if __name__ == "__main__":
 
         # Apply median filter to the downsampled image
         mf_image = median_filter(down_sampled_image, size=3)
-        mf_image = np.pad(mf_image, ((15, 15), (0, 0), (0, 0)), mode='reflect')
+        mf_image = np.pad(mf_image, ((15, 15), (0, 0), (0, 0)), mode="reflect")
         mf_image = mf_image * (mf_image > 104)
-        logger.debug("Applied median filter and padding to the downsampled image and set the threshold as 104")
+        logger.debug(
+            "Applied median filter and padding to the downsampled image and set the threshold as 104"
+        )
 
         # Save the downsampled and filtered image as tif
         saving_folder = (
@@ -148,13 +150,17 @@ if __name__ == "__main__":
 
         # Save the downsampled,filtered and padded image as nifti
         nii_path = file_path_with_suffix(
-            saving_path, "_downsampled_filtered_padded_normalized", new_ext=".nii.gz"
+            saving_path,
+            "_downsampled_filtered_padded_normalized",
+            new_ext=".nii.gz",
         )
         vox_sizes = [
             target_isotropic_resolution,
         ] * 3
         save_as_asr_nii(mf_image, vox_sizes, nii_path)
-        logger.info(f"Saved downsampled and filtered image as {nii_path.name}.")
+        logger.info(
+            f"Saved downsampled and filtered image as {nii_path.name}."
+        )
 
         # Generate the wingdisc mask
         image_ants = ants.image_read(nii_path.as_posix())
@@ -175,9 +181,10 @@ if __name__ == "__main__":
 
         # Normalized the image
         normalised_image = (mf_image - np.min(mf_image)) / (
-                np.max(mf_image) - np.min(mf_image))
+            np.max(mf_image) - np.min(mf_image)
+        )
         save_as_asr_nii(normalised_image, vox_sizes, nii_path)
-        logger.info(f"replace the pre-saved nii.gz image as normalized image .")
+        logger.info("replace the pre-saved nii.gz image as normalized image .")
 
         # Plot the mask over the image to check
         mask_plot_path = (
