@@ -126,7 +126,8 @@ if __name__ == "__main__":
 
         # Apply median filter to the downsampled image
         mf_image = median_filter(down_sampled_image, size=3)
-        mf_image = np.pad(mf_image, ((15, 15), (0, 0), (0, 0)), mode='constant')
+        mf_image = np.pad(mf_image, ((15, 15), (0, 0), (0, 0)), mode='constant',
+                          constant_values=((0, 0), (0, 0), (0, 0)))
         mf_image = mf_image * (mf_image > 104)
         logger.debug("Applied median filter and padding to the downsampled image and set the threshold as 104")
 
