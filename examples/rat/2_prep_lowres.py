@@ -72,10 +72,10 @@ for img_path, img in zip(rat_image_paths, image_arrays):
                         constant_values=0)
 
     # Generate new filename with '_padded'
-    new_filename = img_path.stem + "_padded.nii.gz"
-    new_filepath = img_path.parent / new_filename
+    padded_filename = img_path.stem + "_padded.nii.gz"
+    padded_filepath = img_path.parent / padded_filename
 
-    save_as_asr_nii(padded_img, lowres_vox_sizes, new_filepath)
+    save_as_asr_nii(padded_img, lowres_vox_sizes, padded_filepath)
 
     # Create the 'flipped' folder if it doesn't exist
     flipped_folder = img_path.parent / "flipped"
