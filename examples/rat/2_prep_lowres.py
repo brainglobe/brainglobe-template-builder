@@ -1,23 +1,16 @@
 from pathlib import Path
 import numpy as np
-import tifffile as tiff
-import nibabel as nib
-
 
 from brainglobe_template_builder.io import (
     load_tiff,
     save_as_asr_nii,
 )
 
-
-
 # Define voxel size(in microns) of the lowest resolution image
 lowres = 50
 
 # Define voxel sizes in mm (for Nifti saving)
 lowres_vox_sizes = [lowres * 1e-3] * 3  # in mm
-
-
 
 project_folder_path =  "/mnt/d/template_wd/"   #  "/mnt/ceph/_projects/rat_atlas/derivatives"
 
