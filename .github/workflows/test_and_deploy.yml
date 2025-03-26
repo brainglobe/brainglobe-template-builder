@@ -50,7 +50,7 @@ jobs:
 
       - uses: actions/checkout@v4
         if: startsWith(matrix.os, 'windows-')
-    
+
       - name: Set up Python ${{ matrix.python-version }} on Windows
         if: startsWith(matrix.os, 'windows-')
         uses: actions/setup-python@v5
