@@ -25,7 +25,7 @@ subject_ids = [
 ]
 
 
-# Initialize lists to store image and mask paths and data, and dimensions
+# Initialize lists
 image_arrays = []
 dimensions = []
 mask_arrays = []
@@ -68,7 +68,7 @@ max_z += 20
 max_y += 20
 max_x += 20
 
-# Pad images to match the largest dimensions + 20 pixels all around and save them
+# Pad images to match the largest dimensions + 20 pixels all around
 for img_path, img, mask_path, mask in zip(
     rat_image_paths, image_arrays, rat_mask_paths, mask_arrays
 ):
@@ -95,7 +95,7 @@ for img_path, img, mask_path, mask in zip(
     )
 
     # Check if axes are even, if not add extra padding
-    for axis in range(3):  # Loop over z (0), y (1), and x (2)
+    for axis in range(3):
         if padded_img.shape[axis] % 2 != 0:
             pad_width = [(0, 1) if i == axis else (0, 0) for i in range(3)]
             padded_img = np.pad(
