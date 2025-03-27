@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import numpy as np
 
 from brainglobe_template_builder.io import (
@@ -12,11 +13,16 @@ lowres = 50
 # Define voxel sizes in mm (for Nifti saving)
 lowres_vox_sizes = [lowres * 1e-3] * 3  # in mm
 
-project_folder_path =  "/mnt/d/template_wd/"   #  "/mnt/ceph/_projects/rat_atlas/derivatives"
+project_folder_path = (
+    "/mnt/d/template_wd/"  #  "/mnt/ceph/_projects/rat_atlas/derivatives"
+)
 
 # Get all subject IDs dynamically
-subject_ids = [folder.name for folder in Path(project_folder_path).glob('*')
-               if folder.is_dir() and folder.name.startswith('sub-')]
+subject_ids = [
+    folder.name
+    for folder in Path(project_folder_path).glob("*")
+    if folder.is_dir() and folder.name.startswith("sub-")
+]
 
 
 # Initialize lists to store image and mask paths and data, and dimensions
@@ -28,9 +34,17 @@ rat_mask_paths = []
 
 
 for subject_id in subject_ids:
-    rat_image_path = list(Path(project_folder_path).rglob(f"{subject_id}/{subject_id}_*_orig-asr_aligned.tif"))
+    rat_image_path = list(
+        Path(project_folder_path).rglob(
+            f"{subject_id}/{subject_id}_*_orig-asr_aligned.tif"
+        )
+    )
     rat_image_paths.extend(rat_image_path)
-    rat_mask_path = list(Path(project_folder_path).rglob(f"{subject_id}/{subject_id}_*_orig-asr_label-brain_aligned.tif"))
+    rat_mask_path = list(
+        Path(project_folder_path).rglob(
+            f"{subject_id}/{subject_id}_*_orig-asr_label-brain_aligned.tif"
+        )
+    )
     rat_mask_paths.extend(rat_mask_path)
 
 # Read images and store their dimensions
@@ -55,7 +69,9 @@ max_y += 20
 max_x += 20
 
 # Pad images to match the largest dimensions + 20 pixels all around and save them
-for img_path, img, mask_path, mask in zip(rat_image_paths, image_arrays, rat_mask_paths, mask_arrays):
+for img_path, img, mask_path, mask in zip(
+    rat_image_paths, image_arrays, rat_mask_paths, mask_arrays
+):
     # Calculate how much padding is needed for each axis
     pad_z = max_z - img.shape[0]
     pad_y = max_y - img.shape[1]
@@ -67,33 +83,44 @@ for img_path, img, mask_path, mask in zip(rat_image_paths, image_arrays, rat_mas
     pad_x_start, pad_x_end = pad_x // 2, pad_x - pad_x // 2
 
     # Apply padding to the image
-    padded_img = np.pad(img,
-                        ((pad_z_start, pad_z_end),
-                         (pad_y_start, pad_y_end),
-                         (pad_x_start, pad_x_end)),
-                        mode='constant',
-                        constant_values=0)
+    padded_img = np.pad(
+        img,
+        (
+            (pad_z_start, pad_z_end),
+            (pad_y_start, pad_y_end),
+            (pad_x_start, pad_x_end),
+        ),
+        mode="constant",
+        constant_values=0,
+    )
 
     # Check if axes are even, if not add extra padding
     for axis in range(3):  # Loop over z (0), y (1), and x (2)
         if padded_img.shape[axis] % 2 != 0:
             pad_width = [(0, 1) if i == axis else (0, 0) for i in range(3)]
-            padded_img = np.pad(padded_img, pad_width, mode='constant', constant_values=0)
+            padded_img = np.pad(
+                padded_img, pad_width, mode="constant", constant_values=0
+            )
 
     # Apply padding to the mask
-    padded_mask = np.pad(mask,
-                        ((pad_z_start, pad_z_end),
-                         (pad_y_start, pad_y_end),
-                         (pad_x_start, pad_x_end)),
-                        mode='constant',
-                        constant_values=0)
+    padded_mask = np.pad(
+        mask,
+        (
+            (pad_z_start, pad_z_end),
+            (pad_y_start, pad_y_end),
+            (pad_x_start, pad_x_end),
+        ),
+        mode="constant",
+        constant_values=0,
+    )
 
     # Check if axes are even, if not add extra padding
     for axis in range(3):
         if padded_mask.shape[axis] % 2 != 0:
             pad_width = [(0, 1) if i == axis else (0, 0) for i in range(3)]
-            padded_mask = np.pad(padded_mask, pad_width, mode='constant', constant_values=0)
-
+            padded_mask = np.pad(
+                padded_mask, pad_width, mode="constant", constant_values=0
+            )
 
     # Generate new image and mask filename with '_padded'
     padded_filename = img_path.stem + "_padded.nii.gz"
@@ -112,7 +139,6 @@ for img_path, img, mask_path, mask in zip(rat_image_paths, image_arrays, rat_mas
     padded_flipped_img = np.flip(padded_img, axis=2)
     padded_flipped_mask = np.flip(padded_mask, axis=2)
 
-
     # Construct new filename for the flipped image
     flipped_filename = img_path.stem + "_padded_flipped.nii.gz"
     flipped_filepath = flipped_folder / flipped_filename
@@ -120,4 +146,6 @@ for img_path, img, mask_path, mask in zip(rat_image_paths, image_arrays, rat_mas
     flipped_mask_filepath = flipped_folder / flipped_mask_filename
 
     save_as_asr_nii(padded_flipped_img, lowres_vox_sizes, flipped_filepath)
-    save_as_asr_nii(padded_flipped_mask, lowres_vox_sizes,flipped_mask_filepath)
+    save_as_asr_nii(
+        padded_flipped_mask, lowres_vox_sizes, flipped_mask_filepath
+    )
