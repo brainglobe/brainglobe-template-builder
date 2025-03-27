@@ -74,6 +74,12 @@ for img_path, img, mask_path, mask in zip(rat_image_paths, image_arrays, rat_mas
                         mode='constant',
                         constant_values=0)
 
+    # Check if axes are even, if not add extra padding
+    for axis in range(3):  # Loop over z (0), y (1), and x (2)
+        if padded_img.shape[axis] % 2 != 0:
+            pad_width = [(0, 1) if i == axis else (0, 0) for i in range(3)]
+            padded_img = np.pad(padded_img, pad_width, mode='constant', constant_values=0)
+
     # Apply padding to the mask
     padded_mask = np.pad(mask,
                         ((pad_z_start, pad_z_end),
@@ -81,6 +87,13 @@ for img_path, img, mask_path, mask in zip(rat_image_paths, image_arrays, rat_mas
                          (pad_x_start, pad_x_end)),
                         mode='constant',
                         constant_values=0)
+
+    # Check if axes are even, if not add extra padding
+    for axis in range(3):
+        if padded_mask.shape[axis] % 2 != 0:
+            pad_width = [(0, 1) if i == axis else (0, 0) for i in range(3)]
+            padded_mask = np.pad(padded_mask, pad_width, mode='constant', constant_values=0)
+
 
     # Generate new image and mask filename with '_padded'
     padded_filename = img_path.stem + "_padded.nii.gz"
