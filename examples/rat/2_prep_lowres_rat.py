@@ -163,7 +163,7 @@ for img_path, img, mask_path, mask in zip(
     right_slices, left_slices = get_right_and_left_slices(padded_img)
 
     # Process images and masks
-    subject = img_path.stem  # Extract subject ID from filename
+    subject = img_path.stem
     processed_arrays = generate_arrays_4template(
         subject, padded_img, padded_mask, pad=0
     )
@@ -173,5 +173,5 @@ for img_path, img, mask_path, mask in zip(
     mirrored_folder.mkdir(parents=True, exist_ok=True)
 
     # Save processed arrays in the mirrored folder
-    vox_sizes = lowres_vox_sizes  # Example voxel size (modify as needed)
+    vox_sizes = lowres_vox_sizes
     save_array_dict_to_nii(processed_arrays, mirrored_folder, vox_sizes)
