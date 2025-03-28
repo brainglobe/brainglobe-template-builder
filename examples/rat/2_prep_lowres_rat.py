@@ -137,6 +137,7 @@ for img_path, img, mask_path, mask in zip(
     save_as_asr_nii(padded_mask, lowres_vox_sizes, padded_mask_filepath)
 
     # Flipping images
+
     # Create the 'flipped' folder if it doesn't exist
     flipped_folder = img_path.parent / "flipped"
     flipped_folder.mkdir(parents=True, exist_ok=True)
@@ -157,6 +158,7 @@ for img_path, img, mask_path, mask in zip(
     )
 
     # Splitting brains using brainglobe_template_builder.preproc.splitting
+
     # Slice into right and left hemispheres
     right_slices, left_slices = get_right_and_left_slices(padded_img)
 
