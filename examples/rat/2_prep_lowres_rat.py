@@ -6,6 +6,11 @@ from brainglobe_template_builder.io import (
     load_tiff,
     save_as_asr_nii,
 )
+from brainglobe_template_builder.preproc.splitting import (
+    generate_arrays_4template,
+    get_right_and_left_slices,
+    save_array_dict_to_nii,
+)
 
 # Define voxel size(in microns) of the lowest resolution image
 lowres = 50
@@ -131,6 +136,7 @@ for img_path, img, mask_path, mask in zip(
     save_as_asr_nii(padded_img, lowres_vox_sizes, padded_filepath)
     save_as_asr_nii(padded_mask, lowres_vox_sizes, padded_mask_filepath)
 
+    # Flipping images
     # Create the 'flipped' folder if it doesn't exist
     flipped_folder = img_path.parent / "flipped"
     flipped_folder.mkdir(parents=True, exist_ok=True)
@@ -149,3 +155,21 @@ for img_path, img, mask_path, mask in zip(
     save_as_asr_nii(
         padded_flipped_mask, lowres_vox_sizes, flipped_mask_filepath
     )
+
+    # Splitting brains using brainglobe_template_builder.preproc.splitting
+    # Slice into right and left hemispheres
+    right_slices, left_slices = get_right_and_left_slices(padded_img)
+
+    # Process images and masks
+    subject = img_path.stem  # Extract subject ID from filename
+    processed_arrays = generate_arrays_4template(
+        subject, padded_img, padded_mask, pad=0
+    )
+
+    # Create mirrored folder
+    mirrored_folder = img_path.parent / "mirrored"
+    mirrored_folder.mkdir(parents=True, exist_ok=True)
+
+    # Save processed arrays in the mirrored folder
+    vox_sizes = lowres_vox_sizes  # Example voxel size (modify as needed)
+    save_array_dict_to_nii(processed_arrays, mirrored_folder, vox_sizes)
