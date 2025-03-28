@@ -29,14 +29,10 @@ subject_ids = [
     if folder.is_dir() and folder.name.startswith("sub-")
 ]
 
-
 # Initialize lists
-image_arrays = []
-dimensions = []
-mask_arrays = []
 rat_image_paths = []
 rat_mask_paths = []
-
+dimensions = []
 
 for subject_id in subject_ids:
     rat_image_path = list(
@@ -45,6 +41,7 @@ for subject_id in subject_ids:
         )
     )
     rat_image_paths.extend(rat_image_path)
+
     rat_mask_path = list(
         Path(project_folder_path).rglob(
             f"{subject_id}/{subject_id}_*_orig-asr_label-brain_aligned.tif"
@@ -54,13 +51,8 @@ for subject_id in subject_ids:
 
 # Read images and store their dimensions
 for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
-    # images
     img_array = load_tiff(img_path)
-    image_arrays.append(img_array)
     dimensions.append(img_array.shape)
-    # masks
-    mask_array = load_tiff(mask_path)
-    mask_arrays.append(mask_array)
 
 
 # Compute max dimensions along each axis
@@ -74,9 +66,11 @@ max_y += 20
 max_x += 20
 
 # Pad images to match the largest dimensions + 20 pixels all around
-for img_path, img, mask_path, mask in zip(
-    rat_image_paths, image_arrays, rat_mask_paths, mask_arrays
-):
+for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
+
+    img = load_tiff(img_path)
+    mask = load_tiff(mask_path)
+
     # Calculate how much padding is needed for each axis
     pad_z = max_z - img.shape[0]
     pad_y = max_y - img.shape[1]
