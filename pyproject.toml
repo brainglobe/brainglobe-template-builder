@@ -25,6 +25,7 @@ dependencies = [
     "brainglobe-atlasapi>=2.0.7",
     "loguru",
     "antspyx",
+    "qt-niu"
 ]
 
 entry-points."napari.manifest".brainglobe-template-builder = "brainglobe_template_builder.napari:napari.yaml"
@@ -83,6 +84,9 @@ ignore = [
     "scripts/",
 ]
 
+[tool.mypy]
+ignore_missing_imports = true
+explicit_package_bases = true
 
 [tool.ruff]
 line-length = 79
