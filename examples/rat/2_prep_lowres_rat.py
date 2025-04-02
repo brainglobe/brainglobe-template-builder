@@ -27,46 +27,6 @@ subject_ids = [
     if folder.is_dir() and folder.name.startswith("sub-")
 ]
 
-# Bias field correction (to homogenise intensities)
-
-# Initialize original image paths lists
-rat_image_paths_orig = []
-rat_mask_paths_orig = []
-
-# Construct original image paths
-for subject_id in subject_ids:
-    rat_image_path_orig = list(
-        Path(project_folder_path).rglob(
-            f"{subject_id}/{subject_id}_*_orig-asr_aligned.nii.gz"
-        )
-    )
-    rat_image_paths_orig.extend(rat_image_path_orig)
-
-    rat_mask_path_orig = list(
-        Path(project_folder_path).rglob(
-            f"{subject_id}/{subject_id}_*_orig-asr_label-brain_aligned.nii.gz"
-        )
-    )
-    rat_mask_paths_orig.extend(rat_mask_path_orig)
-
-# Read original images with ants
-for img_path_orig, mask_path_orig in zip(
-    rat_image_paths_orig, rat_mask_paths_orig
-):
-
-    img_ants = ants.image_read(img_path_orig.as_posix())
-    img_n4 = ants.n4_bias_field_correction(img_ants)
-    img_n4_filename = Path(img_path_orig.with_suffix("").stem + "_N4.nii.gz")
-    img_n4_path = Path(img_path_orig.parent / img_n4_filename)
-    ants.image_write(img_n4, img_n4_path.as_posix())
-
-    mask_ants = ants.image_read(mask_path_orig.as_posix())
-    mask_n4 = ants.n4_bias_field_correction(mask_ants)
-    mask_n4_filename = Path(mask_path_orig.with_suffix("").stem + "_N4.nii.gz")
-    mask_n4_path = Path(mask_path_orig.parent / mask_n4_filename)
-    ants.image_write(mask_n4, mask_n4_path.as_posix())
-
-
 # Initialize bias corrected image paths lists
 rat_image_paths = []
 rat_mask_paths = []
@@ -76,14 +36,14 @@ dimensions = []
 for subject_id in subject_ids:
     rat_image_path = list(
         Path(project_folder_path).rglob(
-            f"{subject_id}/{subject_id}_*_orig-asr_aligned_N4.nii.gz"
+            f"{subject_id}/{subject_id}_*_orig-asr_aligned.nii.gz"
         )
     )
     rat_image_paths.extend(rat_image_path)
 
     rat_mask_path = list(
         Path(project_folder_path).rglob(
-            f"{subject_id}/{subject_id}_*_orig-asr_label-brain_aligned_N4.nii.gz"
+            f"{subject_id}/{subject_id}_*_orig-asr_label-brain_aligned.nii.gz"
         )
     )
     rat_mask_paths.extend(rat_mask_path)
@@ -108,7 +68,10 @@ max_x += 20
 
 for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
 
-    img = load_any(img_path, as_numpy=True)
+    img_ants = ants.image_read(img_path.as_posix())
+    img_n4 = ants.n4_bias_field_correction(img_ants)
+
+    img = img_n4.numpy()
     mask = load_any(mask_path, as_numpy=True)
 
     # Padding images to match the largest dimensions + 20 pixels all around
@@ -164,9 +127,9 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     )
 
     # Generate new image and mask filename with '_padded'
-    padded_filename = img_path.with_suffix("").stem + "_padded.nii.gz"
+    padded_filename = img_path.with_suffix("").stem + "_N4_padded.nii.gz"
     padded_filepath = img_path.parent / padded_filename
-    padded_mask_filename = mask_path.with_suffix("").stem + "_padded.nii.gz"
+    padded_mask_filename = mask_path.with_suffix("").stem + "_N4_padded.nii.gz"
     padded_mask_filepath = mask_path.parent / padded_mask_filename
 
     save_as_asr_nii(padded_img, lowres_vox_sizes, padded_filepath)
@@ -183,10 +146,12 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     padded_flipped_mask = np.flip(padded_mask, axis=2)
 
     # Construct new filename for the flipped image
-    flipped_filename = img_path.with_suffix("").stem + "_padded_flipped.nii.gz"
+    flipped_filename = (
+        img_path.with_suffix("").stem + "_N4_padded_flipped.nii.gz"
+    )
     flipped_filepath = flipped_folder / flipped_filename
     flipped_mask_filename = (
-        mask_path.with_suffix("").stem + "_padded_flipped.nii.gz"
+        mask_path.with_suffix("").stem + "_N4_padded_flipped.nii.gz"
     )
     flipped_mask_filepath = flipped_folder / flipped_mask_filename
 
@@ -201,7 +166,7 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     right_slices, left_slices = get_right_and_left_slices(padded_img)
 
     # Process images and masks
-    subject = img_path.with_suffix("").stem
+    subject = img_path.with_suffix("").stem + "_N4"
     processed_arrays = generate_arrays_4template(
         subject, padded_img, padded_mask, pad=0
     )
