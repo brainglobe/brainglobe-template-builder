@@ -67,8 +67,10 @@ max_x += 20
 
 
 # Initialize lists for saving paths
-all_brain_paths = []
-all_mask_paths = []
+all_brain_paths_flipped = []
+all_mask_paths_flipped = []
+all_brain_paths_mirrored = []
+all_mask_paths_mirrored = []
 
 for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
 
@@ -164,8 +166,8 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
         padded_flipped_mask, lowres_vox_sizes, flipped_mask_filepath
     )
 
-    all_brain_paths.append(flipped_filepath)
-    all_mask_paths.append(flipped_mask_filepath)
+    all_brain_paths_flipped.append(flipped_filepath)
+    all_mask_paths_flipped.append(flipped_mask_filepath)
 
     # Splitting brains using brainglobe_template_builder.preproc.splitting
 
@@ -186,13 +188,26 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     vox_sizes = lowres_vox_sizes
     save_array_dict_to_nii(processed_arrays, mirrored_folder, vox_sizes)
 
-    all_brain_paths.extend(mirrored_folder.glob("*.nii.gz"))
-    all_mask_paths.extend(mirrored_folder.glob("*.nii.gz"))
+    for file in mirrored_folder.glob("*.nii.gz"):
+        if "mask" in file.stem:
+            all_mask_paths_mirrored.append(file)
+        else:
+            all_brain_paths_mirrored.append(file)
 
 
 # Save paths to text files
 output_dir = Path(project_folder_path) / "templates"
 output_dir.mkdir(exist_ok=True)
 
-np.savetxt(output_dir / "brain_paths.txt", all_brain_paths, fmt="%s")
-np.savetxt(output_dir / "mask_paths.txt", all_mask_paths, fmt="%s")
+np.savetxt(
+    output_dir / "brain_paths_flipped.txt", all_brain_paths_flipped, fmt="%s"
+)
+np.savetxt(
+    output_dir / "mask_paths_flipped.txt", all_mask_paths_flipped, fmt="%s"
+)
+np.savetxt(
+    output_dir / "brain_paths_mirrored.txt", all_brain_paths_mirrored, fmt="%s"
+)
+np.savetxt(
+    output_dir / "mask_paths_mirrored.txt", all_mask_paths_mirrored, fmt="%s"
+)
