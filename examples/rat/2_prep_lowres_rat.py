@@ -135,6 +135,10 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     # Generate new image and mask filename with '_padded'
     padded_filename = img_path.with_suffix("").stem + "_N4_padded.nii.gz"
     padded_filepath = img_path.parent / padded_filename
+
+    # bias correction wasn't performed on mask
+    # "N4" was added to have matching names
+
     padded_mask_filename = mask_path.with_suffix("").stem + "_N4_padded.nii.gz"
     padded_mask_filepath = mask_path.parent / padded_mask_filename
 
