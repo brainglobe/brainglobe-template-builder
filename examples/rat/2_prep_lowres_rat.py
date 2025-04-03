@@ -166,8 +166,10 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
         padded_flipped_mask, lowres_vox_sizes, flipped_mask_filepath
     )
 
-    all_brain_paths_flipped.append(flipped_filepath)
-    all_mask_paths_flipped.append(flipped_mask_filepath)
+    all_brain_paths_flipped.extend([padded_filepath, flipped_filepath])
+    all_mask_paths_flipped.extend(
+        [padded_mask_filepath, flipped_mask_filepath]
+    )
 
     # Splitting brains using brainglobe_template_builder.preproc.splitting
 
@@ -205,6 +207,7 @@ np.savetxt(
 np.savetxt(
     output_dir / "mask_paths_flipped.txt", all_mask_paths_flipped, fmt="%s"
 )
+
 np.savetxt(
     output_dir / "brain_paths_mirrored.txt", all_brain_paths_mirrored, fmt="%s"
 )
