@@ -143,7 +143,9 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     padded_mask_filepath = mask_path.parent / padded_mask_filename
 
     save_as_asr_nii(padded_img, lowres_vox_sizes, padded_filepath)
-    save_as_asr_nii(padded_mask, lowres_vox_sizes, padded_mask_filepath)
+    save_as_asr_nii(
+        padded_mask.astype(np.uint8), lowres_vox_sizes, padded_mask_filepath
+    )
 
     # Flipping images
 
@@ -167,7 +169,9 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
 
     save_as_asr_nii(padded_flipped_img, lowres_vox_sizes, flipped_filepath)
     save_as_asr_nii(
-        padded_flipped_mask, lowres_vox_sizes, flipped_mask_filepath
+        padded_flipped_mask.astype(np.uint8),
+        lowres_vox_sizes,
+        flipped_mask_filepath,
     )
 
     all_brain_paths_flipped.extend([padded_filepath, flipped_filepath])
@@ -183,7 +187,7 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     # Process images and masks
     subject = img_path.with_suffix("").stem + "_N4"
     processed_arrays = generate_arrays_4template(
-        subject, padded_img, padded_mask, pad=0
+        subject, padded_img, padded_mask.astype(np.uint8), pad=0
     )
 
     # Create mirrored folder
