@@ -78,8 +78,8 @@ def generate_arrays_4template(
 
     # Put the input arrays into the dictionary
     out_dict = {
-        f"{subject}_asym-brain": brain,
-        f"{subject}_asym-mask": mask,
+        # f"{subject}_asym-brain": brain,
+        # f"{subject}_asym-mask": mask,
     }
 
     right_half, left_half = get_right_and_left_slices(brain)
@@ -93,8 +93,8 @@ def generate_arrays_4template(
         left_sym_arr = np.dstack([left_half_arr_xflip, left_half_arr])
         out_dict.update(
             {
-                f"{subject}_right-hemi-{label}": right_half_arr,
-                f"{subject}_left-hemi-xflip-{label}": left_half_arr_xflip,
+                # f"{subject}_right-hemi-{label}": right_half_arr,
+                # f"{subject}_left-hemi-xflip-{label}": left_half_arr_xflip,
                 f"{subject}_right-sym-{label}": right_sym_arr,
                 f"{subject}_left-sym-{label}": left_sym_arr,
             }

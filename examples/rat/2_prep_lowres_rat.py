@@ -1,11 +1,9 @@
 from pathlib import Path
 
+import ants
 import numpy as np
 
-from brainglobe_template_builder.io import (
-    load_tiff,
-    save_as_asr_nii,
-)
+from brainglobe_template_builder.io import load_any, save_as_asr_nii
 from brainglobe_template_builder.preproc.splitting import (
     generate_arrays_4template,
     get_right_and_left_slices,
@@ -29,29 +27,31 @@ subject_ids = [
     if folder.is_dir() and folder.name.startswith("sub-")
 ]
 
-# Initialize lists
+# Initialize bias corrected image paths lists
 rat_image_paths = []
 rat_mask_paths = []
 dimensions = []
 
+# Construct image paths of bias corrected images
 for subject_id in subject_ids:
     rat_image_path = list(
         Path(project_folder_path).rglob(
-            f"{subject_id}/{subject_id}_*_orig-asr_aligned.tif"
+            f"{subject_id}/{subject_id}_*_orig-asr_aligned.nii.gz"
         )
     )
     rat_image_paths.extend(rat_image_path)
 
     rat_mask_path = list(
         Path(project_folder_path).rglob(
-            f"{subject_id}/{subject_id}_*_orig-asr_label-brain_aligned.tif"
+            f"{subject_id}/{subject_id}_*_orig-asr_label-brain_aligned.nii.gz"
         )
     )
     rat_mask_paths.extend(rat_mask_path)
 
-# Read images and store their dimensions
+
+# Read bias corrected images and store their dimensions
 for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
-    img_array = load_tiff(img_path)
+    img_array = load_any(img_path, as_numpy=True)
     dimensions.append(img_array.shape)
 
 
@@ -65,11 +65,22 @@ max_z += 20
 max_y += 20
 max_x += 20
 
-# Pad images to match the largest dimensions + 20 pixels all around
+
+# Initialize lists for saving paths
+all_brain_paths_flipped = []
+all_mask_paths_flipped = []
+all_brain_paths_mirrored = []
+all_mask_paths_mirrored = []
+
 for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
 
-    img = load_tiff(img_path)
-    mask = load_tiff(mask_path)
+    img_ants = ants.image_read(img_path.as_posix())
+    img_n4 = ants.n4_bias_field_correction(img_ants)
+
+    img = img_n4.numpy()
+    mask = load_any(mask_path, as_numpy=True)
+
+    # Padding images to match the largest dimensions + 20 pixels all around
 
     # Calculate how much padding is needed for each axis
     pad_z = max_z - img.shape[0]
@@ -122,13 +133,19 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     )
 
     # Generate new image and mask filename with '_padded'
-    padded_filename = img_path.stem + "_padded.nii.gz"
+    padded_filename = img_path.with_suffix("").stem + "_N4_padded.nii.gz"
     padded_filepath = img_path.parent / padded_filename
-    padded_mask_filename = mask_path.stem + "_padded.nii.gz"
+
+    # bias correction wasn't performed on mask
+    # "N4" was added to have matching names
+
+    padded_mask_filename = mask_path.with_suffix("").stem + "_N4_padded.nii.gz"
     padded_mask_filepath = mask_path.parent / padded_mask_filename
 
     save_as_asr_nii(padded_img, lowres_vox_sizes, padded_filepath)
-    save_as_asr_nii(padded_mask, lowres_vox_sizes, padded_mask_filepath)
+    save_as_asr_nii(
+        padded_mask.astype(np.uint8), lowres_vox_sizes, padded_mask_filepath
+    )
 
     # Flipping images
 
@@ -141,14 +158,25 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     padded_flipped_mask = np.flip(padded_mask, axis=2)
 
     # Construct new filename for the flipped image
-    flipped_filename = img_path.stem + "_padded_flipped.nii.gz"
+    flipped_filename = (
+        img_path.with_suffix("").stem + "_N4_padded_flipped.nii.gz"
+    )
     flipped_filepath = flipped_folder / flipped_filename
-    flipped_mask_filename = mask_path.stem + "_padded_flipped.nii.gz"
+    flipped_mask_filename = (
+        mask_path.with_suffix("").stem + "_N4_padded_flipped.nii.gz"
+    )
     flipped_mask_filepath = flipped_folder / flipped_mask_filename
 
     save_as_asr_nii(padded_flipped_img, lowres_vox_sizes, flipped_filepath)
     save_as_asr_nii(
-        padded_flipped_mask, lowres_vox_sizes, flipped_mask_filepath
+        padded_flipped_mask.astype(np.uint8),
+        lowres_vox_sizes,
+        flipped_mask_filepath,
+    )
+
+    all_brain_paths_flipped.extend([padded_filepath, flipped_filepath])
+    all_mask_paths_flipped.extend(
+        [padded_mask_filepath, flipped_mask_filepath]
     )
 
     # Splitting brains using brainglobe_template_builder.preproc.splitting
@@ -157,9 +185,9 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     right_slices, left_slices = get_right_and_left_slices(padded_img)
 
     # Process images and masks
-    subject = img_path.stem
+    subject = img_path.with_suffix("").stem + "_N4"
     processed_arrays = generate_arrays_4template(
-        subject, padded_img, padded_mask, pad=0
+        subject, padded_img, padded_mask.astype(np.uint8), pad=0
     )
 
     # Create mirrored folder
@@ -169,3 +197,28 @@ for img_path, mask_path in zip(rat_image_paths, rat_mask_paths):
     # Save processed arrays in the mirrored folder
     vox_sizes = lowres_vox_sizes
     save_array_dict_to_nii(processed_arrays, mirrored_folder, vox_sizes)
+
+    for file in mirrored_folder.glob("*.nii.gz"):
+        if "mask" in file.stem:
+            all_mask_paths_mirrored.append(file)
+        else:
+            all_brain_paths_mirrored.append(file)
+
+
+# Save paths to text files
+output_dir = Path(project_folder_path) / "templates"
+output_dir.mkdir(exist_ok=True)
+
+np.savetxt(
+    output_dir / "brain_paths_flipped.txt", all_brain_paths_flipped, fmt="%s"
+)
+np.savetxt(
+    output_dir / "mask_paths_flipped.txt", all_mask_paths_flipped, fmt="%s"
+)
+
+np.savetxt(
+    output_dir / "brain_paths_mirrored.txt", all_brain_paths_mirrored, fmt="%s"
+)
+np.savetxt(
+    output_dir / "mask_paths_mirrored.txt", all_mask_paths_mirrored, fmt="%s"
+)
