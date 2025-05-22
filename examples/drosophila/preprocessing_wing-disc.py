@@ -63,8 +63,8 @@ if __name__ == "__main__":
     template_building_root = Path(args.template_building_root)
     target_isotropic_resolution = int(args.target_isotropic_resolution)
 
-    in_plane_resolution = 0.55
-    out_of_plane_resolution = 1
+    in_plane_resolution = 1.25
+    out_of_plane_resolution = 1.25
 
     in_plane_factor = in_plane_resolution / target_isotropic_resolution
     axial_factor = out_of_plane_resolution / target_isotropic_resolution
@@ -126,10 +126,17 @@ if __name__ == "__main__":
 
         # Apply median filter to the downsampled image
         mf_image = median_filter(down_sampled_image, size=3)
-        mf_image = np.pad(mf_image, ((15, 15), (0, 0), (0, 0)), mode='constant',
-                          constant_values=((0, 0), (0, 0), (0, 0)))
+        mf_image = np.pad(
+            mf_image,
+            ((15, 15), (0, 0), (0, 0)),
+            mode="constant",
+            constant_values=((0, 0), (0, 0), (0, 0)),
+        )
         mf_image = mf_image * (mf_image > 104)
-        logger.debug("Applied median filter and padding to the downsampled image and set the threshold as 104")
+        logger.debug(
+            "Applied median filter and padding to the downsampled "
+            "image and set the threshold as 104"
+        )
 
         # Save the downsampled and filtered image as tif
         saving_folder = (
@@ -144,13 +151,14 @@ if __name__ == "__main__":
         saving_path = saving_folder / downsampled_filename
         save_any(mf_image, saving_path)
         logger.info(
-            f"{sample_folder} downsampled, filtered and padded, saved as {downsampled_filename}"
+            f"{sample_folder} downsampled, filtered and padded, "
+            f"saved as {downsampled_filename}"
         )
 
         # Save the downsampled,filtered and padded image as nifti
         nii_path = file_path_with_suffix(
             saving_path,
-            "_downsampled_filtered_padded_normalized",
+            f"_downsampled_filtered_padded_normalized_{dataset}",
             new_ext=".nii.gz",
         )
         vox_sizes = [
@@ -169,7 +177,11 @@ if __name__ == "__main__":
             threshold_method="triangle",
             closing_size=3,
         )
-        mask_path = file_path_with_suffix(nii_path, "_mask")
+        mask_path = file_path_with_suffix(
+            saving_path,
+            f"_downsampled_filtered_padded_normalized_mask_{dataset}",
+            new_ext=".nii.gz",
+        )
         mask = image_ants.new_image_like(mask_data.astype(np.uint8))
 
         ants.image_write(mask, mask_path.as_posix())
@@ -199,7 +211,8 @@ if __name__ == "__main__":
         )
         logger.debug("Plotted overlay to visually check mask.")
 
-        # Write a text file to record the file path to the downsampled image and mask created
+        # Write a text file to record the file path to
+        # the downsampled image and mask created
         nii_path_str = str(nii_path)
         downsampled_txt_file_name = "brain_paths.txt"
         downsampled_txt_file_path = (
