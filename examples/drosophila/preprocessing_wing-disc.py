@@ -16,6 +16,7 @@ from brainglobe_template_builder.io import (
 )
 from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.wingdisc_utils import (
+    normalize_planes_by_mean,
     resize_anisotropic_image_stack,
 )
 
@@ -191,11 +192,9 @@ if __name__ == "__main__":
         )
 
         # Normalized the image
-        normalised_image = (mf_image - np.min(mf_image)) / (
-            np.max(mf_image) - np.min(mf_image)
-        )
+        normalised_image = normalize_planes_by_mean(mf_image, percentile=0.1)
         save_as_asr_nii(normalised_image, vox_sizes, nii_path)
-        logger.info("replace the pre-saved nii.gz image as normalized image .")
+        logger.info("replace the pre-saved nii.gz image as normalized image.")
 
         # Plot the mask over the image to check
         mask_plot_path = (

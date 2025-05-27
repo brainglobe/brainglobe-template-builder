@@ -61,3 +61,27 @@ def resize_anisotropic_image_stack(
         dtype=np.float64,
     )
     return downsampled_axial.compute()
+
+
+def normalize_planes_by_mean(image: np.ndarray, percentile=0.1) -> np.ndarray:
+    """
+    Parameters:
+        image (np.ndarray): 3D numpy array (Z, Y, X).
+
+    Returns:
+        np.ndarray: Normalized 3D image.
+    """
+    higher_signal_threshold = (1 - percentile) * np.max(image)
+    lower_signal_threshold = percentile * np.max(image)
+    mask = (image > lower_signal_threshold) & (image < higher_signal_threshold)
+    normalized = image.copy().astype(np.float32)
+    overall_mean = np.mean(image[mask])
+    for i in range(image.shape[0]):
+        plane = image[i]
+        if np.any(mask[i]):
+            mean_val = plane[mask[i]].mean()
+            normalized[i] = plane.astype(np.float32) / mean_val
+            normalized[i] *= overall_mean
+        else:
+            normalized[i] = plane
+    return normalized.astype(np.uint16)
