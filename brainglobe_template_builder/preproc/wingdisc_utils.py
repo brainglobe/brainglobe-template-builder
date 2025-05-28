@@ -82,6 +82,7 @@ def normalize_planes_by_mean(image: np.ndarray, percentile=0.1) -> np.ndarray:
             mean_val = plane[mask[i]].mean()
             normalized[i] = plane.astype(np.float32) / mean_val
             normalized[i] *= overall_mean
+            normalized[i] = np.clip(normalized[i], 0, 65535)  # Ensure values are within uint16 range
         else:
             normalized[i] = plane
     return normalized.astype(np.uint16)
