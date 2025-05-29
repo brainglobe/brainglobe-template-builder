@@ -50,6 +50,11 @@ dev = [
     "ruff",
     "setuptools_scm",
 ]
+wingdisc = [
+    'bioio',
+    'bioio_czi',
+    'bioio_sldy'
+]
 
 [build-system]
 requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
