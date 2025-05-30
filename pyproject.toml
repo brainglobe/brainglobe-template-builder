@@ -20,7 +20,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "napari[all]==0.4.19",
+    "napari[all]>=0.5",
     "brainglobe-utils>=0.6.2",
     "brainglobe-atlasapi>=2.0.7",
     "napari-itk-io",
