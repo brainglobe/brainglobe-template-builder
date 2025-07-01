@@ -7,6 +7,7 @@ import pandas as pd
 from brainglobe_utils.IO.image import load_nii
 from matplotlib import pyplot as plt
 
+from brainglobe_template_builder.io import save_nii
 from brainglobe_template_builder.plots import (
     collect_coronal_slices,
     collect_template_paths,
@@ -112,11 +113,34 @@ fig, axs = plot_orthographic(
 )
 print("Plotted final template in orthographic view")
 
+# Save the padded images for later use, if not already saved
+vox_sizes = [config["resolution_um"] * 1e-3] * 3  # convert to mm
+padded_template_path = plots_dir / "final_template_padded.nii.gz"
+if not padded_template_path.exists():
+    save_nii(template_img, vox_sizes, padded_template_path)
+    print(f"Saved padded image for final template to {padded_template_path}")
+else:
+    print(f"Found padded image for final template at {padded_template_path}")
+
 for example_subject in config["example_subjects"]:
     # Plot an example subjects in orthographic view
     subject_path = asym_inputs_paths[example_subject]
     subject_img = load_nii(subject_path, as_array=True, as_numpy=True)
     subject_img, _ = pad_with_zeros(subject_img, target=target_size)
+
+    # Save the padded image for the example subject, if not already saved
+    padded_subject_path = plots_dir / f"{example_subject}_padded.nii.gz"
+    if not padded_subject_path.exists():
+        save_nii(subject_img, vox_sizes, padded_subject_path)
+        print(
+            f"Saved padded image for {example_subject} "
+            f"to {padded_subject_path}."
+        )
+    else:
+        print(
+            f"Found padded image for {example_subject} "
+            f"at {padded_subject_path}."
+        )
 
     fig, axs = plot_orthographic(
         subject_img,

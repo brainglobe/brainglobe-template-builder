@@ -1,33 +1,33 @@
 atlas_forge_dir: "/media/ceph-niu/neuroinformatics/atlas-forge"
 species: "BlackCap"
-template_name: "template_sym_res-25um_n-18_average-trimean"
+template_name: "template_sym_res-25um_n-15_average-trimean_males"
 resolution_um: 25
 transform_types: ["rigid", "similarity", "affine", "nlin"]
 num_iterations: 4
 
-# All indices are for NiFTI images as output by ANTs
+# All indices are for NiFTI images
 # Assumes orientation is ASR
-show_slices: [256, 184, 200]
-insets:
+show_slices: [256, 184, 200]  # coords for ants template image
+insets:  # coords for padded images in plots folder
   tectum:
-    z: 296
+    z: 292
     y_min: 260
     x_min: 60
     size: 160
   entopallium:
-    z: 240
+    z: 238
     y_min: 180
     x_min: 0
     size: 160
   midline:
-    z: 204
+    z: 203
     y_min: 90
     x_min: 178
     size: 160
   injection:
-    z: 274
-    y_min: 60
-    x_min: 20
+    z: 154
+    y_min: 116
+    x_min: 250
     size: 160
 
 vmin_percentile: 1
@@ -35,4 +35,4 @@ vmax_percentile: 99.9
 mip_attenuation: 0.01
 animation_fps: [1, 2, 4, 8]
 use4template_dir_suffix: "orig-asr_N4_aligned_padded_use4template"
-example_subjects: ["sub-BC71"]
+example_subjects: ["sub-BC15"]
