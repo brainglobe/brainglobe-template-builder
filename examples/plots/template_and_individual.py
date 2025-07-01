@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from brainglobe_utils.IO.image import load_nii
 from matplotlib import pyplot as plt
@@ -25,7 +26,7 @@ current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 # Load matplotlib parameters (to allow for proper font export)
 plt.style.use(current_dir / "plots.mplstyle")
 # Load config file containing template building parameters
-config = load_config(current_dir / "config_50um.yaml")
+config = load_config(current_dir / "config_25um.yaml")
 
 # Setup directories based on config file
 atlas_dir, template_dir, plots_dir = setup_directories(config)
@@ -54,10 +55,14 @@ use4template_dirs = collect_use4template_dirs(
     resolution=config["resolution_um"],
     suffix=config["use4template_dir_suffix"],
 )
-# Paths to the asymmetric images used for template building
+# Collect unique subject names used for this template
+brain_paths_txt = template_dir / "brain_paths.txt"
+brain_paths = np.loadtxt(brain_paths_txt, dtype=str).tolist()
+used_subj_names = {Path(path).name.split("_")[0] for path in brain_paths}
+# Paths to the asymmetric images used for this template
 asym_inputs_paths = {
-    subject: folder / f"{subject}_asym-brain.nii.gz"
-    for subject, folder in use4template_dirs.items()
+    subject: use4template_dirs[subject] / f"{subject}_asym-brain.nii.gz"
+    for subject in used_subj_names
 }
 
 # Collect coronal slices for each asymmetric input image
