@@ -1,9 +1,16 @@
-"""Quantify sharpness of template and individual images
-=======================================================
+"""Quantify sharpness of template sand individual images
+========================================================
 
-We consider the following sharpness metrics:
-- Variance of Laplacian
-- Gaussian gradient magnitudes at different sigmas
+Our chosen sharpness metric is edge SNR, i.e. the ratio of
+the mean gradient magnitude on edges
+to the standard deviation of the gradient magnitude on non-edges.
+
+Gradient magnitude is computed with sigma = 1.
+Edge masks are created by a sequence of filters:
+- Gaussian smoothing (sigma = 2)
+- Sobel filter
+- Otsu's thresholding
+- Binary dilation (radius = 1)
 """
 
 # %%
@@ -17,6 +24,11 @@ import numpy as np
 from brainglobe_utils.IO.image import load_nii
 from matplotlib import pyplot as plt
 
+from brainglobe_template_builder.metrics import (
+    create_edge_mask_3d,
+    edge_snr_3d,
+    gradient_magnitude,
+)
 from brainglobe_template_builder.plots import (
     collect_template_paths,
     load_config,
@@ -38,115 +50,137 @@ atlas_dir, template_dir, plots_dir = setup_directories(config)
 transform_types = config["transform_types"]
 n_transforms = len(transform_types)
 n_iter = config["num_iterations"]
+final_stage = transform_types[-1]
+final_iter = f"iter-{n_iter-1}"
 print("transform types: ", transform_types)
 print("number of iterations: ", n_iter)
 
 # Collect template images for each iteration and transform type
 template_paths = collect_template_paths(template_dir, transform_types, n_iter)
-
-# Get the path to the final template
-final_stage = transform_types[-1]
-final_template_path = template_paths[f"{final_stage} iter-{n_iter-1}"]
+# Get paths to the final iteration of each transform stage
+template_paths_final_iter = {
+    k: v for k, v in template_paths.items() if k.endswith(final_iter)
+}
+# Get the path to the very final template (final stage, final iteration)
+final_template_path = template_paths[f"{final_stage} {final_iter}"]
 print("Final template path: ", final_template_path)
 
+# Get paths to individual sample brain images
+with open(template_dir / "brain_paths.txt", "r") as f:
+    sample_paths = [
+        Path(line.strip().replace("/ceph/neuroinformatics", "/media/ceph-niu"))
+        for line in f.readlines()
+    ]
 
 # %%
-
-
-def get_variance_of_laplacian(image: np.ndarray) -> float:
-    """Calculate the variance of the Laplacian of a 3D image."""
-    from scipy.ndimage import laplace
-
-    laplacian = laplace(image, mode="constant")
-    return np.var(laplacian)
-
-
-def get_gradient_magnitude(image: np.ndarray, sigma=0) -> np.ndarray:
-    """Calculate the gradient magnitude of a 3D image."""
-    from scipy.ndimage import gaussian_gradient_magnitude
-
-    # Use a small sigma to avoid smoothing too much
-    gradient = gaussian_gradient_magnitude(image, sigma=sigma, mode="constant")
-    return gradient
-
-
-# %%
-# Load each template image and calculate the variance of Laplacian
-
 
 template_images: dict[str, np.ndarray] = {}
-var_of_laplacian: dict[str, float] = {}
+gradient_images: dict[str, np.ndarray] = {}
+edge_masks: dict[str, np.ndarray] = {}
 
-for stage, path in template_paths.items():
-    print(f"Loading template image for {stage}...")
-    template_images[stage] = load_nii(path, as_array=True, as_numpy=True)
-    var_of_laplacian[stage] = get_variance_of_laplacian(template_images[stage])
-    print(f"Variance of Laplacian for {stage}: {var_of_laplacian[stage]:.4f}")
-
-plt.figure(figsize=(8, 4))
-plt.plot(
-    list(var_of_laplacian.keys()), list(var_of_laplacian.values()), marker="o"
-)
-plt.xticks(rotation=45)
-plt.title("Variance of Laplacian for Template Stages")
-
-
-# %%
-# Plot histograms of gradient magnitudes for each template stage
-# and for different Gaussian smoothing sigmas.
-# We only look at the last iteration of each stage.
-
-gradient_magnitudes: dict[str, np.ndarray] = {}
-
-fig, axs = plt.subplots(1, 4, figsize=(12, 4))
-
-stages = ["rigid", "similarity", "affine", "nlin"]
-iters = [0, 1, 2, 3]
-cmap = plt.get_cmap("viridis", len(stages))
-
-for s, sigma in enumerate([0, 1, 3, 5]):
-    for i, stage in enumerate(stages):
-        last_iter = f"{stage} iter-{iters[-1]}"
-        ax = axs[s]
-        grad_amplitude = get_gradient_magnitude(
-            template_images[last_iter], sigma=sigma
-        )
-        max_grad = np.ceil(np.max(grad_amplitude))
-        ax.hist(
-            grad_amplitude.flatten(),
-            density=True,
-            lw=1.5,
-            bins=np.linspace(0, max_grad, 50),
-            histtype="step",
-            label=last_iter,
-            color=cmap(i),
-        )
-        ax.set_yscale("log")
-        ax.set_xlabel("Gaussian Gradient Magnitude")
-        ax.set_ylabel("Density")
-        ax.set_title(f"Sigma = {sigma}")
-        ax.legend()
-
-        # Store the gradient magnitude for later visualization
-        gradient_magnitudes[f"{last_iter} sigma-{sigma}"] = grad_amplitude
-
-
-# %%
-
-fig, axs = plt.subplots(4, 4, figsize=(12, 8), sharex=True, sharey=True)
-
-max_grads = [10, 1.5, 0.4, 0.3]
-
-
-for i, stage in enumerate(gradient_magnitudes.keys()):
-    ax = axs[i // 4, i % 4]
-    ax.imshow(
-        gradient_magnitudes[stage][256, :, :],
-        vmin=0,
-        vmax=max_grads[i // 4],
-        cmap="viridis",
+for label, path in template_paths_final_iter.items():
+    template_images[label] = load_nii(path, as_array=True, as_numpy=True)
+    gradient_images[label] = gradient_magnitude(
+        template_images[label], sigma=1.0
     )
-    ax.set_title(stage)
-    ax.axis("off")
+    edge_masks[label] = create_edge_mask_3d(
+        template_images[label], sigma=2.0, dilate_radius=1
+    )
+    print(f"Loaded and processed {label}.")
+
+# %%
+# Compute vmax values for comparable plots
+vmax_img = np.max([np.percentile(v, 99) for v in template_images.values()])
+vmax_grad = np.max([np.percentile(v, 99) for v in gradient_images.values()])
+
+# %%
+
+fig, axes = plt.subplots(4, 3, figsize=(8, 8), sharex=True, sharey=True)
+
+slice_idx = config["show_slices"][0]
+
+for row, label in enumerate(template_paths_final_iter.keys()):
+    stage = label.split()[0]
+
+    axes[row, 0].imshow(
+        template_images[label][slice_idx, :, :],
+        cmap="Greys_r",
+        vmin=0,
+        vmax=vmax_img,
+    )
+    axes[row, 0].set_title(stage)
+
+    axes[row, 1].imshow(
+        gradient_images[label][slice_idx, :, :],
+        cmap="Greys_r",
+        vmin=0,
+        vmax=vmax_grad,
+    )
+    axes[row, 1].set_title("Gradient magnitude")
+
+    axes[row, 2].imshow(
+        edge_masks[label][slice_idx, :, :],
+        cmap="binary_r",
+    )
+    axes[row, 2].set_title("Edge Mask")
+
+    for c in range(3):
+        axes[row, c].axis("off")
+
+
+# %%
+
+edge_snrs: dict[str, float] = {}
+
+for label in template_images.keys():
+    stage = label.split()[0]
+    edge_snr = edge_snr_3d(gradient_images[label], edge_masks[label])
+    edge_snrs[stage] = edge_snr
+    print(f"Computed edge SNR for {stage}: {edge_snr}")
+
+
+# %%
+
+sample_edge_snrs: dict[str, float] = {}
+
+for sample_path in sample_paths:
+    sample_path = sample_path
+    sample_name = sample_path.stem
+    print(f"Processing sample: {sample_name}")
+
+    sample_img = load_nii(sample_path, as_array=True, as_numpy=True)
+
+    gmag = gradient_magnitude(sample_img, sigma=1.0)
+    edge_mask = create_edge_mask_3d(sample_img, sigma=2.0, dilate_radius=1)
+    edge_snr = edge_snr_3d(gmag, edge_mask)
+    print(f"Computed edge SNR for {sample_name}: {edge_snr}")
+    sample_edge_snrs[sample_name] = edge_snr
+
+
+# %%
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
+
+# Plot a boxplot of all sample_edge_snrs
+axes[0].set_title("Individual Samples")
+axes[0].scatter(
+    [1] * len(sample_edge_snrs),
+    list(sample_edge_snrs.values()),
+    facecolors="white",
+    edgecolors="blue",
+    alpha=0.7,
+    s=30,
+    lw=2,
+)
+axes[0].set_xticklabels(["individual samples"])
+axes[0].set_ylabel("Edge SNR")
+
+# Plot a line plot of edge SNRs by template stage
+axes[1].set_title("Template Stages")
+axes[1].plot(
+    list(edge_snrs.keys()), list(edge_snrs.values()), marker="o", color="blue"
+)
+axes[1].set_xlabel("Template Stage")
+axes[1].set_ylabel("Edge SNR")
 
 # %%

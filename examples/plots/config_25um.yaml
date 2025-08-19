@@ -1,6 +1,6 @@
 atlas_forge_dir: "/media/ceph-niu/neuroinformatics/atlas-forge"
 species: "BlackCap"
-template_name: "template_sym_res-25um_n-15_average-trimean_males"
+template_name: "template_sym_res-25um_n-18_average-trimean"
 resolution_um: 25
 transform_types: ["rigid", "similarity", "affine", "nlin"]
 num_iterations: 4
