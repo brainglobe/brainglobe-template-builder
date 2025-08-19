@@ -98,7 +98,7 @@ plt.title("Variance of Laplacian for Template Stages")
 
 gradient_magnitudes: dict[str, np.ndarray] = {}
 
-fig, axs = plt.subplots(1, 4, figsize=(12, 4), sharey=True)
+fig, axs = plt.subplots(1, 4, figsize=(12, 4))
 
 stages = ["rigid", "similarity", "affine", "nlin"]
 iters = [0, 1, 2, 3]
