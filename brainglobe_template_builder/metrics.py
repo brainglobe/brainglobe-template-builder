@@ -101,7 +101,11 @@ def create_edge_mask_3d(
     return edge_mask
 
 
-def edge_snr_3d(grad_mag: np.ndarray, edge_mask: np.ndarray) -> float:
+def edge_snr_3d(
+    grad_mag: np.ndarray,
+    edge_mask: np.ndarray,
+    non_edge_mask: np.ndarray | None = None,
+) -> float:
     """Compute edge SNR for 3D image volumes.
 
     Edge SNR is defined as the ratio of the mean gradient magnitude on edges
@@ -113,10 +117,20 @@ def edge_snr_3d(grad_mag: np.ndarray, edge_mask: np.ndarray) -> float:
         Gradient magnitude image.
     edge_mask: np.ndarray
         Binary mask indicating the edges in the image.
+    non_edge_mask: np.ndarray
+        Binary mask indicating the non-edges in the image.
+        If None, the non-edges are defined as the complement of the edge mask.
+
+    Returns
+    -------
+    float
+        The edge SNR value.
 
     """
     edge_gmag = grad_mag[edge_mask]
-    non_edge_gmag = grad_mag[~edge_mask]
+    if non_edge_mask is None:
+        non_edge_mask = ~edge_mask
+    non_edge_gmag = grad_mag[non_edge_mask]
 
     if edge_gmag.size == 0 or non_edge_gmag.size == 0:
         return float("nan")

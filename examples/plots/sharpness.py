@@ -56,131 +56,167 @@ print("transform types: ", transform_types)
 print("number of iterations: ", n_iter)
 
 # Collect template images for each iteration and transform type
-template_paths = collect_template_paths(template_dir, transform_types, n_iter)
-# Get paths to the final iteration of each transform stage
-template_paths_final_iter = {
-    k: v for k, v in template_paths.items() if k.endswith(final_iter)
-}
-# Get the path to the very final template (final stage, final iteration)
-final_template_path = template_paths[f"{final_stage} {final_iter}"]
-print("Final template path: ", final_template_path)
+template_paths = collect_template_paths(
+    template_dir,
+    transform_types,
+    n_iter,
+    template_file_name="template_sharpen_shapeupdate.nii.gz",
+)
+# Collect template brain masks for each iteration and transform type
+template_mask_paths = collect_template_paths(
+    template_dir,
+    transform_types,
+    n_iter,
+    template_file_name="mask_shapeupdate.nii.gz",
+)
+# Keep only paths to the final iteration of each transform stage
+for path_dict in [template_paths, template_mask_paths]:
+    for key in list(path_dict.keys()):
+        if not key.endswith(final_iter):
+            del path_dict[key]
 
-# Get paths to individual sample brain images
+print("\nWill use the following templates images:\n")
+for key in template_paths.keys():
+    folder = template_paths[key].parent
+    template_img = template_paths[key].name
+    template_mask = template_mask_paths[key].name
+    print(f"stage-{key}:")
+    print(f"  directory: {folder}")
+    print(f"  template image: {template_img}")
+    print(f"  mask image: {template_mask}")
+
+
+# Get paths to individual sample brain images and masks
 with open(template_dir / "brain_paths.txt", "r") as f:
-    sample_paths = [
+    input_paths = [
         Path(line.strip().replace("/ceph/neuroinformatics", "/media/ceph-niu"))
         for line in f.readlines()
     ]
+    input_dirs = sorted(list(set(p.parent for p in input_paths)))
+    subjects = [d.parent.name for d in input_dirs]
+    brain_paths = {
+        sub: d / f"{sub}_asym-brain.nii.gz"
+        for sub, d in zip(subjects, input_dirs)
+    }
+    mask_paths = {
+        sub: d / f"{sub}_asym-mask.nii.gz"
+        for sub, d in zip(subjects, input_dirs)
+    }
+    print(f"\nFound images for {len(brain_paths)} individual samples:\n")
+
+for sub in subjects:
+    print(f"Subject: {sub}")
+    print(f"  directory: {brain_paths[sub].parent}")
+    print(f"  brain: {brain_paths[sub].name}")
+    print(f"  mask: {mask_paths[sub].name}")
 
 # %%
+# Load images from the final iteration of each template-building stage,
+# as well as indivual subject images, and compute their
+# gradient magnitude, edge/non-edge masks, and edge SNR.
 
-template_images: dict[str, np.ndarray] = {}
-gradient_images: dict[str, np.ndarray] = {}
-edge_masks: dict[str, np.ndarray] = {}
+combined_img_paths = {**template_paths, **brain_paths}
+combined_mask_paths = {**template_mask_paths, **mask_paths}
 
-for label, path in template_paths_final_iter.items():
-    template_images[label] = load_nii(path, as_array=True, as_numpy=True)
-    gradient_images[label] = gradient_magnitude(
-        template_images[label], sigma=1.0
-    )
-    edge_masks[label] = create_edge_mask_3d(
-        template_images[label], sigma=2.0, dilate_radius=1
-    )
-    print(f"Loaded and processed {label}.")
+results: dict[str, dict[str, np.ndarray]] = {}
+
+for label, img_path in combined_img_paths.items():
+    print(f"Processing {label}...")
+    img = load_nii(img_path, as_array=True, as_numpy=True)
+    gmag = gradient_magnitude(img, sigma=1.0)
+    brain_mask = load_nii(
+        combined_mask_paths[label], as_array=True, as_numpy=True
+    ).astype(bool)
+    edge_mask = create_edge_mask_3d(img, sigma=2.0, dilate_radius=1)
+    non_edge_mask = np.logical_and(brain_mask, ~edge_mask)
+    edge_snr = edge_snr_3d(gmag, edge_mask, non_edge_mask)
+
+    results[label] = {
+        "image": img,
+        "gradient": gmag,
+        "edge_mask": edge_mask,
+        "non_edge_mask": non_edge_mask,
+        "edge_snr": edge_snr,
+    }
+    print(f"Computed edge SNR for {label}: {edge_snr:.2f}")
+
+# Load the individual sample images
+# and compute their gradient magnitudes, edge/non-edge masks, and edge SNR.
+
+sample_results: dict[str, dict[str, np.ndarray]] = {}
+
+for sub, brain_path in brain_paths.items():
+    mask_path = mask_paths[sub]
 
 # %%
+# Plot slices
+
 # Compute vmax values for comparable plots
-vmax_img = np.max([np.percentile(v, 99) for v in template_images.values()])
-vmax_grad = np.max([np.percentile(v, 99) for v in gradient_images.values()])
+# vmax_img = np.max([np.percentile(v, 99) for v in template_images.values()])
+# vmax_grad = np.max(
+#     [np.percentile(v, 99) for v in template_gradients.values()]
+# )
 
-# %%
+# fig, axes = plt.subplots(4, 3, figsize=(8, 8), sharex=True, sharey=True)
 
-fig, axes = plt.subplots(4, 3, figsize=(8, 8), sharex=True, sharey=True)
+# slice_idx = config["show_slices"][0]
 
-slice_idx = config["show_slices"][0]
+# for row, label in enumerate(template_paths_final_iter.keys()):
+#     stage = label.split()[0]
 
-for row, label in enumerate(template_paths_final_iter.keys()):
-    stage = label.split()[0]
+#     axes[row, 0].imshow(
+#         template_images[label][slice_idx, :, :],
+#         cmap="Greys_r",
+#         vmin=0,
+#         vmax=vmax_img,
+#     )
+#     axes[row, 0].set_title(stage)
 
-    axes[row, 0].imshow(
-        template_images[label][slice_idx, :, :],
-        cmap="Greys_r",
-        vmin=0,
-        vmax=vmax_img,
-    )
-    axes[row, 0].set_title(stage)
+#     axes[row, 1].imshow(
+#         template_gradients[label][slice_idx, :, :],
+#         cmap="Greys_r",
+#         vmin=0,
+#         vmax=vmax_grad,
+#     )
+#     axes[row, 1].set_title("Gradient magnitude")
 
-    axes[row, 1].imshow(
-        gradient_images[label][slice_idx, :, :],
-        cmap="Greys_r",
-        vmin=0,
-        vmax=vmax_grad,
-    )
-    axes[row, 1].set_title("Gradient magnitude")
+#     axes[row, 2].imshow(
+#         template_edge_masks[label][slice_idx, :, :],
+#         cmap="binary_r",
+#     )
+#     axes[row, 2].set_title("Edge Mask")
 
-    axes[row, 2].imshow(
-        edge_masks[label][slice_idx, :, :],
-        cmap="binary_r",
-    )
-    axes[row, 2].set_title("Edge Mask")
-
-    for c in range(3):
-        axes[row, c].axis("off")
-
-
-# %%
-
-edge_snrs: dict[str, float] = {}
-
-for label in template_images.keys():
-    stage = label.split()[0]
-    edge_snr = edge_snr_3d(gradient_images[label], edge_masks[label])
-    edge_snrs[stage] = edge_snr
-    print(f"Computed edge SNR for {stage}: {edge_snr}")
+#     for c in range(3):
+#         axes[row, c].axis("off")
 
 
 # %%
 
-sample_edge_snrs: dict[str, float] = {}
+# fig, axes = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
 
-for sample_path in sample_paths:
-    sample_path = sample_path
-    sample_name = sample_path.stem
-    print(f"Processing sample: {sample_name}")
+# # Plot a boxplot of all sample_edge_snrs
+# axes[0].set_title("Individual Samples")
+# axes[0].scatter(
+#     [1] * len(sample_edge_snrs),
+#     list(sample_edge_snrs.values()),
+#     facecolors="white",
+#     edgecolors="blue",
+#     alpha=0.7,
+#     s=30,
+#     lw=2,
+# )
+# axes[0].set_xticklabels(["individual samples"])
+# axes[0].set_ylabel("Edge SNR")
 
-    sample_img = load_nii(sample_path, as_array=True, as_numpy=True)
-
-    gmag = gradient_magnitude(sample_img, sigma=1.0)
-    edge_mask = create_edge_mask_3d(sample_img, sigma=2.0, dilate_radius=1)
-    edge_snr = edge_snr_3d(gmag, edge_mask)
-    print(f"Computed edge SNR for {sample_name}: {edge_snr}")
-    sample_edge_snrs[sample_name] = edge_snr
-
-
-# %%
-
-fig, axes = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
-
-# Plot a boxplot of all sample_edge_snrs
-axes[0].set_title("Individual Samples")
-axes[0].scatter(
-    [1] * len(sample_edge_snrs),
-    list(sample_edge_snrs.values()),
-    facecolors="white",
-    edgecolors="blue",
-    alpha=0.7,
-    s=30,
-    lw=2,
-)
-axes[0].set_xticklabels(["individual samples"])
-axes[0].set_ylabel("Edge SNR")
-
-# Plot a line plot of edge SNRs by template stage
-axes[1].set_title("Template Stages")
-axes[1].plot(
-    list(edge_snrs.keys()), list(edge_snrs.values()), marker="o", color="blue"
-)
-axes[1].set_xlabel("Template Stage")
-axes[1].set_ylabel("Edge SNR")
+# # Plot a line plot of edge SNRs by template stage
+# axes[1].set_title("Template Stages")
+# axes[1].plot(
+#     list(edge_snrs.keys()),
+#     list(edge_snrs.values()),
+#     marker="o",
+#     color="blue"
+# )
+# axes[1].set_xlabel("Template Stage")
+# axes[1].set_ylabel("Edge SNR")
 
 # %%
