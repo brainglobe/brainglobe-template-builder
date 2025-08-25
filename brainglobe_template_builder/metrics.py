@@ -95,8 +95,9 @@ def create_edge_mask_3d(
     edge_mask = edge_strength > threshold
 
     if dilate_radius is not None:
-        structure = ball(max(1, int(dilate_radius))).astype(bool)
-        edge_mask = binary_dilation(edge_mask, structure=structure)
+        edge_mask = binary_dilation(
+            edge_mask, structure=ball(max(1, int(dilate_radius))).astype(bool)
+        )
 
     return edge_mask
 
@@ -104,7 +105,6 @@ def create_edge_mask_3d(
 def edge_snr_3d(
     grad_mag: np.ndarray,
     edge_mask: np.ndarray,
-    non_edge_mask: np.ndarray | None = None,
 ) -> float:
     """Compute edge SNR for 3D image volumes.
 
@@ -117,9 +117,6 @@ def edge_snr_3d(
         Gradient magnitude image.
     edge_mask: np.ndarray
         Binary mask indicating the edges in the image.
-    non_edge_mask: np.ndarray
-        Binary mask indicating the non-edges in the image.
-        If None, the non-edges are defined as the complement of the edge mask.
 
     Returns
     -------
@@ -128,11 +125,9 @@ def edge_snr_3d(
 
     """
     edge_gmag = grad_mag[edge_mask]
-    if non_edge_mask is None:
-        non_edge_mask = ~edge_mask
-    non_edge_gmag = grad_mag[non_edge_mask]
+    non_edge_gmag = grad_mag[~edge_mask]
 
     if edge_gmag.size == 0 or non_edge_gmag.size == 0:
         return float("nan")
 
-    return float(edge_gmag.mean() / (non_edge_gmag.std(ddof=0) + EPS))
+    return float(edge_gmag.mean() / (non_edge_gmag.std() + EPS))
