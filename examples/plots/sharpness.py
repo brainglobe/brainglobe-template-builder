@@ -37,6 +37,7 @@ from brainglobe_template_builder.plots import (
     collect_template_paths,
     compute_vmin_vmax_across_slices,
     load_config,
+    pad_with_zeros,
     save_figure,
     setup_directories,
 )
@@ -153,6 +154,7 @@ def plot_gradients_edges(
     image_dict: dict[str, dict[str, np.ndarray]],
     slice_idx: int | None = None,
     sharev: bool = False,
+    pad: bool = False,
     save_path: Path | None = None,
 ):
     """Plot gradient magnitudes and edge masks for each image.
@@ -171,6 +173,8 @@ def plot_gradients_edges(
         If None (default), show the mid-coronal slice.
     sharev: bool
         Whether to share vmin, vmax across subplots.
+    pad: bool
+        Whether to pad the images to a square aspect ratio.
     save_path: Path | None
         The path to save the figure.
         If None (default), do not save the figure.
@@ -180,8 +184,9 @@ def plot_gradients_edges(
         slice_idx = list(image_dict.values())[0]["image"].shape[0] // 2
 
     n_rows = len(image_dict)
+    fig_width = 6 if pad else 8
     fig, axes = plt.subplots(
-        n_rows, 3, figsize=(8, n_rows * 2), sharex=True, sharey=True
+        n_rows, 3, figsize=(fig_width, n_rows * 2), sharex=True, sharey=True
     )
 
     for row, label in enumerate(image_dict.keys()):
@@ -191,6 +196,13 @@ def plot_gradients_edges(
             image_dict[label]["edge_mask"][slice_idx, :, :],
             image_dict[label]["edge_snr"],
         )
+
+        if pad:
+            target_size = max(img.shape)
+            img, grad, edge_mask = map(
+                lambda x: pad_with_zeros(x, target=target_size)[0],
+                [img, grad, edge_mask],
+            )
 
         if sharev:
             vmin_img, vmax_img = compute_vmin_vmax_across_slices(
@@ -227,7 +239,7 @@ def plot_gradients_edges(
         )
         axes[row, 2].text(
             0.5,
-            0.05,
+            0.1,
             f"Edge SNR = {snr:.2f}",
             color="white",
             ha="center",
@@ -264,6 +276,7 @@ plot_gradients_edges(
     },
     slice_idx=config["show_slices"][0],
     sharev=True,
+    pad=False,
     save_path=plots_dir / "templates_gradients_edges.png",
 )
 
@@ -273,6 +286,7 @@ plot_gradients_edges(
     {k: v for k, v in results.items() if k.startswith("sub-")},
     slice_idx=config["show_slices"][0],
     sharev=False,
+    pad=False,
     save_path=plots_dir / "subjects_gradients_edges.png",
 )
 
@@ -287,6 +301,7 @@ plot_gradients_edges(
     },
     slice_idx=config["show_slices"][0],
     sharev=False,
+    pad=True,
     save_path=plots_dir / "sub-BC15_vs_template_gradients_edges.png",
 )
 
@@ -306,7 +321,7 @@ templates_final_iter_df = templates_df[templates_df["iter"] == str(n_iter - 1)]
 
 plot_df = pd.concat([sample_df, templates_final_iter_df], axis=0).reset_index()
 
-fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+fig, ax = plt.subplots(1, 1, figsize=(3.5, 4))
 
 sns.stripplot(
     plot_df,
@@ -338,4 +353,3 @@ plt.tight_layout()
 save_figure(fig, plots_dir, "edge_snr_comparison")
 
 plot_df.to_csv(plots_dir / "edge_snr_comparison.csv", index=False)
-# %%
