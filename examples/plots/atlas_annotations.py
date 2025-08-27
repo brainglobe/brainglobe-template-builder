@@ -7,6 +7,7 @@ This script needs:
 # %%
 # Imports
 
+import json
 import os
 from pathlib import Path
 
@@ -22,25 +23,45 @@ from brainglobe_template_builder.plots import save_figure
 # Specify paths
 
 # Path to the BrainGlobe atlas
-atlas_name = "eurasian_blackcap_25um_v1.2"
+atlas_name = "eurasian_blackcap_25um_v1.3"
 atlas_dir = Path.home() / ".brainglobe" / atlas_name
 reference_path = atlas_dir / "reference.tiff"
 annotation_path = atlas_dir / "annotation.tiff"
 structures_csv_path = atlas_dir / "structures.csv"
+structures_json_path = atlas_dir / "structures.json"
 
 # get path of this script's parent directory
 current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 # Load matplotlib parameters (to allow for proper font export)
 plt.style.use(current_dir / "plots.mplstyle")
-# Path to the csv file containing the RGB values for each region
-# Expected columns are: "acronym", "R", "G", "B"
-# The .csv is in the same folder as this script
-colors_csv_filename = "oldenburg_blackcap_colors.csv"
-colors_csv_path = current_dir / colors_csv_filename
 
 # Path to save the plots
 niu_dropbox_dir = Path.home() / "Dropbox" / "NIU"
-save_dir = niu_dropbox_dir / "resources" / "figures" / "BlackCap_atlas_v1"
+save_dir = niu_dropbox_dir / "resources" / "figures" / "BlackCap_Atlas_Male"
+
+# %%
+# Load structures.json
+
+with open(structures_json_path, "r") as f:
+    structures_list = json.load(f)
+
+acronyms, R_vals, G_vals, B_vals = [], [], [], []
+for struct in structures_list:
+    acronyms.append(struct["acronym"])
+    R_vals.append(struct["rgb_triplet"][0])
+    G_vals.append(struct["rgb_triplet"][1])
+    B_vals.append(struct["rgb_triplet"][2])
+
+# Construct colors DataFrame
+colors = pd.DataFrame(
+    {
+        "acronym": acronyms,
+        "R": R_vals,
+        "G": G_vals,
+        "B": B_vals,
+    }
+)
+colors.to_csv(save_dir / "eurasian_blackcap_colors.csv", index=False)
 
 # %%
 # Load data
@@ -48,14 +69,10 @@ save_dir = niu_dropbox_dir / "resources" / "figures" / "BlackCap_atlas_v1"
 reference_img = load_any(reference_path)
 annotation_img = load_any(annotation_path)
 
-# Load both "structures" and "colors" csv files
-structures = pd.read_csv(structures_csv_path)
-colors = pd.read_csv(colors_csv_path, dtype={"R": int, "G": int, "B": int})
-
-# Prepare structure-to-color mapping
-
-# Merge the two dataframes on the "acronym" column
+# Prepare structure-to-color mapping:
+# Merge the structures and colors dataframes on the "acronym" column
 # Maintain the order of the "colors" dataframe
+structures = pd.read_csv(structures_csv_path)
 struct2col_df = pd.merge(
     structures, colors, on="acronym", how="right", validate="one_to_one"
 )
@@ -83,7 +100,7 @@ struct_to_rgba = {
 }
 atlas_cmap = mcolors.ListedColormap(
     [struct_to_rgba[color_id] for color_id in struct_to_rgba],
-    name="blackap_atlas_v1.1",
+    name="blackcap_atlas_v1.3",
 )
 # Create a normalization for the colormap based on the color id values
 atlas_cmap_norm = mcolors.BoundaryNorm(
@@ -141,6 +158,9 @@ def plot_slice_with_atlas_overlay(
 # %%
 # Plot each slice of the reference image with the atlas overlay
 
+frames_path = save_dir / "video" / "frames"
+frames_path.mkdir(parents=True, exist_ok=True)
+
 for i in range(reference_img.shape[0]):
     ref_slice = reference_img.take(i, axis=0)
     ann_slice = atlas_overlay.take(i, axis=0)
@@ -150,7 +170,7 @@ for i in range(reference_img.shape[0]):
         ann_slice,
         atlas_cmap,
         atlas_cmap_norm,
-        save_path=save_dir / "video" / "frames" / f"slice_{i:03d}.png",
+        save_path=(frames_path / f"slice_{i:03d}.png"),
     )
     plt.close()
 
@@ -186,3 +206,5 @@ for i in range(n_slices):
 
 fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0, hspace=0)
 save_figure(fig, save_dir, "annotations_overlaid_on_reference")
+
+# %%
