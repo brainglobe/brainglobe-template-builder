@@ -23,7 +23,7 @@ from brainglobe_template_builder.plots import save_figure
 # Specify paths
 
 # Path to the BrainGlobe atlas
-atlas_name = "eurasian_blackcap_25um_v1.3"
+atlas_name = "eurasian_blackcap_25um_v1.4"
 atlas_dir = Path.home() / ".brainglobe" / atlas_name
 reference_path = atlas_dir / "reference.tiff"
 annotation_path = atlas_dir / "annotation.tiff"
@@ -100,7 +100,7 @@ struct_to_rgba = {
 }
 atlas_cmap = mcolors.ListedColormap(
     [struct_to_rgba[color_id] for color_id in struct_to_rgba],
-    name="blackcap_atlas_v1.3",
+    name="blackcap_atlas_v1.4",
 )
 # Create a normalization for the colormap based on the color id values
 atlas_cmap_norm = mcolors.BoundaryNorm(
