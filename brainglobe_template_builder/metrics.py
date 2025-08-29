@@ -46,7 +46,7 @@ def gradient_magnitude(
     numpy.ndarray
         Gradient magnitude image.
     """
-    gmag = gaussian_gradient_magnitude(image, sigma=sigma, mode="constant")
+    gmag = gaussian_gradient_magnitude(image, sigma=sigma)
     if normalize:
         image_smooth = smooth(image, sigma=sigma)
         gmag = gmag / (np.abs(image_smooth) + EPS)
@@ -109,7 +109,7 @@ def edge_snr_3d(
     """Compute edge SNR for 3D image volumes.
 
     Edge SNR is defined as the ratio of the mean gradient magnitude on edges
-    to the standard deviation of the gradient magnitude on non-edges.
+    to the mean gradient magnitude on non-edges.
 
     Parameters
     ----------
@@ -130,4 +130,4 @@ def edge_snr_3d(
     if edge_gmag.size == 0 or non_edge_gmag.size == 0:
         return float("nan")
 
-    return float(edge_gmag.mean() / (non_edge_gmag.std() + EPS))
+    return float(edge_gmag.mean() / (non_edge_gmag.mean() + EPS))

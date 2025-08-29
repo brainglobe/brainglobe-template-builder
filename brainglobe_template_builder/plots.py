@@ -9,6 +9,49 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 
 
+def linear_rescale(
+    source_image: np.ndarray,
+    target_image: np.ndarray,
+    source_pcts: tuple[float, float] = (1.0, 99.0),
+    target_pcts: tuple[float, float] = (1.0, 99.0),
+    source_mask: np.ndarray | None = None,
+    target_mask: np.ndarray | None = None,
+    clip: bool = False,
+    out_dtype: np.dtype | None = None,
+) -> np.ndarray:
+    """
+    Linearly rescale a source image so that its robust range (source_pcts)
+    maps to the target image's robust range (target_pcts).
+
+    - Optionally masks background in source/target when computing percentiles.
+    - Optionally clips output to target robust range to prevent extrapolation.
+    """
+
+    if source_mask is not None:
+        source_data = source_image[source_mask.astype(bool)]
+    else:
+        source_data = source_image
+
+    if target_mask is not None:
+        target_data = target_image[target_mask.astype(bool)]
+    else:
+        target_data = target_image
+
+    source_low, source_high = np.percentile(source_data, source_pcts)
+    source_extent = source_high - source_low
+    target_low, target_high = np.percentile(target_data, target_pcts)
+    target_extent = target_high - target_low
+
+    scale = target_extent / source_extent
+    out = (source_image.astype(np.float32) - source_low) * scale + target_low
+    if clip:
+        out = np.clip(out, target_low, target_high)
+
+    if out_dtype is not None:
+        out = out.astype(out_dtype, copy=False)
+    return out
+
+
 def grey_cmap_transparent(n: int = 10) -> ListedColormap:
     """Create a custom colormap based on 'gray' but with the bottom
     ``n`` values set to be transparent."""
@@ -68,7 +111,8 @@ def collect_template_paths(
 
 
 def collect_coronal_slices(
-    file_paths: dict[str, Path], slice_idx: int
+    file_paths: dict[str, Path],
+    slice_idx: int,
 ) -> dict[str, np.ndarray]:
     """Load and extract coronal slices for all file paths.
 
@@ -124,22 +168,21 @@ def collect_use4template_dirs(
 
 def plot_slices_single_row(
     slices: dict[str, np.ndarray],
-    vmin_perc: float = 1,
-    vmax_perc: float = 99,
     n_transparent: int = 0,
     save_path: Path | None = None,
 ):
     """Plot slices in a single row."""
     n_slices = len(slices)
     fig, ax = plt.subplots(1, n_slices, figsize=(2 * n_slices, 2))
+    vmin, vmax = compute_vmin_vmax_across_slices(slices)
 
     for i, label in enumerate(slices):
         frame = slices[label]
         ax[i].imshow(
             frame,
             cmap=grey_cmap_transparent(n_transparent),
-            vmin=np.percentile(frame, vmin_perc),
-            vmax=np.percentile(frame, vmax_perc),
+            vmin=vmin,
+            vmax=vmax,
         )
         ax[i].axis("off")
         ax[i].set_title(label, fontsize="x-large")
@@ -154,14 +197,13 @@ def plot_slices_single_row(
 
 def plot_slices_single_column(
     slices: dict[str, np.ndarray],
-    vmin_perc: float = 1,
-    vmax_perc: float = 99,
     n_transparent: int = 0,
     save_path: Path | None = None,
 ):
     """Plot slices in a single column."""
     n_slices = len(slices)
     fig, ax = plt.subplots(n_slices, 1, figsize=(2.4, 1.3 * n_slices))
+    vmin, vmax = compute_vmin_vmax_across_slices(slices)
 
     for i, label in enumerate(slices):
         frame = slices[label]
@@ -169,8 +211,8 @@ def plot_slices_single_column(
         ax[i].imshow(
             frame,
             cmap=grey_cmap_transparent(n_transparent),
-            vmin=np.percentile(frame, vmin_perc),
-            vmax=np.percentile(frame, vmax_perc),
+            vmin=vmin,
+            vmax=vmax,
         )
         ax[i].set_ylabel(label, fontsize="x-large")
         ax[i].set_xticks([])
@@ -218,6 +260,8 @@ def plot_orthographic(
     scale_bar: bool = False,
     resolution: float = 0.025,
     save_path: Path | None = None,
+    vmin: float | None = None,
+    vmax: float | None = None,
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot orthographic views of a 3D image,
     including a maximum intensity projection (MIP)."""
@@ -240,6 +284,11 @@ def plot_orthographic(
     frames = [img.take(s, axis=i) for i, s in enumerate(slice_idxs)]
     frames.append(mip)
 
+    if vmin is None:
+        vmin = np.percentile(img, 1)
+    if vmax is None:
+        vmax = np.percentile(img, 99.9)
+
     for j, (view, labels) in enumerate(zip(sections, axis_labels)):
         ax = axs[j]
         ax.imshow(
@@ -247,8 +296,8 @@ def plot_orthographic(
             cmap="gray",
             aspect="equal",
             origin="upper",
-            vmin=np.percentile(img, 1),
-            vmax=np.percentile(img, 99.9),
+            vmin=vmin,
+            vmax=vmax,
         )
         ax.set_title(view)
         ax.set_ylabel(labels[0])
@@ -341,7 +390,7 @@ def plot_inset_comparison(
         img_inset = _extract_inset(img, z, y_min, x_min, size)
         ax = axs[i]
 
-        vmin, vmax = np.percentile(img, (1, 99.9))
+        vmin, vmax = np.percentile(img, (1, 99))
         ax.imshow(
             img_inset,
             cmap="gray",
