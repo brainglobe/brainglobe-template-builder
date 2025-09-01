@@ -240,7 +240,23 @@ for inset_name, inset_param in inset_params.items():
         img1=(example_subject, subject_img),
         img2=("template", template_img),
         **inset_param,
+        vmin=0,
+        vmax=np.percentile(template_img, 99.9),
         save_path=plots_dir / plot_file_name,
+        scale_bar=True,
+        resolution=config["resolution_um"] * 1e-3,  # convert to mm
+    )
+
+    plot_gmag_file_name = (
+        f"{example_subject}_vs_template_gmag_inset-{inset_name}"
+    )
+    plot_inset_comparison(
+        img1=(example_subject, subject_gmag),
+        img2=("template", template_gmag),
+        **inset_param,
+        vmin=0,
+        vmax=np.percentile(template_gmag, 99.9),
+        save_path=plots_dir / plot_gmag_file_name,
         scale_bar=True,
         resolution=config["resolution_um"] * 1e-3,  # convert to mm
     )

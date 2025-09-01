@@ -349,6 +349,8 @@ def plot_inset_comparison(
     y_min: int,
     x_min: int,
     size: int,
+    vmin: float | None = None,
+    vmax: float | None = None,
     scale_bar: bool = False,
     resolution: float = 0.025,
     save_path: Path | None = None,
@@ -375,6 +377,14 @@ def plot_inset_comparison(
     size : int
         Size of the square inset to extract in pixels.
         (same in y and x dimensions).
+    vmin: float, optional
+        Minimum intensity value for the inset, by default None.
+    vmax: float, optional
+        Maximum intensity value for the inset, by default None.
+    scale_bar: bool, optional
+        Whether to include a scale bar in the inset, by default False.
+    resolution: float, optional
+        Resolution of the images in mm/voxel, by default 0.025.
     save_path : Path, optional
         Path to save the figure, by default None.
 
@@ -385,12 +395,18 @@ def plot_inset_comparison(
     """
     fig, axs = plt.subplots(1, 2, figsize=(6, 3))
 
+    if vmin is None:
+        vmin = np.min([np.percentile(img1[1], 1), np.percentile(img2[1], 1)])
+    if vmax is None:
+        vmax = np.max(
+            [np.percentile(img1[1], 99.9), np.percentile(img2[1], 99.9)]
+        )
+
     for i, img_tuple in enumerate([img1, img2]):
         name, img = img_tuple
         img_inset = _extract_inset(img, z, y_min, x_min, size)
         ax = axs[i]
 
-        vmin, vmax = np.percentile(img, (1, 99))
         ax.imshow(
             img_inset,
             cmap="gray",
