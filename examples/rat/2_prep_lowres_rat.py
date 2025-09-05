@@ -17,7 +17,7 @@ lowres = 50
 lowres_vox_sizes = [lowres * 1e-3] * 3  # in mm
 
 project_folder_path = (
-    "/mnt/d/template_wd/"  #  "/mnt/ceph/_projects/rat_atlas/derivatives"
+    "/ceph/akrami/_projects/rat_atlas/derivatives/horizontal_brains"  #  "/mnt/ceph/_projects/rat_atlas/derivatives"
 )
 
 # Get all subject IDs dynamically

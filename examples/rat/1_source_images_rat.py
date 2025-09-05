@@ -31,10 +31,10 @@ from brainglobe_template_builder.plots import plot_grid, plot_orthographic
 
 # Prepare directory structure
 atlas_dir = get_path_from_env_variable(
-    "ATLAS_FORGE_DIR", "/ceph/neuroinformatics/neuroinformatics/atlas-forge"
+    "ATLAS_FORGE_DIR", "/ceph/akrami/_projects/"
 )
 
-species_id = "Rat"  # the subfolder names within atlas_dir
+species_id = "rat_atlas"  # the subfolder names within atlas_dir
 species_dir = atlas_dir / species_id
 
 species_dir.mkdir(parents=True, exist_ok=True)
@@ -45,12 +45,14 @@ for folder in ["rawdata", "derivatives", "templates", "logs"]:
 # Directory where source images are stored for this species
 # This must contain subfolders for each subject
 source_dir = get_path_from_env_variable(
-    "ATLAS_SOURCE_DIR", "/ceph/akrami/capsid_testing/imaging/2p"
+    #"ATLAS_SOURCE_DIR", "/ceph/akrami/capsid_testing/imaging/2p"
+    "ATLAS_SOURCE_DIR", "/ceph/akrami/_projects/rat_atlas/rawdata/"
 )
 
 # Set up logging
 today = date.today()
 current_script_name = os.path.basename(__file__).replace(".py", "")
+# current_script_name = "1_source_images_rat"
 logger.add(species_dir / "logs" / f"{today}_{current_script_name}.log")
 logger.info(f"Will save outputs to {species_dir}.")
 
@@ -59,8 +61,9 @@ logger.info(f"Will save outputs to {species_dir}.")
 # ------------------------------------------------------
 
 path_of_this_script = Path(__file__).resolve()
+# path_of_this_script = Path("/nfs/nhome/live/vplattner/brainglobe-template-builder/examples/rat/1_source_images_rat.py")
 source_csv_dir = path_of_this_script.parent.parent.parent / "data"
-source_csv_path = source_csv_dir / "SWC_brain-list_for-atlases_2024-04-15.csv"
+source_csv_path = source_csv_dir / "SWC_rat_horizontal.csv"
 df = pd.read_csv(source_csv_path)
 
 # Strip trailing space from str columns and from column names
@@ -91,7 +94,7 @@ df[data_path_col] = source_dir.as_posix()
 df["subject_path"] = df.apply(
     lambda x: get_unique_folder_in_dir(
         Path(x[data_path_col]), x["subject_id"], str_position="end"
-    ),
+    ) / "ses-01_dtype-serial2p" / "2pe",
     axis=1,
 )
 
@@ -176,22 +179,22 @@ for sub in df["subject_id"]:
 
 
 # %%
-# Save dataframes and images to rawdata
+# Save dataframes and images to derivatives
 # -------------------------------------
-# Save the dataframes to the species rawdata directory.
+# Save the dataframes to the species derivatives directory.
 
-rawdata_dir = species_dir / "rawdata"
-subjects_csv = rawdata_dir / f"{today}_subjects.csv"
+derivatives_dir = species_dir / "derivatives" / "horizontal_brains"
+subjects_csv = derivatives_dir / f"{today}_subjects.csv"
 df.to_csv(subjects_csv, index=False)
 logger.info(f"Saved subject information to csv: {subjects_csv}")
 
-images_csv = rawdata_dir / f"{today}_images.csv"
+images_csv = derivatives_dir / f"{today}_images.csv"
 images_df.to_csv(images_csv, index=False)
 logger.info(f"Saved image information to csv: {images_csv}")
 
 
 # %%
-# Save images to the species rawdata directory
+# Save images to the species derivatives directory
 # (doesn't overwrite existing images).
 # High-resolution images (10um) are just symlinked to avoid duplication
 # of large files.
@@ -200,7 +203,7 @@ n_copied, n_symlinked = 0, 0
 for idx in tqdm(images_df.index):
     row = images_df.loc[idx, :]
     sub = row["subject_id"]
-    sub_dir = rawdata_dir / f"sub-{sub}"
+    sub_dir = derivatives_dir / f"sub-{sub}"
     sub_dir.mkdir(exist_ok=True)
     microns = row["microns"]
     image_id = row["image_id"]
@@ -226,19 +229,19 @@ for idx in tqdm(images_df.index):
 
 logger.info(
     f"Copied {n_copied} and symlinked {n_symlinked} "
-    f"images to {rawdata_dir}."
+    f"images to {derivatives_dir}."
 )
 
 
 # %%
 # Save diagnostic plots to get a quick overview of the images.
 # Plots will only be generated for the low-resolution images (50um).
-# Plots are saved in the rawdata/sub-<subject_id>/plots folder.
+# Plots are saved in the derivatives/sub-<subject_id>/plots folder.
 
-subjects = sorted([f for f in os.listdir(rawdata_dir) if f.startswith("sub-")])
+subjects = sorted([f for f in os.listdir(derivatives_dir) if f.startswith("sub-")])
 
 for sub in tqdm(subjects):
-    sub_dir = rawdata_dir / sub
+    sub_dir = derivatives_dir / sub
 
     # Find all 50um images for the subject
     images = [
