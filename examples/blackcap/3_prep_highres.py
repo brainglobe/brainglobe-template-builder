@@ -270,7 +270,7 @@ for idx, row in tqdm(df.iterrows(), total=n_subjects):
 # -----------------------------------------------------
 # Use the paths to the use4template directories to generate lists of file paths
 # for the template construction pipeline. Three kinds of template will be
-# generated, and each needs the corresponging brain image and mask files:
+# generated, and each needs the corresponding brain image and mask files:
 # 1. All asym* files for subjects where hemi=both. These will be used to
 #    generate an asymmetric brain template.
 # 2. All right-sym* files for subjects where use_right is True, and

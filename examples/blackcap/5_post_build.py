@@ -51,7 +51,7 @@ assert (
 ), f"Directory {template_final_dir} does not exist."
 assert template_file.is_file(), f"File {template_file} does not exist."
 
-# Define paths to the annotation file and the correspondind subject's image
+# Define paths to the annotation file and the corresponding subject's image
 annot_subj = "sub-BC74"
 annot_dir = species_dir / "rawdata" / annot_subj / "annotations"
 annot_img_file = (
