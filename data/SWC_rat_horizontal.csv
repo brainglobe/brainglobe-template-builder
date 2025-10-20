@@ -1,0 +1,6 @@
+Common name,Scientific name,Strain,Specimen ID,Age (Days),Gender (M / F),Injections,Perfusion (whole / drop fix),Imaging approach (serial 2p / lightsheet / other) ,Imaging Res X (microns),Imaging Res Y,Imaging Res Z,Imaging channel to use ,Imaging quality ,Data path (raw),comments
+rat,Rattus norvegicus domestica ,Lister Hooded,ATL01,50-80,F,"none",,serial 2p,4.033,4.033,6.3,green,OK,/ceph/akrami/_projects/rat_atlas/rawdata/sub-01_id-ATL01/ses-01_dtype-serial2p/2pe,
+rat,Rattus norvegicus domestica ,Lister Hooded,ATL02,50-80,F,"none",,serial 2p,2.278,2.278,5,green,OK,/ceph/akrami/_projects/rat_atlas/rawdata/sub-02_id-ATL02/ses-01_dtype-serial2p/2pe,
+rat,Rattus norvegicus domestica ,Lister Hooded,ATL03,50-80,F,"none",,serial 2p,2.504,2.504,5,green,OK,/ceph/akrami/_projects/rat_atlas/rawdata/sub-03_id-ATL03/ses-01_dtype-serial2p/2pe,
+rat,Rattus norvegicus domestica ,Lister Hooded,ATL04,50-80,F,"none",,serial 2p,2.278,2.278,5,green,OK,/ceph/akrami/_projects/rat_atlas/rawdata/sub-04_id-ATL04/ses-01_dtype-serial2p/2pe,
+rat,Rattus norvegicus domestica ,Lister Hooded,ATL05,50-80,F,"none",,serial 2p,2.278,2.278,5,green,OK,/ceph/akrami/_projects/rat_atlas/rawdata/sub-05_id-ATL05/ses-01_dtype-serial2p/2pe,
