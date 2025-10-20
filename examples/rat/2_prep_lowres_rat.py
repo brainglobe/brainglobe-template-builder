@@ -16,9 +16,7 @@ lowres = 50
 # Define voxel sizes in mm (for Nifti saving)
 lowres_vox_sizes = [lowres * 1e-3] * 3  # in mm
 
-project_folder_path = (
-    "/ceph/akrami/_projects/rat_atlas/derivatives/horizontal_brains"  #  "/mnt/ceph/_projects/rat_atlas/derivatives"
-)
+project_folder_path = "/ceph/akrami/_projects/rat_atlas/derivatives/horizontal_brains"  #  "/mnt/ceph/_projects/rat_atlas/derivatives"
 
 # Get all subject IDs dynamically
 subject_ids = [

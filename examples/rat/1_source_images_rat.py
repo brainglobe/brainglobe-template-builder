@@ -45,8 +45,9 @@ for folder in ["rawdata", "derivatives", "templates", "logs"]:
 # Directory where source images are stored for this species
 # This must contain subfolders for each subject
 source_dir = get_path_from_env_variable(
-    #"ATLAS_SOURCE_DIR", "/ceph/akrami/capsid_testing/imaging/2p"
-    "ATLAS_SOURCE_DIR", "/ceph/akrami/_projects/rat_atlas/rawdata/"
+    # "ATLAS_SOURCE_DIR", "/ceph/akrami/capsid_testing/imaging/2p"
+    "ATLAS_SOURCE_DIR",
+    "/ceph/akrami/_projects/rat_atlas/rawdata/",
 )
 
 # Set up logging
@@ -94,7 +95,9 @@ df[data_path_col] = source_dir.as_posix()
 df["subject_path"] = df.apply(
     lambda x: get_unique_folder_in_dir(
         Path(x[data_path_col]), x["subject_id"], str_position="end"
-    ) / "ses-01_dtype-serial2p" / "2pe",
+    )
+    / "ses-01_dtype-serial2p"
+    / "2pe",
     axis=1,
 )
 
@@ -238,7 +241,9 @@ logger.info(
 # Plots will only be generated for the low-resolution images (50um).
 # Plots are saved in the derivatives/sub-<subject_id>/plots folder.
 
-subjects = sorted([f for f in os.listdir(derivatives_dir) if f.startswith("sub-")])
+subjects = sorted(
+    [f for f in os.listdir(derivatives_dir) if f.startswith("sub-")]
+)
 
 for sub in tqdm(subjects):
     sub_dir = derivatives_dir / sub
