@@ -29,7 +29,6 @@ def correct_image_brightness(
     )
 
     corrector = sitk.N4BiasFieldCorrectionImageFilter()
-    corrector.SetUseMaskLabel(False)
     corrector.SetMaximumNumberOfIterations([50, 50, 50, 50])
     corrector.SetConvergenceThreshold(1e-7)
     corrector.Execute(image_downsampled)
