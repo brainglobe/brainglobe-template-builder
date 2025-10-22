@@ -91,9 +91,12 @@ def plot_orthographic(
 
 def plot_grid(
     img: np.ndarray,
+    overlay: np.ndarray | None = None,
     anat_space="ASR",
     section: Literal["frontal", "horizontal", "sagittal"] = "frontal",
     n_slices: int = 12,
+    overlay_alpha: float = 0.5,
+    overlay_cmap: str = "inferno",
     save_path: Path | None = None,
     **kwargs,
 ) -> tuple[plt.Figure, np.ndarray]:
@@ -106,6 +109,9 @@ def plot_grid(
     ----------
     img : np.ndarray
         Image volume to plot.
+    overlay: np.ndarray, optional
+        Image volume to overlay on top of img. Must have the same dimensions
+        as img.
     anat_space : str, optional
         Anatomical space of the image volume according to the Brainglobe
         definition (origin and order of axes), by default "ASR".
@@ -117,6 +123,10 @@ def plot_grid(
         starting from the first and ending with the last slice. If a higher
         value than the number of slices in the image is chosen, all slices
         are shown.
+    overlay_alpha: float, optional
+        Transparency alpha of overlay.
+    overlay_cmap: str, optional
+        Name of matplotlib colormap to use for overlay.
     save_path : Path, optional
         Path to save the plot, by default None (no saving).
     **kwargs
@@ -150,6 +160,12 @@ def plot_grid(
     fig, ax = plt.subplots(1, 1, figsize=(12, 12))
     kwargs = _set_imshow_defaults(img, kwargs)
     ax.imshow(grid_img, **kwargs)
+
+    if overlay is not None:
+        grid_overlay = _grid_from_slices(
+            [overlay.take(slc, axis=axis_idx) for slc in show_slices]
+        )
+        ax.imshow(grid_overlay, alpha=overlay_alpha, cmap=overlay_cmap)
 
     section_name = section.capitalize()
     ax.set_title(f"{section_name} slices")
