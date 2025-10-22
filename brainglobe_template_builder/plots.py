@@ -98,6 +98,7 @@ def plot_grid(
     overlay_alpha: float = 0.5,
     overlay_cmap: str = "inferno",
     overlay_is_mask: bool = False,
+    plot_title: str | None = None,
     save_path: Path | None = None,
     **kwargs,
 ) -> tuple[plt.Figure, np.ndarray]:
@@ -112,8 +113,7 @@ def plot_grid(
     img : np.ndarray
         Image volume to plot.
     overlay: np.ndarray, optional
-        Image volume to overlay on top of img. Must have the same dimensions
-        as img.
+        Image volume to overlay on top of img.
     anat_space : str, optional
         Anatomical space of the image volume according to the Brainglobe
         definition (origin and order of axes), by default "ASR".
@@ -132,6 +132,8 @@ def plot_grid(
     overlay_is_mask: boolean, optional
         Whether the overlay is a mask / segmentation. When False, contrast
         will be auto-adjusted as described for img above.
+    plot_title: str, optional
+        Plot title.
     save_path : Path, optional
         Path to save the plot, by default None (no saving).
     **kwargs
@@ -182,7 +184,11 @@ def plot_grid(
         ax.imshow(grid_overlay, **overlay_kwargs)
 
     section_name = section.capitalize()
-    ax.set_title(f"{section_name} slices")
+    if plot_title is not None:
+        title = f"{plot_title} - {section_name} slices"
+    else:
+        title = f"{section_name} slices"
+    ax.set_title(title)
     ax.set_xlabel(space.axis_labels[axis_idx][1])
     ax.set_ylabel(space.axis_labels[axis_idx][0])
     ax = _clear_spines_and_ticks(ax)
