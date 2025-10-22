@@ -97,13 +97,15 @@ def plot_grid(
     n_slices: int = 12,
     overlay_alpha: float = 0.5,
     overlay_cmap: str = "inferno",
+    overlay_is_mask: bool = False,
     save_path: Path | None = None,
     **kwargs,
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot image volume as a grid of slices along a given anatomical section.
 
-    Image contrast is auto-adjusted to 1-99% of range unless overridden by
-    ``vmin`` and ``vmax`` passed as keyword arguments.
+    Image contrast (for img) is auto-adjusted to 1-99% of range unless
+    overridden by ``vmin`` and ``vmax`` passed as keyword arguments. This
+    also applies to overlay, unless overlay_is_mask is set to True.
 
     Parameters
     ----------
@@ -127,6 +129,9 @@ def plot_grid(
         Transparency alpha of overlay.
     overlay_cmap: str, optional
         Name of matplotlib colormap to use for overlay.
+    overlay_is_mask: boolean, optional
+        Whether the overlay is a mask / segmentation. When False, contrast
+        will be auto-adjusted as described for img above.
     save_path : Path, optional
         Path to save the plot, by default None (no saving).
     **kwargs
@@ -158,14 +163,23 @@ def plot_grid(
 
     # Plot the grid image
     fig, ax = plt.subplots(1, 1, figsize=(12, 12))
-    kwargs = _set_imshow_defaults(img, kwargs)
-    ax.imshow(grid_img, **kwargs)
+    im_kwargs = _set_imshow_defaults(img, kwargs)
+    ax.imshow(grid_img, **im_kwargs)
 
     if overlay is not None:
         grid_overlay = _grid_from_slices(
             [overlay.take(slc, axis=axis_idx) for slc in show_slices]
         )
-        ax.imshow(grid_overlay, alpha=overlay_alpha, cmap=overlay_cmap)
+
+        overlay_kwargs = kwargs.copy()
+        overlay_kwargs["cmap"] = overlay_cmap
+        overlay_kwargs["alpha"] = overlay_alpha
+        # Only auto-adjust contrast when the overlay isn't a mask
+        adjust_contrast = not overlay_is_mask
+        overlay_kwargs = _set_imshow_defaults(
+            overlay, overlay_kwargs, adjust_contrast=adjust_contrast
+        )
+        ax.imshow(grid_overlay, **overlay_kwargs)
 
     section_name = section.capitalize()
     ax.set_title(f"{section_name} slices")
@@ -258,19 +272,26 @@ def _clear_spines_and_ticks(ax: plt.Axes) -> plt.Axes:
     return ax
 
 
-def _set_imshow_defaults(img: np.ndarray, kwargs: dict) -> dict:
+def _set_imshow_defaults(
+    img: np.ndarray, kwargs: dict, adjust_contrast: bool = True
+) -> dict:
     """Set default values for imshow keyword arguments.
 
     These apply only if the user does not provide them explicitly.
     """
+    kwargs = kwargs.copy()
+    kwargs.setdefault("cmap", "gray")
+    kwargs.setdefault("aspect", "equal")
+
+    if not adjust_contrast:
+        return kwargs
+
     missing_keys = [key for key in ("vmin", "vmax") if key not in kwargs]
     if missing_keys:
         defaults = _auto_adjust_contrast(img)
         for key in missing_keys:
             kwargs.setdefault(key, defaults[key])
 
-    kwargs.setdefault("cmap", "gray")
-    kwargs.setdefault("aspect", "equal")
     return kwargs
 
 
