@@ -95,10 +95,10 @@ def plot_grid(
     anat_space="ASR",
     section: Literal["frontal", "horizontal", "sagittal"] = "frontal",
     n_slices: int = 12,
+    clip_dark_slices: bool = True,
     overlay_alpha: float = 0.5,
     overlay_cmap: str = "inferno",
     overlay_is_mask: bool = False,
-    clip_dark_slices: bool = True,
     plot_title: str | None = None,
     save_path: Path | None = None,
     **kwargs,
@@ -123,9 +123,14 @@ def plot_grid(
         by default "frontal".
     n_slices : int, optional
         Number of slices to show, by default 12. Slices will be evenly spaced,
-        starting from the first and ending with the last slice. If a higher
-        value than the number of slices in the image is chosen, all slices
-        are shown.
+        after removing low intensity slices at the start / end of the volume
+        (use clip_dark_slices=False to use the full volume). If a higher value
+        than the number of slices in the image is chosen, all slices are shown.
+    clip_dark_slices : bool, optional
+        If True, clip low brightness slices at the start / end of the volume
+        before generating evenly spaced slices for display. The brightness
+        threshold is set to 1% of the max brightness, or ``vmin`` if passed
+        as a keyword argument.
     overlay_alpha: float, optional
         Transparency alpha of overlay.
     overlay_cmap: str, optional
@@ -133,9 +138,6 @@ def plot_grid(
     overlay_is_mask: boolean, optional
         Whether the overlay is a mask / segmentation. When False, contrast
         will be auto-adjusted as described for img above.
-    clip_dark_slices : bool, optional
-        If True, clip low brightness slices at the start / end of the volume
-        before generating evenly spaced slices for display.
     plot_title: str, optional
         Plot title.
     save_path : Path, optional
@@ -321,6 +323,25 @@ def _choose_slices(
     n_slices: int,
     vmin: int | float | None = None,
 ) -> np.ndarray:
+    """Return indexes of evenly spaced slices along a given image axis.
+
+    Parameters
+    ----------
+    img : np.ndarray
+        Input image.
+    axis_idx : int
+        Index of axis to generate slices along.
+    n_slices : int
+        Number of slices to choose.
+    vmin : int | float | None, optional
+        If given, remove slices with no pixels above a brightness of vmin
+        from the start / end of the image.
+
+    Returns
+    -------
+    np.ndarray
+        Array of slice indexes (length = n_slices)
+    """
 
     if vmin is None:
         # Return evenly spaced slices including the first and last slice
