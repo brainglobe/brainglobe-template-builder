@@ -306,6 +306,9 @@ def _set_imshow_defaults(
     kwargs.setdefault("aspect", "equal")
 
     if not adjust_contrast:
+        # remove vmin / max if present
+        kwargs.pop("vmin", None)
+        kwargs.pop("vmax", None)
         return kwargs
 
     missing_keys = [key for key in ("vmin", "vmax") if key not in kwargs]
