@@ -85,7 +85,10 @@ bash modelbuild.sh --output-dir "${working_dir}" \
     --average-type "${average_type}" \
     --average-prog "${average_prog}" \
     --reuse-affines \
-    --dry-run \
+    --walltime-short "03:00:00" \
+    --walltime-linear "06:00:00" \
+    --walltime-nonlinear "80:00:00"\
+    --no-dry-run \
     "${working_dir}/brain_paths.txt"
 
 echo "Finished building the template!"
