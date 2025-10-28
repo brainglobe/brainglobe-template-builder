@@ -47,6 +47,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Run tests on napari main if this is a scheduled run
+      - name: Run tests on napari main
+        if: github.event_name == 'schedule'
+        uses: neuroinformatics-unit/actions/test@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          tox-args: '-e napari-dev'
 
       - uses: actions/checkout@v4
         if: startsWith(matrix.os, 'windows-')

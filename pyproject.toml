@@ -20,9 +20,10 @@ classifiers = [
 ]
 
 dependencies = [
-    "napari[all]==0.4.19",
+    "napari[all]>=0.6.1",
     "brainglobe-utils>=0.6.2",
     "brainglobe-atlasapi>=2.0.7",
+    "napari-itk-io",
     "loguru",
     "antspyx",
     "qt-niu"
@@ -48,6 +49,11 @@ dev = [
     "pre-commit",
     "ruff",
     "setuptools_scm",
+]
+wingdisc = [
+    'bioio',
+    'bioio_czi',
+    'bioio_sldy'
 ]
 
 [build-system]
@@ -97,7 +103,7 @@ fix = true
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{311,312,313}
+envlist = py{311,312,313}, napari-dev
 isolated_build = True
 
 [gh-actions]
@@ -111,4 +117,6 @@ extras =
     dev
 commands =
     pytest -v --color=yes --cov=brainglobe_template_builder --cov-report=xml
+deps =
+    napari-dev: git+https://github.com/napari/napari
 """

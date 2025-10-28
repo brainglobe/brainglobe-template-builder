@@ -55,7 +55,7 @@ df = df[df["Common name"] == species_common_name]
 logger.info(f"Found {len(df)} {species_id} subjects.")
 
 # %%
-# Exract subject IDs and paths
+# Extract subject IDs and paths
 # ----------------------------
 
 df["subject_id"] = (
