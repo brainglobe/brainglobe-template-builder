@@ -1,7 +1,7 @@
 """
-Prepare low-resolution Molerat images for template construction
+Prepare high-resolution Molerat images for template construction
 ================================================================
-The following operations are performed on the lowest-resolution images to
+The following operations are performed on the highest resolution images to
 prepare them for template construction:
 - Perform N4 Bias field correction using ANTs
 - Generate brain mask based on N4-corrected image
