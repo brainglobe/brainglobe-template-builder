@@ -216,7 +216,7 @@ class AlignMidplane(QWidget):
             self.align_image_button.setEnabled(True)
 
     def _on_save_transform_click(self):
-        """Save the midplane alignment tranform to a text file."""
+        """Save the midplane alignment transform to a text file."""
         if not hasattr(self, "aligner"):
             show_info("Please align the image to the midplane first")
             return

@@ -31,23 +31,46 @@ jobs:
     strategy:
       matrix:
         # Run all supported Python versions on linux
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
         os: [ubuntu-latest]
-        # Include one windows and ARM/Intel macos run
+        # Include one windows and one macos run
         include:
-        - os: macos-13 # Intel Mac
-          python-version: "3.12"
-        - os: macos-latest # ARM Mac
-          python-version: "3.12"
+        - os: macos-latest
+          python-version: "3.13"
         - os: windows-latest
-          python-version: "3.11"
+          python-version: "3.13"
 
     steps:
       # Run tests
       - uses: neuroinformatics-unit/actions/test@v2
+        if: ${{ ! startsWith(matrix.os, 'windows-') }}
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Run tests on napari main if this is a scheduled run
+      - name: Run tests on napari main
+        if: github.event_name == 'schedule'
+        uses: neuroinformatics-unit/actions/test@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          tox-args: '-e napari-dev'
+
+      - uses: actions/checkout@v4
+        if: startsWith(matrix.os, 'windows-')
+
+      - name: Set up Python ${{ matrix.python-version }} on Windows
+        if: startsWith(matrix.os, 'windows-')
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install and run tox on Windows
+        if: startsWith(matrix.os, 'windows-')
+        shell: cmd
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-gh-actions
+          tox
 
       - name: Notify slack on scheduled failure
         if: failure() && github.event_name == 'schedule'
@@ -71,8 +94,14 @@ jobs:
   upload_all:
     name: Publish build distributions
     needs: [build_sdist_wheels]
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
-    - uses: neuroinformatics-unit/actions/upload_pypi@v2
+    - uses: actions/download-artifact@v4
       with:
-        secret-pypi-key: ${{ secrets.BTB_UPLOAD_API_KEY }}
+        name: artifact
+        path: dist
+    - uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.BTB_UPLOAD_API_KEY }}

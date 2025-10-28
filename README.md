@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/700299148.svg)](https://doi.org/10.5281/zenodo.14608573)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-orange.svg)](https://opensource.org/license/bsd-3-clause/)
 ![CI](https://img.shields.io/github/actions/workflow/status/brainglobe/brainglobe-template-builder/test_and_deploy.yml?label=CI)
 [![codecov](https://codecov.io/gh/brainglobe/brainglobe-template-builder/branch/main/graph/badge.svg?token=P8CCH3TI8K)](https://codecov.io/gh/brainglobe/brainglobe-template-builder)
@@ -66,7 +67,7 @@ conda activate template-builder
 We have called the environment "template-builder", but you can choose any name you like.
 
 This environment contains all dependencies for running the optimised ANTs template construction pipeline, but if you want to use the pre- and
-post-processing funcitonalities of `brainglobe-template-builder`, you will need to also pip install the package in editable mode (see below).
+post-processing functionalities of `brainglobe-template-builder`, you will need to also pip install the package in editable mode (see below).
 
 ### Install `brainglobe-template-builder` with `pip`
 
@@ -105,10 +106,16 @@ Templates can be derived in two primary ways. A *single-subject* template is bas
 
 ANTs includes a template construction piepline - implemented in the [antsMultivariateTemplateConstruction2.sh](https://github.com/ANTsX/ANTs/blob/master/Scripts/antsMultivariateTemplateConstruction2.sh) script - that iteratively aligns and averages multiple images to produce an unbiased population template (see [this issue](https://github.com/ANTsX/ANTs/issues/520) for details).
 
-An [optimsed implementation of the above pipeline](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master), developed by the [CoBra lab](https://www.cobralab.ca/), lies at the core of the `brainglobe-template-builder`'s functionality.
+An [optimised implementation of the above pipeline](https://github.com/CoBrALab/optimized_antsMultivariateTemplateConstruction/tree/master), developed by the [CoBra lab](https://www.cobralab.ca/), lies at the core of the `brainglobe-template-builder`'s functionality.
 
 ## Seeking help or contributing
 We are always happy to help users of our tools, and welcome any contributions. If you would like to get in contact with us for any reason, please see the [contact page of our website](https://brainglobe.info/contact.html).
+
+## Citation
+
+If you find the BrainGlobe Template Builder useful, please cite it in your work:
+
+>Niko Sirmpilatze, Alessandro Felder, Igor Tatarnikov, viktorpm, & Adam Tyson. (2025). brainglobe/brainglobe-template-builder, Zenodo. https://doi.org/10.5281/zenodo.14608573
 
 ## License
 ⚖️ [BSD 3-Clause](https://opensource.org/license/bsd-3-clause/)

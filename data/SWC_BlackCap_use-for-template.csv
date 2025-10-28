@@ -6,6 +6,6 @@ BC63,4,blue,both,blue channel has the best SNR
 BC15,4,blue,both,may need to mask injection and missing few slices at cerebellum
 BC08,3,green,both,need to mask injection and missing small part of midbrain
 BC71,3,green,both,need to mask injection
-BC46,3,green,left,some shadow artifacts mostly in rigth hemi and missing parts of cerebellum
+BC46,3,green,left,some shadow artifacts mostly in right hemi and missing parts of cerebellum
 BC74,3,green,both,not great but acceptable SNR
 BC41o,3,green,both,excellent quality
