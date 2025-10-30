@@ -1,8 +1,9 @@
 import numpy as np
+from numpy.typing import NDArray
 from scipy.ndimage import generic_filter
 
 
-def modal_filter_ignore_zeros(window):
+def modal_filter_ignore_zeros(window: NDArray):
     """
     Compute the mode of the window, ignoring zero values.
 
@@ -26,7 +27,7 @@ def modal_filter_ignore_zeros(window):
     return values[np.argmax(counts)]
 
 
-def apply_modal_filter(image, filter_size=3):
+def apply_modal_filter(image: NDArray, filter_size: int = 3):
     """Apply a modal filter to the image, ignoring zero neighbors.
 
     Parameters
