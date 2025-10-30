@@ -32,7 +32,7 @@ def apply_modal_filter(image, filter_size=3):
     Parameters
     ----------
     image : numpy.ndarray
-        Input image as a 2D NumPy array.
+        Input image as a 3D NumPy array.
     filter_size : int
         Size of the filtering window (must be odd).
 
