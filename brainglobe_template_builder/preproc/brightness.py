@@ -1,11 +1,10 @@
-from pathlib import Path
-
+import numpy as np
 import SimpleITK as sitk
 
 
 def correct_image_brightness(
-    input_image_path: Path, output_image_path: Path
-) -> None:
+    input_image: np.ndarray, spacing: list[float]
+) -> np.ndarray:
     """Correct image brightness using simple itk's
     N4BiasFieldCorrectionImageFilter.
 
@@ -14,18 +13,32 @@ def correct_image_brightness(
 
     Parameters
     ----------
-    input_image_path : Path
-        Path to nifti image file
-    output_image_path : Path
-        Path to save processed nifti image file
+    input_image : np.ndarray
+        Input image to process.
+    spacing : list
+        Pixel size (in mm) for each axis - should
+        be in same order as input_image axes.
+
+    Returns
+    ----------
+    np.ndarray
+        The processed image with float64 dtype.
     """
 
-    # Read as float32 (same as default of ants.image_read)
-    image = sitk.ReadImage(input_image_path, sitk.sitkFloat32)
+    # The output of GetLogBiasFieldAsImage is always float32,
+    # so we need a float32 input image to avoid errors
+    if input_image.dtype != np.float32:
+        input_image = input_image.astype(np.float32, casting="same_kind")
+
+    sitk_image = sitk.GetImageFromArray(input_image)
+
+    # Conversion to sitk flips the axis order [z, y, x] -> [x, y, z],
+    # so we must flip the spacing too
+    sitk_image.SetSpacing(spacing[::-1])
 
     shrinkFactor = 4
     image_downsampled = sitk.Shrink(
-        image, [shrinkFactor] * image.GetDimension()
+        sitk_image, [shrinkFactor] * sitk_image.GetDimension()
     )
 
     corrector = sitk.N4BiasFieldCorrectionImageFilter()
@@ -33,7 +46,7 @@ def correct_image_brightness(
     corrector.SetConvergenceThreshold(1e-7)
     corrector.Execute(image_downsampled)
 
-    log_bias_field = corrector.GetLogBiasFieldAsImage(image)
-    corrected_image_full_resolution = image / sitk.Exp(log_bias_field)
+    log_bias_field = corrector.GetLogBiasFieldAsImage(sitk_image)
+    corrected_image_full_resolution = sitk_image / sitk.Exp(log_bias_field)
 
-    sitk.WriteImage(corrected_image_full_resolution, output_image_path)
+    return sitk.GetArrayFromImage(corrected_image_full_resolution)
