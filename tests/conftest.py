@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pooch
+import pytest
 
 POOCH_REGISTRY = pooch.create(
     path=Path(__file__).parents[1] / ".pooch",
@@ -13,14 +14,16 @@ POOCH_REGISTRY = pooch.create(
 )
 
 
-def load_rat_image() -> Path:
+@pytest.fixture(scope="session")
+def image_path() -> Path:
     """
     Return path to test rat data.
     """
     return POOCH_REGISTRY.fetch("Rat1_sub-01_T2w.nii.gz")
 
 
-def load_corrected_rat_image() -> Path:
+@pytest.fixture(scope="session")
+def corrected_image_path() -> Path:
     """
     Return path to corrected test rat data.
     Brightness correction via ants.n4_bias_field_correction.
