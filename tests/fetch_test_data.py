@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pooch
-import pytest
 
 POOCH_REGISTRY = pooch.create(
     path=Path(__file__).parents[1] / ".pooch",
@@ -14,7 +13,6 @@ POOCH_REGISTRY = pooch.create(
 )
 
 
-@pytest.fixture(scope="session")
 def image_path() -> Path:
     """
     Return path to test rat data.
@@ -22,7 +20,6 @@ def image_path() -> Path:
     return POOCH_REGISTRY.fetch("Rat1_sub-01_T2w.nii.gz")
 
 
-@pytest.fixture(scope="session")
 def corrected_image_path() -> Path:
     """
     Return path to corrected test rat data.
