@@ -11,8 +11,7 @@ from pathlib import Path
 
 import napari
 import numpy as np
-from brainglobe_utils.IO.image import load_nii
-from brainglobe_utils.IO.image.save import save_as_asr_nii
+from brainglobe_utils.IO.image import load_nii, save_as_asr_nii
 from scipy.ndimage import binary_erosion
 
 from brainglobe_template_builder.postproc.annotation_filter import (
