@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from brainglobe_utils.IO.image.save import save_as_asr_nii
 from napari.layers import Image, Labels, Points
 from napari.utils.notifications import show_info
 from napari.viewer import Viewer
@@ -13,10 +14,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from brainglobe_template_builder.io import (
-    save_3d_points_to_csv,
-    save_as_asr_nii,
-)
+from brainglobe_template_builder.io import save_3d_points_to_csv
 
 
 class SaveFiles(QWidget):

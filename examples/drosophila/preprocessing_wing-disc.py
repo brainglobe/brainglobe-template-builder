@@ -5,15 +5,13 @@ import ants
 import numpy as np
 import pandas as pd
 from brainglobe_utils.IO.image import load_any, save_any
+from brainglobe_utils.IO.image.save import save_as_asr_nii
 from dask import array as da
 from loguru import logger
 from scipy.ndimage import median_filter
 from skimage.util import img_as_uint
 
-from brainglobe_template_builder.io import (
-    file_path_with_suffix,
-    save_as_asr_nii,
-)
+from brainglobe_template_builder.io import file_path_with_suffix
 from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.wingdisc_utils import (
     normalize_planes_by_mean,

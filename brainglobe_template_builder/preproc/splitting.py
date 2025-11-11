@@ -3,8 +3,7 @@
 from pathlib import Path
 
 import numpy as np
-
-from brainglobe_template_builder.io import save_as_asr_nii
+from brainglobe_utils.IO.image.save import save_as_asr_nii
 
 
 def get_right_and_left_slices(array: np.ndarray) -> tuple:
