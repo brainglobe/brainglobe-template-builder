@@ -17,13 +17,10 @@ from pathlib import Path
 
 import ants
 import numpy as np
+from brainglobe_utils.IO.image.save import save_as_asr_nii
 from loguru import logger
 
-from brainglobe_template_builder.io import (
-    file_path_with_suffix,
-    load_tiff,
-    save_as_asr_nii,
-)
+from brainglobe_template_builder.io import file_path_with_suffix, load_tiff
 from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.splitting import (
     get_right_and_left_slices,

@@ -1,10 +1,9 @@
 from pathlib import Path
 
-import nibabel as nib
 import numpy as np
 import pandas as pd
 from brainglobe_utils.IO.image.load import load_any
-from brainglobe_utils.IO.image.save import to_tiff
+from brainglobe_utils.IO.image.save import save_as_asr_nii, to_tiff
 
 
 def get_unique_folder_in_dir(search_dir: Path, search_str: str) -> Path:
@@ -74,45 +73,6 @@ def save_3d_points_to_csv(points: np.ndarray, file_path: Path):
     points_df.to_csv(file_path, index=False)
 
 
-def save_as_asr_nii(
-    stack: np.ndarray,
-    vox_sizes: list,
-    dest_path: Path,
-):
-    """
-    Save 3D image stack to dest_path as a nifti image.
-
-    This function assumes that the image is in the ASR orientation
-    and sets the qform and sform of the nifti header accordingly
-    (so that the image is displayed correctly in nifti viewers like ITK-SNAP).
-
-    Parameters
-    ----------
-    stack : np.ndarray
-        3D image stack
-    vox_sizes : list
-        list of voxel dimensions in mm. The order is 'x', 'y', 'z'
-    dest_path : pathlib.Path
-        path to save the nifti image
-    """
-    affine = _get_transf_matrix_from_res(vox_sizes)
-    nii_img = nib.Nifti1Image(stack, affine, dtype=stack.dtype)
-    # Set qform and sform to match axes orientation, assuming ASR
-    reorient = np.array(
-        [
-            [0, 0, -1, 0],
-            [-1, 0, 0, 0],
-            [0, -1, 0, 0],
-            [0, 0, 0, 1],
-        ]
-    )
-    new_form = reorient @ affine
-    nii_img.set_qform(new_form, code=3)
-    nii_img.set_sform(new_form, code=3)
-    # save the nifti image
-    nib.save(nii_img, dest_path.as_posix())
-
-
 def file_path_with_suffix(path: Path, suffix: str, new_ext=None) -> Path:
     """
     Return a new path with the given suffix added before the extension.
@@ -144,26 +104,6 @@ def file_path_with_suffix(path: Path, suffix: str, new_ext=None) -> Path:
     else:
         new_name = f"{pure_stem}{suffix}{suffixes}"
     return path.with_name(new_name)
-
-
-def _get_transf_matrix_from_res(vox_sizes: list) -> np.ndarray:
-    """Create transformation matrix from a dictionary of voxel dimensions.
-
-    Parameters
-    ----------
-    vox_sizes : list
-        list of voxel dimensions in mm. The order is 'x', 'y', 'z'
-
-    Returns
-    -------
-    np.ndarray
-        A (4, 4) transformation matrix with the voxel dimensions
-        on the first 3 diagonal entries.
-    """
-    transformation_matrix = np.eye(4)
-    for i in range(3):
-        transformation_matrix[i, i] = vox_sizes[i]
-    return transformation_matrix
 
 
 def tiff_to_nifti(tiff_path: Path, nifti_path: Path, vox_sizes: list):
