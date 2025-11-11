@@ -91,21 +91,30 @@ def plot_orthographic(
 
 def plot_grid(
     img: np.ndarray,
+    overlay: np.ndarray | None = None,
     anat_space="ASR",
     section: Literal["frontal", "horizontal", "sagittal"] = "frontal",
     n_slices: int = 12,
+    clip_dark_slices: bool = True,
+    overlay_alpha: float = 0.5,
+    overlay_cmap: str = "inferno",
+    overlay_is_mask: bool = False,
+    plot_title: str | None = None,
     save_path: Path | None = None,
     **kwargs,
 ) -> tuple[plt.Figure, np.ndarray]:
     """Plot image volume as a grid of slices along a given anatomical section.
 
-    Image contrast is auto-adjusted to 1-99% of range unless overridden by
-    ``vmin`` and ``vmax`` passed as keyword arguments.
+    Image contrast (for img) is auto-adjusted to 1-99% of range unless
+    overridden by ``vmin`` and ``vmax`` passed as keyword arguments. This
+    also applies to overlay, unless overlay_is_mask is set to True.
 
     Parameters
     ----------
     img : np.ndarray
         Image volume to plot.
+    overlay: np.ndarray, optional
+        Image volume to overlay on top of img.
     anat_space : str, optional
         Anatomical space of the image volume according to the Brainglobe
         definition (origin and order of axes), by default "ASR".
@@ -114,9 +123,23 @@ def plot_grid(
         by default "frontal".
     n_slices : int, optional
         Number of slices to show, by default 12. Slices will be evenly spaced,
-        starting from the first and ending with the last slice. If a higher
-        value than the number of slices in the image is chosen, all slices
-        are shown.
+        after removing low intensity slices at the start / end of the volume
+        (use clip_dark_slices=False to use the full volume). If a higher value
+        than the number of slices in the image is chosen, all slices are shown.
+    clip_dark_slices : bool, optional
+        If True, clip low brightness slices at the start / end of the volume
+        before generating evenly spaced slices for display. The brightness
+        threshold is set to 1% of the max brightness, or ``vmin`` if passed
+        as a keyword argument.
+    overlay_alpha: float, optional
+        Transparency alpha of overlay.
+    overlay_cmap: str, optional
+        Name of matplotlib colormap to use for overlay.
+    overlay_is_mask: boolean, optional
+        Whether the overlay is a mask / segmentation. When False, contrast
+        will be auto-adjusted as described for img above.
+    plot_title: str, optional
+        Plot title.
     save_path : Path, optional
         Path to save the plot, by default None (no saving).
     **kwargs
@@ -128,6 +151,10 @@ def plot_grid(
         Matplotlib figure and axes objects
 
     """
+
+    if (overlay is not None) and (overlay.shape != img.shape):
+        raise ValueError("Overlay dimensions must match img")
+
     space = AnatomicalSpace(anat_space)
     section_to_axis = {  # Mapping of section names to space axes
         "frontal": "sagittal",
@@ -138,8 +165,15 @@ def plot_grid(
 
     # Ensure n_slices is not greater than the number of slices in the image
     n_slices = min(n_slices, img.shape[axis_idx])
-    # ensure first and last slices are included
-    show_slices = np.linspace(0, img.shape[axis_idx] - 1, n_slices, dtype=int)
+
+    # Return evenly spaced slices with/without removing low brightness slices
+    im_kwargs = _set_imshow_defaults(img, kwargs)
+    if clip_dark_slices:
+        show_slices = _choose_slices(
+            img, axis_idx, n_slices, vmin=im_kwargs["vmin"]
+        )
+    else:
+        show_slices = _choose_slices(img, axis_idx, n_slices, vmin=None)
 
     # Get slices along the specified axis and arrange them in a grid
     grid_img = _grid_from_slices(
@@ -148,11 +182,29 @@ def plot_grid(
 
     # Plot the grid image
     fig, ax = plt.subplots(1, 1, figsize=(12, 12))
-    kwargs = _set_imshow_defaults(img, kwargs)
-    ax.imshow(grid_img, **kwargs)
+    ax.imshow(grid_img, **im_kwargs)
+
+    if overlay is not None:
+        grid_overlay = _grid_from_slices(
+            [overlay.take(slc, axis=axis_idx) for slc in show_slices]
+        )
+
+        overlay_kwargs = kwargs.copy()
+        overlay_kwargs["cmap"] = overlay_cmap
+        overlay_kwargs["alpha"] = overlay_alpha
+        # Only auto-adjust contrast when the overlay isn't a mask
+        adjust_contrast = not overlay_is_mask
+        overlay_kwargs = _set_imshow_defaults(
+            overlay, overlay_kwargs, adjust_contrast=adjust_contrast
+        )
+        ax.imshow(grid_overlay, **overlay_kwargs)
 
     section_name = section.capitalize()
-    ax.set_title(f"{section_name} slices")
+    if plot_title is not None:
+        title = f"{plot_title} - {section_name} slices"
+    else:
+        title = f"{section_name} slices"
+    ax.set_title(title)
     ax.set_xlabel(space.axis_labels[axis_idx][1])
     ax.set_ylabel(space.axis_labels[axis_idx][0])
     ax = _clear_spines_and_ticks(ax)
@@ -242,20 +294,74 @@ def _clear_spines_and_ticks(ax: plt.Axes) -> plt.Axes:
     return ax
 
 
-def _set_imshow_defaults(img: np.ndarray, kwargs: dict) -> dict:
+def _set_imshow_defaults(
+    img: np.ndarray, kwargs: dict, adjust_contrast: bool = True
+) -> dict:
     """Set default values for imshow keyword arguments.
 
     These apply only if the user does not provide them explicitly.
     """
+    kwargs = kwargs.copy()
+    kwargs.setdefault("cmap", "gray")
+    kwargs.setdefault("aspect", "equal")
+
+    if not adjust_contrast:
+        # remove vmin / max if present
+        kwargs.pop("vmin", None)
+        kwargs.pop("vmax", None)
+        return kwargs
+
     missing_keys = [key for key in ("vmin", "vmax") if key not in kwargs]
     if missing_keys:
         defaults = _auto_adjust_contrast(img)
         for key in missing_keys:
             kwargs.setdefault(key, defaults[key])
 
-    kwargs.setdefault("cmap", "gray")
-    kwargs.setdefault("aspect", "equal")
     return kwargs
+
+
+def _choose_slices(
+    img: np.ndarray,
+    axis_idx: int,
+    n_slices: int,
+    vmin: int | float | None = None,
+) -> np.ndarray:
+    """Return indexes of evenly spaced slices along a given image axis.
+
+    Parameters
+    ----------
+    img : np.ndarray
+        Input image.
+    axis_idx : int
+        Index of axis to generate slices along.
+    n_slices : int
+        Number of slices to choose.
+    vmin : int | float | None, optional
+        If given, remove slices with no pixels above a brightness of vmin
+        from the start / end of the image.
+
+    Returns
+    -------
+    np.ndarray
+        Array of slice indexes (length = n_slices)
+    """
+
+    if vmin is None:
+        # Return evenly spaced slices including the first and last slice
+        return np.linspace(0, img.shape[axis_idx] - 1, n_slices, dtype=int)
+
+    # Remove slices where no pixels have a brightness > vmin
+    axes_to_sum = list(range(img.ndim))
+    axes_to_sum.remove(axis_idx)
+
+    n_pixels_above_vmin = (img > vmin).sum(axis=tuple(axes_to_sum))
+    slice_idx_above_vmin = np.where(n_pixels_above_vmin > 0)[0]
+
+    min_idx = slice_idx_above_vmin[0]
+    max_idx = slice_idx_above_vmin[-1]
+
+    # Return evenly spaced slices within the area with pixels > vmin
+    return np.linspace(min_idx, max_idx, n_slices, dtype=int)
 
 
 def _grid_from_slices(slices: list[np.ndarray]) -> np.ndarray:
