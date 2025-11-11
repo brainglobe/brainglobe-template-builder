@@ -43,14 +43,6 @@ jobs:
           python-version: "3.11"
 
     steps:
-      # Cache test data to prevent repeated downloads
-      - name: Cache pooch datasets
-        uses: actions/cache@v4
-        with:
-          path: .pooch/
-          key: pooch-${{ hashFiles('tests/fetch_test_data.py') }}
-          enableCrossOsArchive: true
-
       # Run tests
       - uses: neuroinformatics-unit/actions/test@v2
         with:
