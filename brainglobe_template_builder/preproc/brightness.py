@@ -30,6 +30,9 @@ def correct_image_brightness(
     if input_image.dtype != np.float32:
         input_image = input_image.astype(np.float32, casting="same_kind")
 
+    print("float32 input max", input_image.max())
+    print("float32 input min", input_image.min())
+
     sitk_image = sitk.GetImageFromArray(input_image)
 
     # Conversion to sitk flips the axis order [z, y, x] -> [x, y, z],
