@@ -42,6 +42,7 @@ entry-points."napari.manifest".brainglobe-template-builder = "brainglobe_templat
 dev = [
     "pytest",
     "pytest-cov",
+    "pytest-mock",
     "coverage",
     "tox",
     "black",
