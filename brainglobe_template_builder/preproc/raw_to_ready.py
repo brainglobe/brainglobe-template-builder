@@ -6,6 +6,7 @@ from brainglobe_utils.IO.image.load import load_any
 from brainglobe_utils.IO.image.save import save_as_asr_nii
 
 from brainglobe_template_builder.io import get_unique_folder_in_dir
+from brainglobe_template_builder.plots import plot_grid
 from brainglobe_template_builder.preproc.cropping import crop_to_mask
 from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
@@ -30,6 +31,7 @@ def process_sample(
 ) -> tuple[Path, Path]:
 
     image_path = _get_sample_image_path(subject_id, config.derivatives_dir)
+    output_dir = image_path.parent
     image = load_any(image_path)
 
     # TODO - denoising
@@ -49,7 +51,16 @@ def process_sample(
 
     # TODO - xflip
 
-    output_dir = image_path.parent
+    # Make QC plots of the mask overlaid on the image
+    plot_grid(
+        image,
+        overlay=mask,
+        anat_space="ASR",
+        section="frontal",
+        overlay_is_mask=True,
+        save_path=output_dir / f"sub-{subject_id}-QC-mask.png",
+    )
+
     image_save_path = output_dir / f"{image_path.stem}_processed.nii.gz"
     mask_save_path = output_dir / f"{image_path.stem}_processed_mask.nii.gz"
     vox_sizes_mm = [
@@ -74,9 +85,24 @@ def raw_to_ready(input_csv: Path, config_file: Path) -> None:
     config_json = config_file.read_text()
     config = PreprocConfig.model_validate_json(config_json)
 
+    image_paths = []
+    mask_paths = []
     for subject_id in input_df["subject_id"]:
 
         if ("use" in input_df) and (input_df["use"] is False):
             continue
 
-        process_sample(subject_id, config)
+        image_path, mask_path = process_sample(subject_id, config)
+        image_paths.append(image_path)
+        mask_paths.append(mask_path)
+
+    np.savetxt(
+        config.derivatives_dir / "all_processed_brain_paths.txt",
+        image_paths,
+        fmt="%s",
+    )
+    np.savetxt(
+        config.derivatives_dir / "all_processed_mask_paths.txt",
+        mask_paths,
+        fmt="%s",
+    )
