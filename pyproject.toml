@@ -26,7 +26,8 @@ dependencies = [
     "napari-itk-io",
     "loguru",
     "antspyx",
-    "qt-niu"
+    "qt-niu",
+    "pydantic"
 ]
 
 entry-points."napari.manifest".brainglobe-template-builder = "brainglobe_template_builder.napari:napari.yaml"
