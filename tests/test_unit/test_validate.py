@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from brainglobe_template_builder.validate import (
+    validate_column_names_format,
     validate_file_extension,
     validate_required_columns,
 )
@@ -88,3 +89,33 @@ def test_validate_required_columns(columns, required, error_message):
             validate_required_columns(columns, required)
     else:
         validate_required_columns(columns, required)
+
+
+@pytest.mark.parametrize(
+    ["column_names", "error_message"],
+    [
+        pytest.param(["col1", "col2"], None, id="valid"),
+        pytest.param(
+            ["col 1", "col2"],
+            "Column name 'col 1' contains whitespace.",
+            id="invalid (space in name)",
+        ),
+        pytest.param(
+            ["col1", "col\t2"],
+            "Column name 'col\t2' contains whitespace.",
+            id="invalid (tab in name)",
+        ),
+        pytest.param(
+            ["col_1", "col-2", "col.3", "!$£"],
+            None,
+            id="valid (special chars)",
+        ),
+    ],
+)
+def test_validate_column_names_format(column_names, error_message):
+    """Tests format of column names"""
+    if error_message:
+        with pytest.raises(ValueError, match=error_message):
+            validate_column_names_format(column_names)
+    else:
+        validate_column_names_format(column_names)
