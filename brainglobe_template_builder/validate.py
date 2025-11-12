@@ -45,9 +45,13 @@ def validate_required_columns(
     """
     for required_column in required_columns:
         if required_column not in column_names:
+            missing = [c for c in required_columns if c not in column_names]
+            column_str = "Column" if len(missing) == 1 else "Columns"
+            name_str = "name" if len(missing) == 1 else "names"
+            missing_list = ", ".join(f"'{col}'" for col in missing)
             raise ValueError(
-                f"Column with name '{required_column}'",
-                "is required but missing from source CSV.",
+                f"{column_str} with {name_str} {missing_list} required "
+                f"but missing from source CSV."
             )
 
 
