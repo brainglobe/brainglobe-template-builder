@@ -148,7 +148,7 @@ def _process_subject(
 
     # Save image + mask, as well as flipped versions
     return _save_image_and_mask(
-        image, mask, vox_sizes_mm, output_dir, image_path.stem
+        image, mask, vox_sizes_mm, output_dir, image_path.stem.split(".")[0]
     )
 
 
