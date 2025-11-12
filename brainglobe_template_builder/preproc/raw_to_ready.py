@@ -26,13 +26,55 @@ def _get_sample_image_path(subject_id: str, derivatives_dir: Path) -> Path:
     return image_paths[0]
 
 
-def process_sample(
-    subject_id: str, config: PreprocConfig
-) -> tuple[Path, Path]:
+def _save_image_and_mask(
+    image: np.ndarray,
+    mask: np.ndarray,
+    voxel_sizes_mm: list[float],
+    output_dir: Path,
+    image_name: str,
+) -> dict[str, Path]:
+
+    image_path = output_dir / f"{image_name}_processed.nii.gz"
+    mask_path = output_dir / f"{image_name}_processed_mask.nii.gz"
+    flipped_image_path = output_dir / f"{image_name}_processed_xflip.nii.gz"
+    flipped_mask_path = (
+        output_dir / f"{image_name}_processed_mask_xflip.nii.gz"
+    )
+
+    save_as_asr_nii(image, vox_sizes=voxel_sizes_mm, dest_path=image_path)
+    save_as_asr_nii(
+        mask.astype(np.uint8), vox_sizes=voxel_sizes_mm, dest_path=mask_path
+    )
+
+    flipped_image = np.flip(image, axis=2)
+    flipped_mask = np.flip(mask, axis=2)
+    save_as_asr_nii(
+        flipped_image, vox_sizes=voxel_sizes_mm, dest_path=flipped_image_path
+    )
+    save_as_asr_nii(
+        flipped_mask.astype(np.uint8),
+        vox_sizes=voxel_sizes_mm,
+        dest_path=flipped_mask_path,
+    )
+
+    return {
+        "image": image_path,
+        "mask": mask_path,
+        "flipped_image": flipped_image_path,
+        "flipped_mask": flipped_mask_path,
+    }
+
+
+def process_sample(subject_id: str, config: PreprocConfig) -> dict[str, Path]:
 
     image_path = _get_sample_image_path(subject_id, config.derivatives_dir)
     output_dir = image_path.parent
     image = load_any(image_path)
+    vox_sizes_mm = [
+        config.resolution_x * 0.001,
+        config.resolution_y * 0.001,
+        config.resolution_z * 0.001,
+    ]
 
     # TODO - denoising
     # TODO - n4 bias field correction
@@ -49,8 +91,6 @@ def process_sample(
     # Crop image to mask bounds, and pad by n pixels
     image, mask = crop_to_mask(image, mask, padding=config.pad_pixels)
 
-    # TODO - xflip
-
     # Make QC plots of the mask overlaid on the image
     plot_grid(
         image,
@@ -61,20 +101,10 @@ def process_sample(
         save_path=output_dir / f"sub-{subject_id}-QC-mask.png",
     )
 
-    image_save_path = output_dir / f"{image_path.stem}_processed.nii.gz"
-    mask_save_path = output_dir / f"{image_path.stem}_processed_mask.nii.gz"
-    vox_sizes_mm = [
-        config.resolution_x * 0.001,
-        config.resolution_y * 0.001,
-        config.resolution_z * 0.001,
-    ]
-
-    save_as_asr_nii(image, vox_sizes=vox_sizes_mm, dest_path=image_save_path)
-    save_as_asr_nii(
-        mask.astype(np.uint8), vox_sizes=vox_sizes_mm, dest_path=mask_save_path
+    # Save image + mask, as well as flipped versions
+    return _save_image_and_mask(
+        image, mask, vox_sizes_mm, output_dir, image_path.stem
     )
-
-    return image_save_path, mask_save_path
 
 
 def raw_to_ready(input_csv: Path, config_file: Path) -> None:
@@ -92,9 +122,9 @@ def raw_to_ready(input_csv: Path, config_file: Path) -> None:
         if ("use" in input_df) and (input_df["use"] is False):
             continue
 
-        image_path, mask_path = process_sample(subject_id, config)
-        image_paths.append(image_path)
-        mask_paths.append(mask_path)
+        paths_dict = process_sample(subject_id, config)
+        image_paths.extend([paths_dict["image"], paths_dict["flipped_image"]])
+        mask_paths.extend([paths_dict["mask"], paths_dict["flipped_mask"]])
 
     np.savetxt(
         config.derivatives_dir / "all_processed_brain_paths.txt",
