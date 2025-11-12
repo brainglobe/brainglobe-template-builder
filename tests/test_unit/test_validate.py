@@ -11,7 +11,10 @@ from brainglobe_template_builder.validate import (
 
 @pytest.fixture
 def valid_df():
-    """Create a DataFrame with minimal valid input data."""
+    """Create a DataFrame with minimal valid input data.
+
+    The format of this DataFrame matches input CSV file is
+    """
     data = {
         "species": "Zebra finch",
         "sex": ["F", "M", "F", "M", "F"],
@@ -24,11 +27,6 @@ def valid_df():
         "source_filepath": [f"/path/to/atlas-{i + 1}" for i in range(5)],
     }
     return pd.DataFrame(data)
-
-
-@pytest.fixture
-def df_missing_origin(valid_df):
-    return valid_df.drop(columns=["origin"])
 
 
 @pytest.mark.parametrize(
