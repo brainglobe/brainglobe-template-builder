@@ -1,12 +1,11 @@
-import os
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Sequence
 
 import pandas as pd
 
 
 def validate_file_extension(
-    file_path: Union[str, Path], expected_extension: str
+    file_path: str | Path, expected_extension: str
 ) -> None:
     """Check if file has the expected extension.
 
@@ -79,7 +78,7 @@ def validate_column_names_unique(column_names: Sequence[str]) -> None:
         raise ValueError("Column names of source CSV are not unique.")
 
 
-def validate_input_csv(input_csv_path: Union[str, os.PathLike]) -> None:
+def validate_input_csv(input_csv_path: str | Path) -> None:
     """
     Validate input CSV.
 
