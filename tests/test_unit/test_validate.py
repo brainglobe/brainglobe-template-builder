@@ -7,6 +7,7 @@ from brainglobe_template_builder.validate import (
     validate_column_names_format,
     validate_column_names_unique,
     validate_file_extension,
+    validate_input_csv,
     validate_required_columns,
 )
 
@@ -145,3 +146,22 @@ def test_validate_column_names_unique(column_names, error_message):
             validate_column_names_unique(column_names)
     else:
         validate_column_names_unique(column_names)
+
+
+@pytest.mark.parametrize(
+    ["valid"],
+    [
+        pytest.param(True, id="valid"),
+        pytest.param(False, id="invalid"),
+    ],
+)
+def test_validate_input_csv(mocker, valid_df, valid):
+    """Test validate_input_csv with patched DataFrame."""
+    df = valid_df if valid else valid_df.drop(columns=["subject_id"])
+    mocker.patch("pandas.read_csv", return_value=df)
+
+    if valid:
+        validate_input_csv("input.csv")
+    else:
+        with pytest.raises(ValueError):
+            validate_input_csv("input.csv")
