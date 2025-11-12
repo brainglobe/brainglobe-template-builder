@@ -5,6 +5,7 @@ import pytest
 
 from brainglobe_template_builder.validate import (
     validate_column_names_format,
+    validate_column_names_unique,
     validate_file_extension,
     validate_required_columns,
 )
@@ -119,3 +120,28 @@ def test_validate_column_names_format(column_names, error_message):
             validate_column_names_format(column_names)
     else:
         validate_column_names_format(column_names)
+
+
+@pytest.mark.parametrize(
+    ["column_names", "error_message"],
+    [
+        pytest.param(["col1", "col2", "col3"], None, id="valid (all unique)"),
+        pytest.param(
+            ["col1", "col2", "col1"],
+            "Column names of source CSV are not unique.",
+            id="invalid (duplicate col1)",
+        ),
+        pytest.param(
+            ["Col1", "col1", "COL1"],
+            None,
+            id="valid (case-sensitive unique)",
+        ),
+    ],
+)
+def test_validate_column_names_unique(column_names, error_message):
+    """Test whether duplicate column names are recognized correctly."""
+    if error_message:
+        with pytest.raises(ValueError, match=error_message):
+            validate_column_names_unique(column_names)
+    else:
+        validate_column_names_unique(column_names)
