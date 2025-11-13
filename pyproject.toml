@@ -118,7 +118,7 @@ python =
 extras =
     dev
 commands =
-    pytest -v --color=yes --cov=brainglobe_template_builder --cov-report=xml -s
+    pytest -v --color=yes --cov=brainglobe_template_builder --cov-report=xml
 deps =
     napari-dev: git+https://github.com/napari/napari
 """
