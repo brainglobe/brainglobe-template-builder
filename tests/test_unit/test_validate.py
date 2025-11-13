@@ -86,6 +86,7 @@ def test_validate_file_extension(filepath, extension, is_valid):
     ],
 )
 def test_validate_required_columns(columns, required, error_message):
+    """Tests whether all required columns are present."""
     if error_message:
         with pytest.raises(ValueError, match=error_message):
             validate_required_columns(columns, required)
@@ -156,7 +157,10 @@ def test_validate_column_names_unique(column_names, error_message):
     ],
 )
 def test_validate_input_csv(mocker, valid_df, valid):
-    """Test validate_input_csv with patched DataFrame."""
+    """Test validate_input_csv with patched DataFrame.
+
+    Invalid case: missing required 'subject_id' column.
+    """
     df = valid_df if valid else valid_df.drop(columns=["subject_id"])
     mocker.patch("pandas.read_csv", return_value=df)
 
