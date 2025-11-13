@@ -9,7 +9,7 @@ def correct_image_brightness(
     N4BiasFieldCorrectionImageFilter.
 
     Default values are set to match those used in
-    ants.n4_bias_field_correction.
+    ants.n4_bias_field_correction (antspyx v0.6.1)
 
     Parameters
     ----------
