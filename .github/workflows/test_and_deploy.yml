@@ -41,6 +41,17 @@ jobs:
           python-version: "3.13"
 
     steps:
+      # checkout files, so the pooch cache can use hashFiles() in its key
+      - uses: actions/checkout@v4
+
+      # Cache test data to prevent repeated downloads
+      - name: Cache pooch datasets
+        uses: actions/cache@v4
+        with:
+          path: "~/.brainglobe/brainglobe-workflows/test-data"
+          key: pooch-${{ runner.os }}-${{ hashFiles('./tests/fetch_test_data.py') }}
+          enableCrossOsArchive: false
+
       # Run tests
       - uses: neuroinformatics-unit/actions/test@v2
         if: ${{ ! startsWith(matrix.os, 'windows-') }}

@@ -3,7 +3,7 @@ from pathlib import Path
 import pooch
 
 POOCH_REGISTRY = pooch.create(
-    path=Path(__file__).parents[1] / ".pooch",
+    path=Path.home() / ".brainglobe" / "brainglobe-workflows" / "test-data",
     base_url="https://gin.g-node.org/BrainGlobe/test-data/raw/master/brainglobe-template-builder",
     registry={
         "Rat1_sub-01_T2w.nii.gz": "sha256:cd460fdbb2a2dc555ba70510b9b27d93962bc5ee59b3b610c480f27cd6a5d29c",  # noqa: E501
