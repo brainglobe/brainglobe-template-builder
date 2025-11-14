@@ -199,12 +199,12 @@ def raw_to_ready(input_csv: Path, config_file: Path) -> None:
 
     image_paths = []
     mask_paths = []
-    for subject_id in input_df["subject_id"]:
+    for _, row in input_df.iterrows():
 
-        if ("use" in input_df) and (input_df["use"] is False):
+        if ("use" in row) and (row.use is False):
             continue
 
-        paths_dict = _process_subject(subject_id, config)
+        paths_dict = _process_subject(row.subject_id, config)
         image_paths.extend([paths_dict["image"], paths_dict["flipped_image"]])
         mask_paths.extend([paths_dict["mask"], paths_dict["flipped_mask"]])
 
