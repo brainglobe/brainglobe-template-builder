@@ -27,7 +27,8 @@ dependencies = [
     "loguru",
     "antspyx",
     "qt-niu",
-    "pydantic"
+    "pydantic",
+    "simpleitk"
 ]
 
 entry-points."napari.manifest".brainglobe-template-builder = "brainglobe_template_builder.napari:napari.yaml"
@@ -50,6 +51,7 @@ dev = [
     "pre-commit",
     "ruff",
     "setuptools_scm",
+    "pooch"
 ]
 wingdisc = [
     'bioio',
