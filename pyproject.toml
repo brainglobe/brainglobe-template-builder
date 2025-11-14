@@ -27,6 +27,7 @@ dependencies = [
     "loguru",
     "antspyx",
     "qt-niu",
+    "pydantic",
     "simpleitk"
 ]
 
