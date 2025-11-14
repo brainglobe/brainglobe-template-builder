@@ -7,6 +7,9 @@ from brainglobe_utils.IO.image.save import save_as_asr_nii
 
 from brainglobe_template_builder.io import get_unique_folder_in_dir
 from brainglobe_template_builder.plots import plot_grid
+from brainglobe_template_builder.preproc.brightness import (
+    correct_image_brightness,
+)
 from brainglobe_template_builder.preproc.cropping import crop_to_mask
 from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
@@ -116,13 +119,15 @@ def _process_subject(
     output_dir = image_path.parent
     image = load_any(image_path)
     vox_sizes_mm = [
-        config.resolution_x * 0.001,
-        config.resolution_y * 0.001,
         config.resolution_z * 0.001,
+        config.resolution_y * 0.001,
+        config.resolution_x * 0.001,
     ]
 
     # TODO - denoising
-    # TODO - n4 bias field correction
+
+    # n4 bias field correction
+    image = correct_image_brightness(image, spacing=vox_sizes_mm)
 
     mask_config = config.mask
     mask = create_mask(
@@ -148,7 +153,11 @@ def _process_subject(
 
     # Save image + mask, as well as flipped versions
     return _save_image_and_mask(
-        image, mask, vox_sizes_mm, output_dir, image_path.stem.split(".")[0]
+        image,
+        mask,
+        vox_sizes_mm[::-1],
+        output_dir,
+        image_path.stem.split(".")[0],
     )
 
 
