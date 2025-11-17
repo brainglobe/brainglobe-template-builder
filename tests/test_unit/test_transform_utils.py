@@ -101,8 +101,20 @@ def test_downsample_anisotropic_stack_to_isotropic(
     ), "dask downsampling does not match expected skimage result"
 
 
+def test_upsampling_raises_error(stack):
+    with pytest.raises(ValueError, match="Upsampling would be required."):
+        downsample_anisotropic_stack_to_isotropic(stack, [50, 50, 50], 25)
+
+
 def test_downsample_anisotropic_image_stack_raises(not_slicewise_stack):
     with pytest.raises(AssertionError, match="not chunked by plane!"):
         downsample_anisotropic_image_stack(
             not_slicewise_stack, in_plane_factor=20, axial_factor=2
+        )
+
+
+def test_downsample_to_isotropic_raises(not_slicewise_stack):
+    with pytest.raises(AssertionError, match="not chunked by plane!"):
+        downsample_anisotropic_stack_to_isotropic(
+            not_slicewise_stack, [25, 25, 25], 50
         )
