@@ -3,6 +3,7 @@ from pathlib import Path
 import dask.array as da
 import numpy as np
 from brainglobe_utils.IO.image import read_z_stack, save_any
+from loguru import logger
 from scipy.ndimage import affine_transform
 from skimage import transform
 
@@ -169,6 +170,59 @@ def _downsample_anisotropic_stack_by_factors(
     return downsampled_axial.compute()
 
 
+def _warn_if_output_vox_sizes_incorrect(
+    input_shape: tuple[int],
+    output_shape: tuple[int],
+    input_vox_sizes: list[float],
+    downsampling_factors: list[float],
+) -> None:
+    """Log a warning if the output voxel sizes are incorrect.
+
+    If the shape of each image axis isn't exactly divisible by its
+    downsampling factor, the final shape (and therefore voxel size)
+    will be slightly different from the target voxel size.
+
+    Parameters
+    ----------
+    input_shape : tuple[int]
+        Shape of input image (before downsampling).
+    output_shape : tuple[int]
+        Shape of output image (after downsampling).
+    input_vox_sizes : list[float]
+        Input image voxel sizes.
+    downsampling_factors : list[float]
+        Downsampling factors used for each axis.
+    """
+
+    for axis_shape, downsampling_factor in zip(
+        input_shape, downsampling_factors
+    ):
+        if not (axis_shape * downsampling_factor).is_integer():
+
+            # Total size of each axis in microns
+            axis_sizes_um = [
+                axis_shape * vox_size
+                for axis_shape, vox_size in zip(input_shape, input_vox_sizes)
+            ]
+            # output voxel sizes in microns
+            output_vox_sizes = [
+                axis_size / axis_shape
+                for axis_size, axis_shape in zip(axis_sizes_um, output_shape)
+            ]
+
+            msg = (
+                f"Image shape {input_shape} isn't an exact multiple of "
+                f"downsampling factors [{1/downsampling_factors[0]:.3f}x, "
+                f"{1/downsampling_factors[1]:.3f}x "
+                f"{1/downsampling_factors[2]:.3f}x]. "
+                f"Output shape is {output_shape}, with voxel size "
+                f"[{output_vox_sizes[0]:.3f}, {output_vox_sizes[1]:.3f}, "
+                f"{output_vox_sizes[2]:.3f}]."
+            )
+            logger.warning(msg)
+            return
+
+
 def downsample_anisotropic_stack_to_isotropic(
     stack: da.Array, input_vox_sizes: list[float], output_vox_size: float
 ) -> np.ndarray:
@@ -182,6 +236,8 @@ def downsample_anisotropic_stack_to_isotropic(
                 "Upsampling would be required."
             )
 
+    # Downsampling factors are defined so: input shape * factor = output shape
+    # so e.g. a 0.5 downsampling factor, is equivalent to downsampling 2x
     downsampling_factors = [
         vox_size / output_vox_size for vox_size in input_vox_sizes
     ]
@@ -189,13 +245,12 @@ def downsample_anisotropic_stack_to_isotropic(
         stack, downsampling_factors
     )
 
-    # if the shape of each axis isn't exactly divisible by its
-    # downsampling factor, the final shape
-    # (and therefore voxel size) will be slightly off the target
-    # output_vox_size
-    # for axis_shape, downsampling_factor in
-    # zip(stack.shape, downsampling_factors):
-    #     if axis_shape % downsampling_factor != 0:
+    _warn_if_output_vox_sizes_incorrect(
+        stack.shape,
+        downsampled_image.shape,
+        input_vox_sizes,
+        downsampling_factors,
+    )
 
     return downsampled_image
 

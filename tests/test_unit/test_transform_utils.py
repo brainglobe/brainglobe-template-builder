@@ -44,24 +44,49 @@ def test_downsample_anisotropic_image_stack(stack):
 
 
 @pytest.mark.parametrize(
-    "input_vox_sizes,output_vox_size,expected_shape",
+    "input_vox_sizes,output_vox_size,expected_shape,expected_warning",
     [
         pytest.param(
-            [25, 25, 25], 50, (5, 50, 50), id="downsampling [2x, 2x, 2x]"
+            [25, 25, 25], 50, (5, 50, 50), None, id="downsampling [2x, 2x, 2x]"
         ),
         pytest.param(
-            [5, 10, 50], 50, (1, 20, 100), id="downsampling [10x, 5x, 1x]"
+            [5, 10, 50],
+            50,
+            (1, 20, 100),
+            None,
+            id="downsampling [10x, 5x, 1x]",
+        ),
+        pytest.param(
+            [50, 25, 25],
+            75,
+            (7, 33, 33),
+            "shape is (7, 33, 33), with voxel size [71.429, 75.758, 75.758].",
+            id="downsampling [1.5x, 3x, 3x]",
+        ),
+        pytest.param(
+            [50, 25, 25],
+            85,
+            (6, 29, 29),
+            "shape is (6, 29, 29), with voxel size [83.333, 86.207, 86.207].",
+            id="downsampling [1.7x, 3.4x, 3.4x]",
         ),
     ],
 )
 def test_downsample_anisotropic_stack_to_isotropic(
-    stack, input_vox_sizes, output_vox_size, expected_shape
+    caplog,
+    stack,
+    input_vox_sizes,
+    output_vox_size,
+    expected_shape,
+    expected_warning,
 ):
     downsampled_stack = downsample_anisotropic_stack_to_isotropic(
         stack, input_vox_sizes, output_vox_size
     )
 
     assert downsampled_stack.shape == expected_shape
+    if expected_warning is not None:
+        assert expected_warning in caplog.text
 
     # Check processing directly with skimage is same as dask based result
     downsampling_factors = [
