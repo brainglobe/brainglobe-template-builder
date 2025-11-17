@@ -141,6 +141,33 @@ def downsample_anisotropic_image_stack(
 def _downsample_anisotropic_stack_by_factors(
     stack: da.Array, downsampling_factors: list[float]
 ) -> np.ndarray:
+    """
+    Lazily downsamples a dask array first along axes 1,2 (in-plane) and then
+    along axis 0 (axial), using interpolation via `skimage.transform.rescale`.
+
+    The input dask array must be chunked by plane. The (smaller) array
+    is returned in memory (numpy) form at the end.
+
+
+    Parameters
+    ----------
+    stack : da.Array
+        The input dask array representing the image stack.
+    downsampling_factors : list[float]
+        Downsampling factors to use for each image axis. They should be
+        defined so that: input shape * factor = output shape so e.g. a
+        0.5 downsampling factor, would be equivalent to downsampling 2x.
+
+    Returns
+    -------
+    np.ndarray
+        The computed downsampled (numpy) array.
+
+    Raises
+    ------
+    ValueError
+        If the array is not chunked by plane along axis 0.
+    """
 
     # check we have expected slice chunks
     if not np.all(np.array(stack.chunks[0]) == 1):
@@ -226,6 +253,39 @@ def _warn_if_output_vox_sizes_incorrect(
 def downsample_anisotropic_stack_to_isotropic(
     stack: da.Array, input_vox_sizes: list[float], output_vox_size: float
 ) -> np.ndarray:
+    """
+    Lazily downsamples a dask array first along axes 1,2 (in-plane) and then
+    along axis 0 (axial), using interpolation via `skimage.transform.rescale`.
+
+    This setup is typical for certain types of microscopy,
+    where axial resolution is lower than in-plane resolution.
+
+    The input dask array must be chunked by plane. The (smaller) array
+    is returned in memory (numpy) form at the end.
+
+
+    Parameters
+    ----------
+    stack : da.Array
+        The input dask array representing the image stack.
+    input_vox_sizes : list[float]
+        Input voxel sizes in microns (must be in same order as stack axes).
+    output_vox_size : float
+        Output voxel size in microns to downsample to. The image will
+        be made isotropic, with voxel sizes as close as possible to
+        [output_vox_size, output_vox_size, output_vox_size].
+
+    Returns
+    -------
+    np.ndarray
+        The computed downsampled (numpy) array.
+
+    Raises
+    ------
+    ValueError
+        If the array is not chunked by plane along axis 0, or
+        if the output_vox_size would require upsampling.
+    """
 
     # Don't allow up-sampling
     for vox_size in input_vox_sizes:

@@ -114,7 +114,7 @@ def test_downsample_anisotropic_image_stack_raises(not_slicewise_stack):
 
 
 def test_downsample_to_isotropic_raises(not_slicewise_stack):
-    with pytest.raises(AssertionError, match="not chunked by plane!"):
+    with pytest.raises(ValueError, match="not chunked by plane!"):
         downsample_anisotropic_stack_to_isotropic(
             not_slicewise_stack, [25, 25, 25], 50
         )
