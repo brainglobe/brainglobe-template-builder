@@ -52,7 +52,8 @@ def _process_subject(
         Output voxel size in micrometre. Images will be downsampled to
         an isotropic resolution of
         output_vox_size x output_vox_size x output_vox_size. If not
-        provided, input images will not be downsampled.
+        provided, input images will be left as-is (they must have
+        isotropic resolution!).
 
     Returns
     -------
@@ -64,8 +65,21 @@ def _process_subject(
     subject_id = subject_row.subject_id
 
     # downsample to target isotropic resolution
-    if output_vox_size is not None:
-        pass  # TODO - downsample
+    if output_vox_size is None:
+        output_vox_sizes = [
+            subject_row.resolution_x,
+            subject_row.resolution_y,
+            subject_row.resolution_z,
+        ]
+        if len(set(output_vox_sizes)) != 1:
+            raise ValueError(
+                f"Subject id: {subject_id} has anisotropic voxel size: "
+                f"{output_vox_sizes}. Pass an output_vox_size to re-sample it."
+            )
+
+    else:
+        output_vox_sizes = [output_vox_size, output_vox_size, output_vox_size]
+        # TODO - downsample
 
     # re-orient to ASR
     space = AnatomicalSpace(subject_row.origin)
@@ -73,14 +87,6 @@ def _process_subject(
 
     # Get path to output image file, incorporating output
     # resolution into filename
-    if output_vox_size is None:
-        output_vox_sizes = [
-            subject_row.resolution_x,
-            subject_row.resolution_y,
-            subject_row.resolution_z,
-        ]
-    else:
-        output_vox_sizes = [output_vox_size, output_vox_size, output_vox_size]
     dest_path = _get_subject_path(output_dir, subject_id, output_vox_sizes)
 
     # save QC plot of re-oriented image
@@ -116,7 +122,8 @@ def source_to_raw(
         Output voxel size in micrometre. Images will be downsampled to
         an isotropic resolution of
         output_vox_size x output_vox_size x output_vox_size. If not
-        provided, input images will not be downsampled.
+        provided, input images will be left as-is (they must have
+        isotropic resolution!).
     """
 
     input_df = pd.read_csv(input_csv)
