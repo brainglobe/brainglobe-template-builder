@@ -137,6 +137,69 @@ def downsample_anisotropic_image_stack(
     return downsampled_axial.compute()
 
 
+def _downsample_anisotropic_stack_by_factors(
+    stack: da.Array, downsampling_factors: list[float]
+) -> np.ndarray:
+
+    # check we have expected slice chunks
+    if not np.all(np.array(stack.chunks[0]) == 1):
+        raise ValueError(
+            "Array not chunked by plane! Chunks on "
+            f"axis 0 are {stack.chunks[0]}"
+        )
+
+    # we have xy slices as chunks, so apply downscaling in xy first
+    downsampled_inplane = stack.map_blocks(
+        transform.rescale,
+        (1, downsampling_factors[1], downsampling_factors[2]),
+        dtype=np.float64,
+    )
+
+    # rechunk so we can map_blocks along z
+    downsampled_inplane = downsampled_inplane.rechunk(
+        {0: downsampled_inplane.shape[0], 1: -1, 2: -1}
+    )
+
+    # downsample in z
+    downsampled_axial = downsampled_inplane.map_blocks(
+        transform.rescale,
+        (downsampling_factors[0], 1, 1),
+        dtype=np.float64,
+    )
+    return downsampled_axial.compute()
+
+
+def downsample_anisotropic_stack_to_isotropic(
+    stack: da.Array, input_vox_sizes: list[float], output_vox_size: float
+) -> np.ndarray:
+
+    # Don't allow up-sampling
+    for vox_size in input_vox_sizes:
+        if vox_size > output_vox_size:
+            raise ValueError(
+                f"Some input voxel sizes: {input_vox_sizes} are larger "
+                f"than the output_vox_size: {output_vox_size}. "
+                "Upsampling would be required."
+            )
+
+    downsampling_factors = [
+        vox_size / output_vox_size for vox_size in input_vox_sizes
+    ]
+    downsampled_image = _downsample_anisotropic_stack_by_factors(
+        stack, downsampling_factors
+    )
+
+    # if the shape of each axis isn't exactly divisible by its
+    # downsampling factor, the final shape
+    # (and therefore voxel size) will be slightly off the target
+    # output_vox_size
+    # for axis_shape, downsampling_factor in
+    # zip(stack.shape, downsampling_factors):
+    #     if axis_shape % downsampling_factor != 0:
+
+    return downsampled_image
+
+
 def downsample(
     sample_folder: Path,
     downsampled_path: Path,
