@@ -56,10 +56,19 @@ def source_to_raw(
     input_df = pd.read_csv(input_csv)
     # TODO - Validate input csv
 
+    if "use" in input_df:
+        input_df = input_df[input_df.use is True]
+
+    processed_paths = []
     for _, row in input_df.iterrows():
-
-        if ("use" in row) and (row.use is False):
-            continue
-
         nifti_path = _process_subject(row, output_dir, output_vox_size)
-        print(nifti_path)
+        processed_paths.append(nifti_path)
+
+    # Make output csv for processed images
+    output_df = input_df.copy()
+    output_df.origin = "ASR"
+    output_df.resolution_z = output_vox_size
+    output_df.resolution_y = output_vox_size
+    output_df.resolution_x = output_vox_size
+    output_df.source_filepath = processed_paths
+    output_df.to_csv(output_dir / "raw_images.csv", index=False)
