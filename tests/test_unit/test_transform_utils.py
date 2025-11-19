@@ -4,7 +4,6 @@ import pytest
 from skimage import transform
 
 from brainglobe_template_builder.preproc.transform_utils import (
-    downsample_anisotropic_image_stack,
     downsample_anisotropic_stack_to_isotropic,
 )
 
@@ -19,28 +18,16 @@ def stack():
 
 @pytest.fixture()
 def not_slicewise_stack(stack):
-    """Create a dask array representing an image stack"""
+    """Create a dask array representing an image stack,
+    chunked by multiple slices."""
     return stack.rechunk({0: 2, 1: 100, 2: 100})
 
 
-def test_downsample_anisotropic_image_stack(stack):
-    """Test that downsampling with dask gives same as without."""
-    in_plane = 20
-    axial = 2
-
-    downsampled_stack = downsample_anisotropic_image_stack(
-        stack, in_plane, axial
-    )
-
-    assert downsampled_stack.shape == (5, 5, 5)
-
-    expected = transform.downscale_local_mean(
-        stack.compute(), (1, in_plane, in_plane)
-    )
-    expected = transform.downscale_local_mean(expected, (axial, 1, 1))
-    assert np.all(
-        downsampled_stack == expected
-    ), "dask downsampling does not match expected skimage result"
+@pytest.fixture()
+def partial_slicewise_stack(stack):
+    """Create a dask array representing an image stack,
+    chunked by part of an individual slice."""
+    return stack.rechunk({0: 1, 1: 17, 2: 100})
 
 
 @pytest.mark.parametrize(
@@ -106,15 +93,21 @@ def test_upsampling_raises_error(stack):
         downsample_anisotropic_stack_to_isotropic(stack, [50, 50, 50], 25)
 
 
-def test_downsample_anisotropic_image_stack_raises(not_slicewise_stack):
-    with pytest.raises(AssertionError, match="not chunked by plane!"):
-        downsample_anisotropic_image_stack(
-            not_slicewise_stack, in_plane_factor=20, axial_factor=2
+def test_non_planar_chunking_raises_error(not_slicewise_stack):
+    with pytest.raises(
+        ValueError,
+        match="not chunked by entire plane! Chunks on axis 0 are \\(2,",
+    ):
+        downsample_anisotropic_stack_to_isotropic(
+            not_slicewise_stack, [25, 25, 25], 50
         )
 
 
-def test_downsample_to_isotropic_raises(not_slicewise_stack):
-    with pytest.raises(ValueError, match="not chunked by plane!"):
+def test_chunks_covering_part_of_plane_raises_error(partial_slicewise_stack):
+    with pytest.raises(
+        ValueError,
+        match="not chunked by entire plane! Chunks on axis 1 are \\(17,",
+    ):
         downsample_anisotropic_stack_to_isotropic(
-            not_slicewise_stack, [25, 25, 25], 50
+            partial_slicewise_stack, [25, 25, 25], 50
         )

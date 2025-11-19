@@ -78,6 +78,18 @@ def apply_transform(
     return transformed.astype(data.dtype)
 
 
+def _verify_chunked_by_entire_plane(stack: da.Array) -> None:
+    """Check the dask array's chunks cover entire z slices."""
+
+    expected_chunk_size = (1, stack.shape[1], stack.shape[2])
+    for i, chunk_size in enumerate(expected_chunk_size):
+        if not (np.array(stack.chunks[i]) == chunk_size).all():
+            raise ValueError(
+                "Array not chunked by entire plane! Chunks on "
+                f"axis {i} are {stack.chunks[i]}"
+            )
+
+
 def _downsample_anisotropic_stack_by_factors(
     stack: da.Array, downsampling_factors: list[float]
 ) -> np.ndarray:
@@ -110,11 +122,7 @@ def _downsample_anisotropic_stack_by_factors(
     """
 
     # check we have expected slice chunks
-    if not np.all(np.array(stack.chunks[0]) == 1):
-        raise ValueError(
-            "Array not chunked by plane! Chunks on "
-            f"axis 0 are {stack.chunks[0]}"
-        )
+    _verify_chunked_by_entire_plane(stack)
 
     # we have xy slices as chunks, so apply downscaling in xy first
     downsampled_inplane = stack.map_blocks(
