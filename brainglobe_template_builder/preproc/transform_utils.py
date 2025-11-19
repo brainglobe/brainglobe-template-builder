@@ -79,7 +79,7 @@ def apply_transform(
 
 
 def _verify_chunked_by_entire_plane(stack: da.Array) -> None:
-    """Check the dask array's chunks cover entire z slices."""
+    """Check the dask array's chunks cover entire axial slices (axis=0)."""
 
     expected_chunk_size = (1, stack.shape[1], stack.shape[2])
     for i, chunk_size in enumerate(expected_chunk_size):
@@ -108,7 +108,7 @@ def _downsample_anisotropic_stack_by_factors(
     downsampling_factors : list[float]
         Downsampling factors to use for each image axis. They should be
         defined so that: input shape * factor = output shape so e.g. a
-        0.5 downsampling factor, would be equivalent to downsampling 2x.
+        0.5 downsampling factor, would halve the image size.
     mask : bool, optional
         Whether the stack is a mask / segmentation. If True, nearest
         neighbour interpolation will be used, rather than the default
@@ -122,7 +122,7 @@ def _downsample_anisotropic_stack_by_factors(
     Raises
     ------
     ValueError
-        If the array is not chunked by plane along axis 0.
+        If the array is not chunked by entire planes along axis 0.
     """
 
     # check we have expected slice chunks
@@ -187,7 +187,7 @@ def _warn_if_output_vox_sizes_incorrect(
     output_shape : tuple[int]
         Shape of output image (after downsampling).
     input_vox_sizes : list[float]
-        Input image voxel sizes.
+        Input image voxel sizes in microns.
     downsampling_factors : list[float]
         Downsampling factors used for each axis.
     """
@@ -270,7 +270,7 @@ def downsample_anisotropic_stack_to_isotropic(
         if vox_size > output_vox_size:
             raise ValueError(
                 f"Some input voxel sizes: {input_vox_sizes} are larger "
-                f"than the output_vox_size: {output_vox_size}. "
+                f"than the output voxel size: {output_vox_size}. "
                 "Upsampling would be required."
             )
 
