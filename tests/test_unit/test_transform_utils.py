@@ -17,6 +17,14 @@ def stack():
 
 
 @pytest.fixture()
+def mask():
+    """Create a dask array representing a mask - only values 0 and 1."""
+    data = np.zeros(shape=(10, 100, 100), dtype="float32")
+    data[3:7, 25:75, 25:75] = 1
+    return da.from_array(data, chunks=(1, 100, 100))
+
+
+@pytest.fixture()
 def not_slicewise_stack(stack):
     """Create a dask array representing an image stack,
     chunked by multiple slices."""
@@ -80,11 +88,41 @@ def test_downsample_anisotropic_stack_to_isotropic(
         vox_size / output_vox_size for vox_size in input_vox_sizes
     ]
     expected = transform.rescale(
-        stack.compute(), (1, downsampling_factors[1], downsampling_factors[2])
+        stack.compute(),
+        (1, downsampling_factors[1], downsampling_factors[2]),
+        order=1,
     )
-    expected = transform.rescale(expected, (downsampling_factors[0], 1, 1))
+    expected = transform.rescale(
+        expected, (downsampling_factors[0], 1, 1), order=1
+    )
     assert np.all(
         downsampled_stack == expected
+    ), "dask downsampling does not match expected skimage result"
+
+
+def test_downsample_mask_to_isotropic(mask):
+    downsampled_mask = downsample_anisotropic_stack_to_isotropic(
+        mask, [25, 25, 25], 50, mask=True
+    )
+
+    assert downsampled_mask.shape == (5, 50, 50)
+    # Downsampled mask should still only contain values 0 and 1
+    # i.e. no intermediate interpolated values.
+    assert np.array_equal(np.unique(downsampled_mask), np.array([0, 1]))
+
+    # Check processing directly with skimage is same as dask based result
+    downsampling_factors = [0.5, 0.5, 0.5]
+    expected = transform.rescale(
+        mask.compute(),
+        (1, downsampling_factors[1], downsampling_factors[2]),
+        order=0,
+        anti_aliasing=False,
+    )
+    expected = transform.rescale(
+        expected, (downsampling_factors[0], 1, 1), order=0, anti_aliasing=False
+    )
+    assert np.all(
+        downsampled_mask == expected
     ), "dask downsampling does not match expected skimage result"
 
 

@@ -91,7 +91,7 @@ def _verify_chunked_by_entire_plane(stack: da.Array) -> None:
 
 
 def _downsample_anisotropic_stack_by_factors(
-    stack: da.Array, downsampling_factors: list[float]
+    stack: da.Array, downsampling_factors: list[float], mask: bool = False
 ) -> np.ndarray:
     """
     Lazily downsamples a dask array first along axes 1,2 (in-plane) and then
@@ -109,6 +109,10 @@ def _downsample_anisotropic_stack_by_factors(
         Downsampling factors to use for each image axis. They should be
         defined so that: input shape * factor = output shape so e.g. a
         0.5 downsampling factor, would be equivalent to downsampling 2x.
+    mask : bool, optional
+        Whether the stack is a mask / segmentation. If True, nearest
+        neighbour interpolation will be used, rather than the default
+        of bi-linear.
 
     Returns
     -------
@@ -124,11 +128,20 @@ def _downsample_anisotropic_stack_by_factors(
     # check we have expected slice chunks
     _verify_chunked_by_entire_plane(stack)
 
+    if mask:
+        order = 0
+        anti_aliasing = False
+    else:
+        order = 1
+        anti_aliasing = True
+
     # we have xy slices as chunks, so apply downscaling in xy first
     downsampled_inplane = stack.map_blocks(
         transform.rescale,
         (1, downsampling_factors[1], downsampling_factors[2]),
         dtype=np.float64,
+        order=order,
+        anti_aliasing=anti_aliasing,
     )
 
     # rechunk so we can map_blocks along z
@@ -141,6 +154,8 @@ def _downsample_anisotropic_stack_by_factors(
         transform.rescale,
         (downsampling_factors[0], 1, 1),
         dtype=np.float64,
+        order=order,
+        anti_aliasing=anti_aliasing,
     )
     return downsampled_axial.compute()
 
@@ -199,7 +214,10 @@ def _warn_if_output_vox_sizes_incorrect(
 
 
 def downsample_anisotropic_stack_to_isotropic(
-    stack: da.Array, input_vox_sizes: list[float], output_vox_size: float
+    stack: da.Array,
+    input_vox_sizes: list[float],
+    output_vox_size: float,
+    mask: bool = False,
 ) -> np.ndarray:
     """
     Lazily downsamples a dask array first along axes 1,2 (in-plane) and then
@@ -222,6 +240,10 @@ def downsample_anisotropic_stack_to_isotropic(
         Output voxel size in microns to downsample to. The image will
         be made isotropic, with voxel sizes as close as possible to
         [output_vox_size, output_vox_size, output_vox_size].
+    mask : bool, optional
+        Whether the stack is a mask / segmentation. If True, nearest
+        neighbour interpolation will be used, rather than the default
+        of bi-linear.
 
     Returns
     -------
@@ -250,7 +272,7 @@ def downsample_anisotropic_stack_to_isotropic(
         vox_size / output_vox_size for vox_size in input_vox_sizes
     ]
     downsampled_image = _downsample_anisotropic_stack_by_factors(
-        stack, downsampling_factors
+        stack, downsampling_factors, mask
     )
 
     _warn_if_output_vox_sizes_incorrect(
