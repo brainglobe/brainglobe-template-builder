@@ -19,7 +19,7 @@ def stack():
 @pytest.fixture()
 def mask():
     """Create a dask array representing a mask - only values 0 and 1."""
-    data = np.zeros(shape=(10, 100, 100), dtype="float32")
+    data = np.zeros(shape=(10, 100, 100), dtype="float64")
     data[3:7, 25:75, 25:75] = 1
     return da.from_array(data, chunks=(1, 100, 100))
 

@@ -128,20 +128,27 @@ def _downsample_anisotropic_stack_by_factors(
     # check we have expected slice chunks
     _verify_chunked_by_entire_plane(stack)
 
+    # Avoid intermediate values for masks i.e.
+    # an input with values of 0 and 1, should
+    # produce an output with only values of 0 and 1.
     if mask:
         order = 0
         anti_aliasing = False
+        # rescale only converts to float for order > 0
+        data_type = stack.dtype.type
     else:
         order = 1
         anti_aliasing = True
+        data_type = np.float64
 
     # we have xy slices as chunks, so apply downscaling in xy first
     downsampled_inplane = stack.map_blocks(
         transform.rescale,
         (1, downsampling_factors[1], downsampling_factors[2]),
-        dtype=np.float64,
+        dtype=data_type,
         order=order,
         anti_aliasing=anti_aliasing,
+        preserve_range=True,
     )
 
     # rechunk so we can map_blocks along z
@@ -153,9 +160,10 @@ def _downsample_anisotropic_stack_by_factors(
     downsampled_axial = downsampled_inplane.map_blocks(
         transform.rescale,
         (downsampling_factors[0], 1, 1),
-        dtype=np.float64,
+        dtype=data_type,
         order=order,
         anti_aliasing=anti_aliasing,
+        preserve_range=True,
     )
     return downsampled_axial.compute()
 
