@@ -55,6 +55,6 @@ if __name__ == "__main__":
         downsample(
             sample_folder,
             template_raw_data / sample_filename,
-            [1 / in_plane_factor, 1 / axial_factor, 1 / axial_factor],
+            [1 / axial_factor, 1 / in_plane_factor, 1 / in_plane_factor],
         )
         logger.info(f"{sample_filename} downsampled.")
