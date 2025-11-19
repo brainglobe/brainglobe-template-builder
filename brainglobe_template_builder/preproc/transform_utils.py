@@ -2,7 +2,7 @@ from pathlib import Path
 
 import dask.array as da
 import numpy as np
-from brainglobe_utils.IO.image import read_z_stack, save_any
+from brainglobe_utils.IO.image import read_with_dask, save_any
 from loguru import logger
 from scipy.ndimage import affine_transform
 from skimage import transform
@@ -78,66 +78,6 @@ def apply_transform(
     return transformed.astype(data.dtype)
 
 
-def downsample_anisotropic_image_stack(
-    stack: da.Array, in_plane_factor: int, axial_factor: int
-) -> np.ndarray:
-    """
-
-    Lazily downsamples a dask array first along axes 1,2 (in-plane) and then
-    along axis 0 (axial), using a local mean of the pixels. The image is
-    zero-padded to allow for the correct dimensions of the averaging
-    neighbourhood, since it uses `skimage.transform.downscale_local_mean`
-    under the hood.
-
-    This setup is typical for certain types of microscopy,
-    where axial resolution is lower than in-plane resolution.
-
-    The input dask array must be chunked by plane. The (smaller) array
-    is returned in memory (numpy) form at the end.
-
-    Parameters:
-    ----------
-    stack : da.Array
-        The input dask array representing the image stack.
-    in_plane_factor : int
-        The in-plane downsampling factor (axes=1,2).
-    axial_factor : int
-        The downsampling factor in axial direction (axis=0).
-    Returns:
-    -------
-    np.ndarray
-        The computed downsampled (numpy) array.
-    Raises:
-    ------
-    AssertionError
-        If the array is not chunked by plane along axis 0.
-    """
-    # check we have expected slice chunks
-    assert np.all(
-        np.array(stack.chunks[0]) == 1
-    ), f"Array not chunked by plane! Chunks on axis 0 are {stack.chunks[0]}"
-
-    # we have xy slices as chunks, so apply downscaling in xy first
-    downsampled_inplane = stack.map_blocks(
-        transform.downscale_local_mean,  # type: ignore
-        (1, in_plane_factor, in_plane_factor),
-        dtype=np.float64,
-    )
-
-    # rechunk so we can map_blocks along z
-    downsampled_inplane = downsampled_inplane.rechunk(
-        {0: downsampled_inplane.shape[0], 1: -1, 2: -1}
-    )
-
-    # downsample in z
-    downsampled_axial = downsampled_inplane.map_blocks(
-        transform.downscale_local_mean,
-        (axial_factor, 1, 1),
-        dtype=np.float64,
-    )
-    return downsampled_axial.compute()
-
-
 def _downsample_anisotropic_stack_by_factors(
     stack: da.Array, downsampling_factors: list[float]
 ) -> np.ndarray:
@@ -145,8 +85,8 @@ def _downsample_anisotropic_stack_by_factors(
     Lazily downsamples a dask array first along axes 1,2 (in-plane) and then
     along axis 0 (axial), using interpolation via `skimage.transform.rescale`.
 
-    The input dask array must be chunked by plane. The (smaller) array
-    is returned in memory (numpy) form at the end.
+    The input dask array must be chunked by the entire plane. The (smaller)
+    array is returned in memory (numpy) form at the end.
 
 
     Parameters
@@ -260,8 +200,8 @@ def downsample_anisotropic_stack_to_isotropic(
     This setup is typical for certain types of microscopy,
     where axial resolution is lower than in-plane resolution.
 
-    The input dask array must be chunked by plane. The (smaller) array
-    is returned in memory (numpy) form at the end.
+    The input dask array must be chunked by the entire plane. The (smaller)
+    array is returned in memory (numpy) form at the end.
 
 
     Parameters
@@ -318,14 +258,13 @@ def downsample_anisotropic_stack_to_isotropic(
 def downsample(
     sample_folder: Path,
     downsampled_path: Path,
-    in_plane_factor: int,
-    axial_factor: int,
+    downsampling_factors: list[float],
 ) -> None:
     """Convenience function to read, downsample and write
     an anisotropic stack of images"""
-    stack = read_z_stack(str(sample_folder))
+    stack = read_with_dask(str(sample_folder))
 
-    downsampled = downsample_anisotropic_image_stack(
-        stack, in_plane_factor=in_plane_factor, axial_factor=axial_factor
+    downsampled = _downsample_anisotropic_stack_by_factors(
+        stack, downsampling_factors
     )
     save_any(downsampled, downsampled_path)
