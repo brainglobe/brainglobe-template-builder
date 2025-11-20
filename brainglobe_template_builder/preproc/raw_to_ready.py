@@ -124,8 +124,6 @@ def _process_subject(
         subject_row.resolution_x * 0.001,
     ]
 
-    # TODO - denoising
-
     # n4 bias field correction
     image = correct_image_brightness(image, spacing=vox_sizes_mm)
 
