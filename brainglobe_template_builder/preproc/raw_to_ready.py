@@ -26,22 +26,19 @@ def _create_subject_dir(subject_id: str, output_dir: Path) -> Path:
     return subject_dir
 
 
-def _save_image_and_mask(
+def _save_niftis(
     image: np.ndarray,
-    mask: np.ndarray,
     voxel_sizes_mm: list[float],
     subject_dir: Path,
     image_name: str,
-) -> dict[str, Path]:
-    """Save image and mask as nifti files - in standard and
-    lr-flipped orientations.
+) -> tuple[Path, Path]:
+    """Save image as nifti files - in standard and
+    left-right (lr) flipped orientations.
 
     Parameters
     ----------
     image : np.ndarray
         Processed brain image.
-    mask : np.ndarray
-        Mask of processed brain image.
     voxel_sizes_mm : list[float]
         Voxel sizes in mm - [x, y, z].
     subject_dir : Path
@@ -51,43 +48,20 @@ def _save_image_and_mask(
 
     Returns
     -------
-    dict[str, Path]
-        Returns a dict of saved nifti paths:
-        - image: path of processed brain image
-        - mask: path of brain mask
-        - flipped_image: path of lr-flipped processed brain image
-        - flipped_mask: path of lr-flipped brain mask
+    tuple[Path, Path]
+        Returns (path of nifti image, path of lr-flipped nifti image)
     """
-
-    image_path = subject_dir / f"{image_name}_processed.nii.gz"
-    mask_path = subject_dir / f"{image_name}_processed_mask.nii.gz"
-    flipped_image_path = subject_dir / f"{image_name}_processed_lrflip.nii.gz"
-    flipped_mask_path = (
-        subject_dir / f"{image_name}_processed_mask_lrflip.nii.gz"
-    )
+    image_path = subject_dir / f"{image_name}.nii.gz"
+    flipped_image_path = subject_dir / f"{image_name}_lrflip.nii.gz"
 
     save_as_asr_nii(image, vox_sizes=voxel_sizes_mm, dest_path=image_path)
-    save_as_asr_nii(
-        mask.astype(np.uint8), vox_sizes=voxel_sizes_mm, dest_path=mask_path
-    )
 
     flipped_image = np.flip(image, axis=2)
-    flipped_mask = np.flip(mask, axis=2)
     save_as_asr_nii(
         flipped_image, vox_sizes=voxel_sizes_mm, dest_path=flipped_image_path
     )
-    save_as_asr_nii(
-        flipped_mask.astype(np.uint8),
-        vox_sizes=voxel_sizes_mm,
-        dest_path=flipped_mask_path,
-    )
 
-    return {
-        "image": image_path,
-        "mask": mask_path,
-        "flipped_image": flipped_image_path,
-        "flipped_mask": flipped_mask_path,
-    }
+    return image_path, flipped_image_path
 
 
 def _process_subject(
@@ -155,13 +129,22 @@ def _process_subject(
     )
 
     # Save image + mask, as well as flipped versions
-    return _save_image_and_mask(
-        image,
-        mask,
+    filename_prefix = image_path.stem.split(".")[0]
+    image_path, flipped_image_path = _save_niftis(
+        image, vox_sizes_mm[::-1], subject_dir, filename_prefix + "_processed"
+    )
+    mask_path, flipped_mask_path = _save_niftis(
+        mask.astype("uint8"),
         vox_sizes_mm[::-1],
         subject_dir,
-        image_path.stem.split(".")[0],
+        filename_prefix + "_processed_mask",
     )
+    return {
+        "image": image_path,
+        "mask": mask_path,
+        "flipped_image": flipped_image_path,
+        "flipped_mask": flipped_mask_path,
+    }
 
 
 def raw_to_ready(raw_csv: Path, config_file: Path) -> None:
