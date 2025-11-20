@@ -127,14 +127,19 @@ def _process_subject(
     # n4 bias field correction
     image = correct_image_brightness(image, spacing=vox_sizes_mm)
 
-    mask_config = config.mask
-    mask = create_mask(
-        image,
-        gauss_sigma=mask_config.gaussian_sigma,
-        threshold_method=mask_config.threshold_method.value,
-        closing_size=mask_config.closing_size,
-        erode_size=mask_config.erode_size,
-    )
+    if ("mask_filepath" in subject_row) and pd.isnull(
+        subject_row.mask_filepath
+    ):
+        mask_config = config.mask
+        mask = create_mask(
+            image,
+            gauss_sigma=mask_config.gaussian_sigma,
+            threshold_method=mask_config.threshold_method.value,
+            closing_size=mask_config.closing_size,
+            erode_size=mask_config.erode_size,
+        )
+    else:
+        mask = load_any(subject_row.mask_filepath)
 
     # Crop image to mask bounds, and pad by n pixels
     image, mask = crop_to_mask(image, mask, padding=config.pad_pixels)
