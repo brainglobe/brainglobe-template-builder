@@ -19,10 +19,7 @@ class MaskConfig(BaseModel):
 
 
 class PreprocConfig(BaseModel):
-    derivatives_dir: Path
-    resolution_z: Annotated[float, Field(gt=0)]
-    resolution_y: Annotated[float, Field(gt=0)]
-    resolution_x: Annotated[float, Field(gt=0)]
+    output_dir: Path
     mask: MaskConfig
     pad_pixels: Annotated[int, Field(ge=0)] = 5
 

@@ -6,7 +6,6 @@ import yaml
 from brainglobe_utils.IO.image.load import load_any
 from brainglobe_utils.IO.image.save import save_as_asr_nii
 
-from brainglobe_template_builder.io import get_unique_folder_in_dir
 from brainglobe_template_builder.plots import plot_grid
 from brainglobe_template_builder.preproc.brightness import (
     correct_image_brightness,
@@ -16,30 +15,26 @@ from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
 from brainglobe_template_builder.validate import validate_input_csv
 
+DERIVATIVES_DIR_NAME = "derivatives"
 
-def _get_sample_image_path(subject_id: str, derivatives_dir: Path) -> Path:
-    subject_dir = get_unique_folder_in_dir(derivatives_dir, subject_id)
-    image_paths = list(
-        subject_dir.glob(f"sub-{subject_id}*_origin-asr.nii.gz")
-    )
 
-    if len(image_paths) != 1:
-        raise ValueError(
-            f"Expected one image file for {subject_id}: found {image_paths}"
-        )
+def _create_subject_dir(subject_id: str, output_dir: Path) -> Path:
+    """Create subject dir inside of the derivatives directory."""
+    subject_dir = output_dir / DERIVATIVES_DIR_NAME / f"sub-{subject_id}"
+    subject_dir.mkdir(parents=True, exist_ok=True)
 
-    return image_paths[0]
+    return subject_dir
 
 
 def _save_image_and_mask(
     image: np.ndarray,
     mask: np.ndarray,
     voxel_sizes_mm: list[float],
-    output_dir: Path,
+    subject_dir: Path,
     image_name: str,
 ) -> dict[str, Path]:
     """Save image and mask as nifti files - in standard and
-    x-flipped orientations.
+    lr-flipped orientations.
 
     Parameters
     ----------
@@ -49,8 +44,8 @@ def _save_image_and_mask(
         Mask of processed brain image.
     voxel_sizes_mm : list[float]
         Voxel sizes in mm - [x, y, z].
-    output_dir : Path
-        Output directory to save nifti files.
+    subject_dir : Path
+        Subject directory to save nifti files.
     image_name : str
         Name to use as prefix for all saved files.
 
@@ -60,15 +55,15 @@ def _save_image_and_mask(
         Returns a dict of saved nifti paths:
         - image: path of processed brain image
         - mask: path of brain mask
-        - flipped_image: path of x-flipped processed brain image
-        - flipped_mask: path of x-flipped brain mask
+        - flipped_image: path of lr-flipped processed brain image
+        - flipped_mask: path of lr-flipped brain mask
     """
 
-    image_path = output_dir / f"{image_name}_processed.nii.gz"
-    mask_path = output_dir / f"{image_name}_processed_mask.nii.gz"
-    flipped_image_path = output_dir / f"{image_name}_processed_lrflip.nii.gz"
+    image_path = subject_dir / f"{image_name}_processed.nii.gz"
+    mask_path = subject_dir / f"{image_name}_processed_mask.nii.gz"
+    flipped_image_path = subject_dir / f"{image_name}_processed_lrflip.nii.gz"
     flipped_mask_path = (
-        output_dir / f"{image_name}_processed_mask_lrflip.nii.gz"
+        subject_dir / f"{image_name}_processed_mask_lrflip.nii.gz"
     )
 
     save_as_asr_nii(image, vox_sizes=voxel_sizes_mm, dest_path=image_path)
@@ -96,14 +91,14 @@ def _save_image_and_mask(
 
 
 def _process_subject(
-    subject_id: str, config: PreprocConfig
+    subject_row: pd.Series, config: PreprocConfig
 ) -> dict[str, Path]:
     """Process an individual subject's images.
 
     Parameters
     ----------
-    subject_id : str
-        Unique subject id.
+    subject_row : pd.Series
+        Subject row from raw csv file.
     config : PreprocConfig
         Preprocessing config - contains settings for pre-processing steps.
 
@@ -113,17 +108,20 @@ def _process_subject(
         Returns a dict of saved nifti paths:
         - image: path of processed brain image
         - mask: path of brain mask
-        - flipped_image: path of x-flipped processed brain image
-        - flipped_mask: path of x-flipped brain mask
+        - flipped_image: path of lr-flipped processed brain image
+        - flipped_mask: path of lr-flipped brain mask
     """
 
-    image_path = _get_sample_image_path(subject_id, config.derivatives_dir)
-    output_dir = image_path.parent
+    image_path = Path(subject_row.source_filepath)
+    subject_dir = _create_subject_dir(
+        subject_row.subject_id, config.output_dir
+    )
+
     image = load_any(image_path)
     vox_sizes_mm = [
-        config.resolution_z * 0.001,
-        config.resolution_y * 0.001,
-        config.resolution_x * 0.001,
+        subject_row.resolution_z * 0.001,
+        subject_row.resolution_y * 0.001,
+        subject_row.resolution_x * 0.001,
     ]
 
     # TODO - denoising
@@ -150,7 +148,7 @@ def _process_subject(
         anat_space="ASR",
         section="frontal",
         overlay_is_mask=True,
-        save_path=output_dir / f"sub-{subject_id}-QC-mask.png",
+        save_path=subject_dir / f"sub-{subject_row.subject_id}-QC-mask.png",
     )
 
     # Save image + mask, as well as flipped versions
@@ -158,12 +156,12 @@ def _process_subject(
         image,
         mask,
         vox_sizes_mm[::-1],
-        output_dir,
+        subject_dir,
         image_path.stem.split(".")[0],
     )
 
 
-def raw_to_ready(input_csv: Path, config_file: Path) -> None:
+def raw_to_ready(raw_csv: Path, config_file: Path) -> None:
     """Process nifti files in ASR orientation to create output images +
     masks ready for template creation.
 
@@ -174,8 +172,8 @@ def raw_to_ready(input_csv: Path, config_file: Path) -> None:
     inside the derivatives directory:
     - ..._processed.nii.gz : the processed brain image
     - ..._processed_mask.nii.gz : the mask of the brain image
-    - ..._processed_lrflip.nii.gz : the x-flipped processed brain image
-    - ..._processed_mask_lrflip.nii.gz : the x-flipped mask of the brain image
+    - ..._processed_lrflip.nii.gz : the lr-flipped processed brain image
+    - ..._processed_mask_lrflip.nii.gz : the lr-flipped mask of the brain image
     - ..-QC-mask.png: a plot showing the mask overlaid on the brain image
 
     At the top level of the derivatives dir, two text files are produced:
@@ -186,20 +184,22 @@ def raw_to_ready(input_csv: Path, config_file: Path) -> None:
 
     Parameters
     ----------
-    input_csv : Path
-        Input csv file path. One row per sample, each with a
-        unique 'subject_id'.
+    raw_csv : Path
+        Raw csv file path. One row per sample, each with a
+        unique 'subject_id' - this is created via `source_to_raw`.
     config_file : Path
         Config json file path. Contains settings for pre-processing steps.
     """
 
-    validate_input_csv(input_csv)
-    input_df = pd.read_csv(input_csv)
+    validate_input_csv(raw_csv)
+    input_df = pd.read_csv(raw_csv)
 
     with open(config_file) as f:
         config_yaml = yaml.safe_load(f)
 
     config = PreprocConfig.model_validate(config_yaml)
+    derivatives_dir = config.output_dir / DERIVATIVES_DIR_NAME
+    derivatives_dir.mkdir(parents=True, exist_ok=True)
 
     image_paths = []
     mask_paths = []
@@ -208,17 +208,17 @@ def raw_to_ready(input_csv: Path, config_file: Path) -> None:
         if ("use" in row) and (row.use is False):
             continue
 
-        paths_dict = _process_subject(row.subject_id, config)
+        paths_dict = _process_subject(row, config)
         image_paths.extend([paths_dict["image"], paths_dict["flipped_image"]])
         mask_paths.extend([paths_dict["mask"], paths_dict["flipped_mask"]])
 
     np.savetxt(
-        config.derivatives_dir / "all_processed_brain_paths.txt",
+        derivatives_dir / "all_processed_brain_paths.txt",
         image_paths,
         fmt="%s",
     )
     np.savetxt(
-        config.derivatives_dir / "all_processed_mask_paths.txt",
+        derivatives_dir / "all_processed_mask_paths.txt",
         mask_paths,
         fmt="%s",
     )
