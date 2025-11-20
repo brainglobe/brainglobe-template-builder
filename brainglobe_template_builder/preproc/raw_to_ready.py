@@ -14,6 +14,7 @@ from brainglobe_template_builder.preproc.brightness import (
 from brainglobe_template_builder.preproc.cropping import crop_to_mask
 from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
+from brainglobe_template_builder.validate import validate_input_csv
 
 
 def _get_sample_image_path(subject_id: str, derivatives_dir: Path) -> Path:
@@ -192,8 +193,8 @@ def raw_to_ready(input_csv: Path, config_file: Path) -> None:
         Config json file path. Contains settings for pre-processing steps.
     """
 
+    validate_input_csv(input_csv)
     input_df = pd.read_csv(input_csv)
-    # TODO - Validate input csv
 
     with open(config_file) as f:
         config_yaml = yaml.safe_load(f)
