@@ -51,7 +51,8 @@ dev = [
     "pre-commit",
     "ruff",
     "setuptools_scm",
-    "pooch"
+    "pooch",
+    "types-PyYAML"
 ]
 wingdisc = [
     'bioio',

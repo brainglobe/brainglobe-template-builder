@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import yaml
 from brainglobe_utils.IO.image.load import load_any
 from brainglobe_utils.IO.image.save import save_as_asr_nii
 
@@ -194,8 +195,10 @@ def raw_to_ready(input_csv: Path, config_file: Path) -> None:
     input_df = pd.read_csv(input_csv)
     # TODO - Validate input csv
 
-    config_json = config_file.read_text()
-    config = PreprocConfig.model_validate_json(config_json)
+    with open(config_file) as f:
+        config_yaml = yaml.safe_load(f)
+
+    config = PreprocConfig.model_validate(config_yaml)
 
     image_paths = []
     mask_paths = []
