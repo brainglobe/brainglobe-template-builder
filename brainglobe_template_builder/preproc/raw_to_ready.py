@@ -65,9 +65,9 @@ def _save_image_and_mask(
 
     image_path = output_dir / f"{image_name}_processed.nii.gz"
     mask_path = output_dir / f"{image_name}_processed_mask.nii.gz"
-    flipped_image_path = output_dir / f"{image_name}_processed_xflip.nii.gz"
+    flipped_image_path = output_dir / f"{image_name}_processed_lrflip.nii.gz"
     flipped_mask_path = (
-        output_dir / f"{image_name}_processed_mask_xflip.nii.gz"
+        output_dir / f"{image_name}_processed_mask_lrflip.nii.gz"
     )
 
     save_as_asr_nii(image, vox_sizes=voxel_sizes_mm, dest_path=image_path)
@@ -173,8 +173,8 @@ def raw_to_ready(input_csv: Path, config_file: Path) -> None:
     inside the derivatives directory:
     - ..._processed.nii.gz : the processed brain image
     - ..._processed_mask.nii.gz : the mask of the brain image
-    - ..._processed_xflip.nii.gz : the x-flipped processed brain image
-    - ..._processed_mask_xflip.nii.gz : the x-flipped mask of the brain image
+    - ..._processed_lrflip.nii.gz : the x-flipped processed brain image
+    - ..._processed_mask_lrflip.nii.gz : the x-flipped mask of the brain image
     - ..-QC-mask.png: a plot showing the mask overlaid on the brain image
 
     At the top level of the derivatives dir, two text files are produced:
