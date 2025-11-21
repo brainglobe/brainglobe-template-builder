@@ -175,7 +175,7 @@ def raw_to_ready(raw_csv: Path, config_file: Path) -> None:
         Raw csv file path. One row per sample, each with a
         unique 'subject_id' - this is created via `source_to_raw`.
     config_file : Path
-        Config json file path. Contains settings for pre-processing steps.
+        Config yaml file path. Contains settings for pre-processing steps.
     """
 
     validate_input_csv(raw_csv)
