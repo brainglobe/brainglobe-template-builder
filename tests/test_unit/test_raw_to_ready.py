@@ -1,32 +1,35 @@
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import pytest
 import yaml
 from brainglobe_utils.IO.image.save import save_as_asr_nii
+from numpy.typing import NDArray
 
 from brainglobe_template_builder.preproc.raw_to_ready import raw_to_ready
 
 
 @pytest.fixture()
-def stack():
-    """Create a test image stack"""
+def stack() -> NDArray[np.float64]:
+    """Create 50x50x50 stack with 21x21x21 centred object (value 0.5)."""
     stack = np.zeros((50, 50, 50))
     stack[15:36, 15:36, 15:36] = 0.5
     return stack
 
 
 @pytest.fixture()
-def mask():
-    """Create a test mask"""
+def mask() -> NDArray[np.float64]:
+    """Create 50x50x50 binary mask with 31×31×31 centred foreground."""
     mask = np.zeros((50, 50, 50))
     mask[10:41, 10:41, 10:41] = 1
     return mask
 
 
 @pytest.fixture()
-def test_data(stack):
+def test_data(stack: NDArray[np.float64]) -> list[dict[str, Any]]:
+    """Create test data for two subjects with different voxel sizes."""
     return [
         {
             "subject_id": "sub-1",
@@ -43,7 +46,10 @@ def test_data(stack):
     ]
 
 
-def create_test_images(path: Path, test_data):
+def create_test_images(
+    path: Path, test_data: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Save test images and add their paths to the returned test data dicts."""
     for data in test_data:
         image_path = path / data["subject_id"] / f"{data['subject_id']}.nii.gz"
         image_path.parent.mkdir()
@@ -52,7 +58,8 @@ def create_test_images(path: Path, test_data):
     return test_data
 
 
-def create_test_csv(path, test_data):
+def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
+    """Creates "raw_data" CSV file and returns it's path."""
     for data in test_data:
         data["resolution_z"] = data["voxel_size"][0]
         data["resolution_y"] = data["voxel_size"][1]
@@ -64,7 +71,8 @@ def create_test_csv(path, test_data):
     return csv_path
 
 
-def create_test_yaml(path):
+def create_test_yaml(path: Path) -> Path:
+    """Creates YAML config file and returns it's path."""
     yaml_dict = {
         "output_dir": str(path.resolve()),
         "mask": {
@@ -84,7 +92,10 @@ def create_test_yaml(path):
 
 
 @pytest.fixture()
-def create_test_data(tmp_path, test_data):
+def create_raw_test_data(
+    tmp_path: Path, test_data: list[dict[str, Any]]
+) -> tuple[Path, Path]:
+    """Sets up temp directory with "raw" test images, CSV, and config files."""
     raw_dir = tmp_path / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
@@ -94,7 +105,8 @@ def create_test_data(tmp_path, test_data):
     return csv_path, config_path
 
 
-def test_simple(create_test_data):
-    csv_path, config_path = create_test_data
+def test_raw_to_ready(create_raw_test_data: tuple[Path, Path]) -> None:
+    """Test that raw_to_ready creates expected derivatives directory."""
+    csv_path, config_path = create_raw_test_data
     raw_to_ready(csv_path, config_path)
-    assert (create_test_data[0].parents[0] / "derivatives").exists()
+    assert (create_raw_test_data[0].parents[0] / "derivatives").exists()
