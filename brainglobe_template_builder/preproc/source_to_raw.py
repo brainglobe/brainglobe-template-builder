@@ -6,6 +6,7 @@ from brainglobe_utils.IO.image.load import load_any
 from brainglobe_utils.IO.image.save import save_as_asr_nii
 
 from brainglobe_template_builder.plots import plot_orthographic
+from brainglobe_template_builder.validate import validate_input_csv
 
 
 def _get_subject_path(
@@ -127,22 +128,22 @@ def source_to_raw(
         isotropic resolution!).
     """
 
-    input_df = pd.read_csv(source_csv)
-    # TODO - Validate input csv
+    validate_input_csv(source_csv)
+    source_df = pd.read_csv(source_csv)
 
     raw_dir = output_dir / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
-    if "use" in input_df:
-        input_df = input_df[input_df.use is True]
+    if "use" in source_df:
+        source_df = source_df[source_df.use is True]
 
     processed_paths = []
-    for _, row in input_df.iterrows():
+    for _, row in source_df.iterrows():
         nifti_path = _process_subject(row, raw_dir, output_vox_size)
         processed_paths.append(nifti_path)
 
     # Make output csv for processed images
-    output_df = input_df.copy()
+    output_df = source_df.copy()
     output_df.origin = "ASR"
     output_df.source_filepath = processed_paths
 
