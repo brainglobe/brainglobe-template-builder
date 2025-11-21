@@ -60,8 +60,8 @@ def generate_arrays_4template(
     - asym-mask: the input aligned mask (asymmetric mask)
     - right-hemi-brain: the right hemisphere of the image
     - right-hemi-mask: the right hemisphere of the mask
-    - left-hemi-xflip-brain: the reflection of the left hemisphere
-    - left-hemi-xflip-mask: the reflection of the left hemisphere mask
+    - left-hemi-lrflip-brain: the reflection of the left hemisphere
+    - left-hemi-lrflip-mask: the reflection of the left hemisphere mask
     - right-sym-brain: the right hemisphere merged with its reflection
     - right-sym-mask: the right hemisphere mask merged with its reflection
     - left-sym-brain: the left hemisphere merged with its reflection
@@ -86,14 +86,14 @@ def generate_arrays_4template(
     for label, arr in zip(("brain", "mask"), (brain, mask)):
         right_half_arr = arr[right_half]
         left_half_arr = arr[left_half]
-        right_half_arr_xflip = np.flip(right_half_arr, axis=-1)
-        left_half_arr_xflip = np.flip(left_half_arr, axis=-1)
-        right_sym_arr = np.dstack([right_half_arr, right_half_arr_xflip])
-        left_sym_arr = np.dstack([left_half_arr_xflip, left_half_arr])
+        right_half_arr_lrflip = np.flip(right_half_arr, axis=-1)
+        left_half_arr_lrflip = np.flip(left_half_arr, axis=-1)
+        right_sym_arr = np.dstack([right_half_arr, right_half_arr_lrflip])
+        left_sym_arr = np.dstack([left_half_arr_lrflip, left_half_arr])
         out_dict.update(
             {
                 f"{subject}_right-hemi-{label}": right_half_arr,
-                f"{subject}_left-hemi-xflip-{label}": left_half_arr_xflip,
+                f"{subject}_left-hemi-lrflip-{label}": left_half_arr_lrflip,
                 f"{subject}_right-sym-{label}": right_sym_arr,
                 f"{subject}_left-sym-{label}": left_sym_arr,
             }
