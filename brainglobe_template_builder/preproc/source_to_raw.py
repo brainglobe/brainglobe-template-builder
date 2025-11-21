@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from brainglobe_space import AnatomicalSpace
 from brainglobe_utils.IO.image.load import load_any
@@ -10,37 +11,86 @@ from brainglobe_template_builder.validate import validate_input_csv
 
 
 def _get_subject_path(
-    raw_dir: Path, subject_id: str, output_vox_sizes: list[float]
+    raw_dir: Path, subject_id: str, output_vox_size: float, mask: bool = False
 ) -> Path:
     """Get path to standardised nifti file for subject_id, and create any
     required parent directories."""
 
     # round output vox sizes to nearest int (we don't want decimal
     # points in the filename)
-    rounded_sizes = [round(vox_size) for vox_size in output_vox_sizes]
-    resolution_string = (
-        f"res-{rounded_sizes[0]}x{rounded_sizes[1]}x{rounded_sizes[2]}um"
-    )
-    dest_path = (
-        raw_dir
-        / f"sub-{subject_id}"
-        / f"sub-{subject_id}_{resolution_string}_origin-asr.nii.gz"
-    )
-    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    rounded_size = round(output_vox_size)
+    resolution_string = f"res-{rounded_size}x{rounded_size}x{rounded_size}um"
 
+    subject_dir = raw_dir / f"sub-{subject_id}"
+    file_name = f"sub-{subject_id}_{resolution_string}"
+    if mask:
+        dest_path = subject_dir / f"{file_name}_mask_origin-asr.nii.gz"
+    else:
+        dest_path = subject_dir / f"{file_name}_origin-asr.nii.gz"
+
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
     return dest_path
+
+
+def _process_image(
+    image_path: Path,
+    output_path: Path,
+    origin: str,
+    input_vox_sizes: list[float],
+    output_vox_size: float,
+    mask: bool = False,
+) -> None:
+
+    if (np.array(input_vox_sizes) == output_vox_size).all():
+        image = load_any(image_path)
+    else:
+        # downsample to target resolution
+        image = load_any(
+            image_path
+        )  # TO REMOVE - placeholder until downsample_anisotropic merged
+        # image_dask = read_with_dask(image_path)
+        # image = downsample_anisotropic_stack_to_isotropic(
+        #     image_dask,
+        #     input_vox_sizes,
+        #     output_vox_size,
+        #     mask=mask
+        # )
+
+    # re-orient to ASR
+    space = AnatomicalSpace(origin)
+    image = space.map_stack_to("asr", image)
+
+    # save QC plot of re-oriented image
+    file_name = str(output_path.stem).split(".")[0]
+    plot_path = output_path.parent / f"{file_name}-QC.png"
+
+    if mask:
+        plot_orthographic(
+            image,
+            anat_space="ASR",
+            save_path=plot_path,
+            vmin=image.min(),
+            vmax=image.max(),
+        )
+    else:
+        plot_orthographic(image, anat_space="ASR", save_path=plot_path)
+
+    output_vox_sizes = [output_vox_size, output_vox_size, output_vox_size]
+    vox_sizes_mm = [vox_size * 0.001 for vox_size in output_vox_sizes]
+    save_as_asr_nii(image, vox_sizes=vox_sizes_mm, dest_path=output_path)
 
 
 def _process_subject(
     subject_row: pd.Series,
     raw_dir: Path,
     output_vox_size: float | None = None,
-) -> Path:
-    """Standardise source image of an individual subject.
+) -> tuple[Path, Path | None]:
+    """Standardise source images of an individual subject.
 
     A directory is created inside 'output_dir' for the subject containing:
     - the standardised nifti image file
-    - a QC plot to verify the ASR orientation
+    - the standardised nifti mask file (if a mask_filepath was provided)
+    - QC plots to verify the ASR orientation
 
     Parameters
     ----------
@@ -58,46 +108,58 @@ def _process_subject(
 
     Returns
     -------
-    Path
-        Path to standardised nifti file.
+    tuple[Path, Path | None]
+        Returns: (
+            Path to standardised nifti image file,
+            Path to standardised nifti mask file - if provided, otherwise None
+        )
     """
 
-    image = load_any(subject_row.source_filepath)
     subject_id = subject_row.subject_id
+    input_vox_sizes = [
+        subject_row.resolution_x,
+        subject_row.resolution_y,
+        subject_row.resolution_z,
+    ]
 
-    # downsample to target isotropic resolution
     if output_vox_size is None:
-        output_vox_sizes = [
-            subject_row.resolution_x,
-            subject_row.resolution_y,
-            subject_row.resolution_z,
-        ]
-        if len(set(output_vox_sizes)) != 1:
+        if len(set(input_vox_sizes)) != 1:
             raise ValueError(
                 f"Subject id: {subject_id} has anisotropic voxel size: "
-                f"{output_vox_sizes}. Pass an output_vox_size to re-sample it."
+                f"{input_vox_sizes}. Pass an output_vox_size to re-sample it."
             )
+        output_vox_size = input_vox_sizes[0]
 
+    image_output_path = _get_subject_path(
+        raw_dir, subject_id, output_vox_size, mask=False
+    )
+    _process_image(
+        Path(subject_row.source_filepath),
+        image_output_path,
+        subject_row.origin,
+        input_vox_sizes,
+        output_vox_size,
+        mask=False,
+    )
+
+    if ("mask_filepath" in subject_row) and pd.notna(
+        subject_row.mask_filepath
+    ):
+        mask_output_path = _get_subject_path(
+            raw_dir, subject_id, output_vox_size, mask=True
+        )
+        _process_image(
+            Path(subject_row.mask_filepath),
+            mask_output_path,
+            subject_row.origin,
+            input_vox_sizes,
+            output_vox_size,
+            mask=True,
+        )
     else:
-        output_vox_sizes = [output_vox_size, output_vox_size, output_vox_size]
-        # TODO - downsample
+        mask_output_path = None
 
-    # re-orient to ASR
-    space = AnatomicalSpace(subject_row.origin)
-    image = space.map_stack_to("asr", image)
-
-    # Get path to output image file, incorporating output
-    # resolution into filename
-    dest_path = _get_subject_path(raw_dir, subject_id, output_vox_sizes)
-
-    # save QC plot of re-oriented image
-    plot_path = dest_path.parent / f"sub-{subject_id}-QC-standardised.png"
-    plot_orthographic(image, anat_space="ASR", save_path=plot_path)
-
-    vox_sizes_mm = [vox_size * 0.001 for vox_size in output_vox_sizes]
-    save_as_asr_nii(image, vox_sizes=vox_sizes_mm, dest_path=dest_path)
-
-    return dest_path
+    return image_output_path, mask_output_path
 
 
 def source_to_raw(
@@ -137,19 +199,24 @@ def source_to_raw(
     if "use" in source_df:
         source_df = source_df[source_df.use is True]
 
-    processed_paths = []
+    processed_image_paths = []
+    processed_mask_paths = []
     for _, row in source_df.iterrows():
-        nifti_path = _process_subject(row, raw_dir, output_vox_size)
-        processed_paths.append(nifti_path)
+        image_path, mask_path = _process_subject(row, raw_dir, output_vox_size)
+        processed_image_paths.append(image_path)
+        processed_mask_paths.append(mask_path)
 
     # Make output csv for processed images
     output_df = source_df.copy()
     output_df.origin = "ASR"
-    output_df.source_filepath = processed_paths
+    output_df.source_filepath = processed_image_paths
+
+    if "mask_filepath" in output_df:
+        output_df.mask_filepath = processed_mask_paths
 
     if output_vox_size is not None:
         output_df.resolution_z = output_vox_size
         output_df.resolution_y = output_vox_size
         output_df.resolution_x = output_vox_size
 
-    output_df.to_csv(output_dir / "raw_images.csv", index=False)
+    output_df.to_csv(raw_dir / "raw_images.csv", index=False)
