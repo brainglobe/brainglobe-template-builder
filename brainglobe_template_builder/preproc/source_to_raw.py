@@ -9,7 +9,7 @@ from brainglobe_template_builder.plots import plot_orthographic
 
 
 def _get_subject_path(
-    output_dir: Path, subject_id: str, output_vox_sizes: list[float]
+    raw_dir: Path, subject_id: str, output_vox_sizes: list[float]
 ) -> Path:
     """Get path to standardised nifti file for subject_id, and create any
     required parent directories."""
@@ -21,7 +21,7 @@ def _get_subject_path(
         f"res-{rounded_sizes[0]}x{rounded_sizes[1]}x{rounded_sizes[2]}um"
     )
     dest_path = (
-        output_dir
+        raw_dir
         / f"sub-{subject_id}"
         / f"sub-{subject_id}_{resolution_string}_origin-asr.nii.gz"
     )
@@ -32,7 +32,7 @@ def _get_subject_path(
 
 def _process_subject(
     subject_row: pd.Series,
-    output_dir: Path,
+    raw_dir: Path,
     output_vox_size: float | None = None,
 ) -> Path:
     """Standardise source image of an individual subject.
@@ -46,8 +46,8 @@ def _process_subject(
     subject_row : pd.Series
         Subject row from input csv file (in standardised format
         defined in the atlas-forge documentation).
-    output_dir : Path
-        Output directory to write to.
+    raw_dir : Path
+        Raw directory to write subject files to.
     output_vox_size : float | None, optional
         Output voxel size in micrometre. Images will be downsampled to
         an isotropic resolution of
@@ -87,7 +87,7 @@ def _process_subject(
 
     # Get path to output image file, incorporating output
     # resolution into filename
-    dest_path = _get_subject_path(output_dir, subject_id, output_vox_sizes)
+    dest_path = _get_subject_path(raw_dir, subject_id, output_vox_sizes)
 
     # save QC plot of re-oriented image
     plot_path = dest_path.parent / f"sub-{subject_id}-QC-standardised.png"
@@ -100,21 +100,22 @@ def _process_subject(
 
 
 def source_to_raw(
-    input_csv: Path, output_dir: Path, output_vox_size: float | None = None
+    source_csv: Path, output_dir: Path, output_vox_size: float | None = None
 ) -> None:
     """Standardise source images to the same resolution and orientation (ASR).
 
-    A directory is created inside 'output_dir' for each subject id containing:
+    A 'raw' directory is created inside 'output_dir', containing a folder for
+    each subject id with:
     - the standardised nifti image file
     - a QC plot to verify the ASR orientation
 
-    At the top level of 'output_dir', a csv file is created summarising the
+    At the top level of the 'raw' dir, a csv file is created summarising the
     properties / locations of the standardised image files.
 
     Parameters
     ----------
-    input_csv : Path
-        Input csv with one row per subject id. Should be in the standard
+    source_csv : Path
+        Source csv with one row per subject id. Should be in the standard
         format defined in the atlas-forge documentation.
     output_dir : Path
         Output directory to write to.
@@ -126,15 +127,18 @@ def source_to_raw(
         isotropic resolution!).
     """
 
-    input_df = pd.read_csv(input_csv)
+    input_df = pd.read_csv(source_csv)
     # TODO - Validate input csv
+
+    raw_dir = output_dir / "raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
 
     if "use" in input_df:
         input_df = input_df[input_df.use is True]
 
     processed_paths = []
     for _, row in input_df.iterrows():
-        nifti_path = _process_subject(row, output_dir, output_vox_size)
+        nifti_path = _process_subject(row, raw_dir, output_vox_size)
         processed_paths.append(nifti_path)
 
     # Make output csv for processed images
