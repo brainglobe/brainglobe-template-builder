@@ -40,6 +40,27 @@ def _process_image(
     output_vox_size: float,
     mask: bool = False,
 ) -> None:
+    """
+    Standardise a single input image.
+
+    Converts to ASR orientation, and downsamples to an isotropic
+    resolution of [output_vox_size, output_vox_size, output_vox_size].
+
+    Parameters
+    ----------
+    image_path : Path
+        Path to image to standardise.
+    output_path : Path
+        Path to write processed image to.
+    origin : str
+        3-letter anatomical orientation code (e.g., PSL, LSP, RAS)
+    input_vox_sizes : list[float]
+        Input voxel sizes in microns - xyz order.
+    output_vox_size : float
+        Output voxel size in microns.
+    mask : bool, optional
+        Whether the input image is a mask, by default False
+    """
 
     if (np.array(input_vox_sizes) == output_vox_size).all():
         image = load_any(image_path)
@@ -87,7 +108,7 @@ def _process_subject(
 ) -> tuple[Path, Path | None]:
     """Standardise source images of an individual subject.
 
-    A directory is created inside 'output_dir' for the subject containing:
+    A directory is created inside 'raw_dir' for the subject containing:
     - the standardised nifti image file
     - the standardised nifti mask file (if a mask_filepath was provided)
     - QC plots to verify the ASR orientation
@@ -170,7 +191,8 @@ def source_to_raw(
     A 'raw' directory is created inside 'output_dir', containing a folder for
     each subject id with:
     - the standardised nifti image file
-    - a QC plot to verify the ASR orientation
+    - the standardised nifti mask file (if a mask_filepath was provided)
+    - QC plots to verify the ASR orientation
 
     At the top level of the 'raw' dir, a csv file is created summarising the
     properties / locations of the standardised image files.
