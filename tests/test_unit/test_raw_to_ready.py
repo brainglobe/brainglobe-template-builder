@@ -19,7 +19,7 @@ from brainglobe_template_builder.preproc.raw_to_ready import (
 def stack() -> NDArray[np.float64]:
     """Create 50x50x50 stack with 21x21x21 centred object (value 128)."""
     stack = np.zeros((50, 50, 50), dtype=np.float64)
-    stack[15:36, 15:36, 15:36] = 1
+    stack[15:36, 15:36, 15:36] = 0.5
     return stack
 
 
