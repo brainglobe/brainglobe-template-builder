@@ -16,9 +16,9 @@ from brainglobe_template_builder.preproc.raw_to_ready import (
 
 
 @pytest.fixture()
-def stack() -> NDArray[np.float]:
+def stack() -> NDArray[np.float64]:
     """Create 50x50x50 stack with 21x21x21 centred object (value 128)."""
-    stack = np.zeros((50, 50, 50), dtype=np.float)
+    stack = np.zeros((50, 50, 50), dtype=np.float64)
     stack[15:36, 15:36, 15:36] = 1
     return stack
 
@@ -131,7 +131,7 @@ def test_create_subject_dir_exists(tmp_path: Path) -> None:
     _create_subject_dir(sub_id, tmp_path)
 
 
-def test_save_niftis(tmp_path: Path, stack: NDArray[np.float]) -> None:
+def test_save_niftis(tmp_path: Path, stack: NDArray[np.float64]) -> None:
     """Test that _save_niftis saves both standard and flipped images."""
 
     # TODO make stack asymmetric to test flipping
