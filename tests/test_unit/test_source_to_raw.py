@@ -144,6 +144,39 @@ def source_csv_with_masks(
     return write_test_data(source_dir, test_data)
 
 
+@pytest.fixture()
+def source_csv_with_use(source_dir: Path, stack: NDArray[np.float64]) -> Path:
+    """Creates source images and csv in temporary directory -
+    with a 'use' column."""
+
+    # Create test data for two subjects - one with use=False,
+    # and the other with use=True
+    test_data = [
+        {
+            "image": stack,
+            "mask": None,
+            "subject_id": "a",
+            "resolution_z": 25,
+            "resolution_y": 25,
+            "resolution_x": 25,
+            "origin": "PSL",
+            "use": False,
+        },
+        {
+            "image": stack,
+            "mask": None,
+            "subject_id": "b",
+            "resolution_z": 10,
+            "resolution_y": 10,
+            "resolution_x": 10,
+            "origin": "LSA",
+            "use": True,
+        },
+    ]
+
+    return write_test_data(source_dir, test_data)
+
+
 @pytest.mark.parametrize(
     "source_csv", ["source_csv_no_masks", "source_csv_with_masks"]
 )
@@ -224,3 +257,22 @@ def test_source_to_raw(request, source_csv):
         expected_output_csv["mask_filepath"] = raw_mask_filepaths
 
     assert output_csv.equals(expected_output_csv)
+
+
+def test_source_to_raw_with_use(source_csv_with_use):
+    """Test source_to_raw excludes subjects with use=False."""
+
+    output_dir = source_csv_with_use.parents[1]
+    source_to_raw(source_csv_with_use, output_dir, 50)
+
+    raw_dir = output_dir / "raw"
+    assert raw_dir.exists()
+    assert not (raw_dir / "sub-a").exists()  # subject a has use=False
+    assert (raw_dir / "sub-b").exists()  # subject b has use=True
+
+    output_csv_path = output_dir / "raw" / "raw_images.csv"
+    assert output_csv_path.exists()
+
+    output_csv = pd.read_csv(output_csv_path)
+    assert len(output_csv) == 1
+    assert output_csv.subject_id.iloc[0] == "b"

@@ -219,7 +219,7 @@ def source_to_raw(
     raw_dir.mkdir(parents=True, exist_ok=True)
 
     if "use" in source_df:
-        source_df = source_df[source_df.use is True]
+        source_df = source_df[source_df.use]
 
     processed_image_paths = []
     processed_mask_paths = []
