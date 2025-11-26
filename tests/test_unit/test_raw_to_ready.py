@@ -10,15 +10,16 @@ from numpy.typing import NDArray
 
 from brainglobe_template_builder.preproc.raw_to_ready import (
     _create_subject_dir,
+    _save_niftis,
     raw_to_ready,
 )
 
 
 @pytest.fixture()
-def stack() -> NDArray[np.float64]:
-    """Create 50x50x50 stack with 21x21x21 centred object (value 0.5)."""
-    stack = np.zeros((50, 50, 50))
-    stack[15:36, 15:36, 15:36] = 0.5
+def stack() -> NDArray[np.float]:
+    """Create 50x50x50 stack with 21x21x21 centred object (value 128)."""
+    stack = np.zeros((50, 50, 50), dtype=np.float)
+    stack[15:36, 15:36, 15:36] = 1
     return stack
 
 
@@ -128,3 +129,19 @@ def test_create_subject_dir_exists(tmp_path: Path) -> None:
     sub_id = "test123"
     _create_subject_dir(sub_id, tmp_path)
     _create_subject_dir(sub_id, tmp_path)
+
+
+def test_save_niftis(tmp_path: Path, stack: NDArray[np.float]) -> None:
+    """Test that _save_niftis saves both standard and flipped images."""
+
+    # TODO make stack asymmetric to test flipping
+    voxel_sizes = [1.0, 1.0, 1.0]
+    image_name = "test_image"
+
+    image_path, flipped_path = _save_niftis(
+        stack, voxel_sizes, tmp_path, image_name
+    )
+
+    assert image_path.exists() & flipped_path.exists()
+    assert image_path.name == f"{image_name}.nii.gz"
+    assert flipped_path.name == f"{image_name}_lrflip.nii.gz"
