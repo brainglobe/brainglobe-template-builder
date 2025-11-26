@@ -177,6 +177,29 @@ def source_csv_with_use(source_dir: Path, stack: NDArray[np.float64]) -> Path:
     return write_test_data(source_dir, test_data)
 
 
+@pytest.fixture()
+def source_csv_anisotropic(
+    source_dir: Path, stack: NDArray[np.float64]
+) -> Path:
+    """Creates source image and csv in temporary directory -
+    input resolution is anisotropic."""
+
+    # Create test data for one subject with anisotropic resolution
+    test_data = [
+        {
+            "image": stack,
+            "mask": None,
+            "subject_id": "a",
+            "resolution_z": 25,
+            "resolution_y": 30,
+            "resolution_x": 40,
+            "origin": "PSL",
+        }
+    ]
+
+    return write_test_data(source_dir, test_data)
+
+
 @pytest.mark.parametrize(
     "source_csv", ["source_csv_no_masks", "source_csv_with_masks"]
 )
@@ -276,3 +299,17 @@ def test_source_to_raw_with_use(source_csv_with_use):
     output_csv = pd.read_csv(output_csv_path)
     assert len(output_csv) == 1
     assert output_csv.subject_id.iloc[0] == "b"
+
+
+def test_source_to_raw_anisotropic(source_csv_anisotropic):
+    """Test source_to_raw errors when anisotropic data is provided with no
+    output_vox_size.
+    """
+
+    with pytest.raises(
+        ValueError,
+        match=r"Subject id: a has anisotropic voxel size: \[40, 30, 25\]",
+    ):
+        source_to_raw(
+            source_csv_anisotropic, source_csv_anisotropic.parents[1]
+        )
