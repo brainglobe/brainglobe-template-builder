@@ -8,7 +8,10 @@ import yaml
 from brainglobe_utils.IO.image.save import save_as_asr_nii
 from numpy.typing import NDArray
 
-from brainglobe_template_builder.preproc.raw_to_ready import raw_to_ready
+from brainglobe_template_builder.preproc.raw_to_ready import (
+    _create_subject_dir,
+    raw_to_ready,
+)
 
 
 @pytest.fixture()
@@ -110,3 +113,18 @@ def test_raw_to_ready(create_raw_test_data: tuple[Path, Path]) -> None:
     csv_path, config_path = create_raw_test_data
     raw_to_ready(csv_path, config_path)
     assert (create_raw_test_data[0].parents[0] / "derivatives").exists()
+
+
+def test_create_subject_dir(tmp_path: Path) -> None:
+    """Test that _create_subject_dir creates correct directory structure."""
+    sub_id = "test123"
+    sub_dir = _create_subject_dir(sub_id, tmp_path)
+    assert sub_dir.exists()
+    assert sub_dir == tmp_path / "derivatives" / f"sub-{sub_id}"
+
+
+def test_create_subject_dir_exists(tmp_path: Path) -> None:
+    """Test exist_ok=True for _create_subject_dir."""
+    sub_id = "test123"
+    _create_subject_dir(sub_id, tmp_path)
+    _create_subject_dir(sub_id, tmp_path)
