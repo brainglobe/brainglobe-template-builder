@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import yaml
+from brainglobe_utils.IO.image import load_any
 from brainglobe_utils.IO.image.save import save_as_asr_nii
+from numpy.testing import assert_raises
 from numpy.typing import NDArray
 
 from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
@@ -17,35 +19,54 @@ from brainglobe_template_builder.preproc.raw_to_ready import (
 )
 
 
-@pytest.fixture()
-def stack() -> NDArray[np.float64]:
-    """Create 50x50x50 stack with 21x21x21 centred object (value 128)."""
-    stack = np.zeros((50, 50, 50), dtype=np.float64)
-    stack[15:36, 15:36, 15:36] = 0.5
+def make_stack(
+    offset: int | None = None,
+    mask: bool = False,
+) -> NDArray[np.float64]:
+    """Create a 50x50x50 zeros stack with foreground."""
+
+    shape = [50, 50, 50]
+    obj_size = 20
+    mask_extra = 5
+    value = 1 if mask else 0.5
+
+    stack = np.zeros(shape, dtype=np.float64)
+    foreground_size = obj_size + (mask_extra if mask else 0)
+
+    start = [(s - foreground_size) // 2 for s in shape]
+    if offset:
+        start = [s - offset for s in start]
+    end = [s + foreground_size for s in start]
+
+    stack[start[0] : end[0], start[1] : end[1], start[2] : end[2]] = value
+
     return stack
 
 
 @pytest.fixture()
-def mask() -> NDArray[np.float64]:
-    """Create 50x50x50 binary mask with 31×31×31 centred foreground."""
-    mask = np.zeros((50, 50, 50))
-    mask[10:41, 10:41, 10:41] = 1
-    return mask
+def test_stacks():
+    """Create symmetric and asymmetric test images and masks."""
+    return {
+        "image": make_stack(),
+        "mask": make_stack(mask=True),
+        "image_asym": make_stack(offset=5),
+        "mask_asym": make_stack(mask=True, offset=5),
+    }
 
 
 @pytest.fixture()
-def test_data(stack: NDArray[np.float64]) -> list[dict[str, Any]]:
+def test_data(test_stacks: NDArray[np.float64]) -> list[dict[str, Any]]:
     """Create test data for two subjects with different voxel sizes."""
     return [
         {
             "subject_id": "test1",
-            "image": stack,
+            "image": test_stacks["image"],
             "voxel_size": [1, 1, 1],
             "origin": "ASR",
         },
         {
             "subject_id": "test2",
-            "image": stack,
+            "image": test_stacks["image"],
             "voxel_size": [2, 2, 2],
             "origin": "ASR",
         },
@@ -133,20 +154,49 @@ def test_create_subject_dir_exists(tmp_path: Path) -> None:
     _create_subject_dir(sub_id, tmp_path)
 
 
-def test_save_niftis(tmp_path: Path, stack: NDArray[np.float64]) -> None:
+def test_save_niftis(tmp_path: Path, test_stacks) -> None:
     """Test that _save_niftis saves both standard and flipped images."""
-
-    # TODO make stack asymmetric to test flipping
     voxel_sizes = [1.0, 1.0, 1.0]
     image_name = "test_image"
 
     image_path, flipped_path = _save_niftis(
-        stack, voxel_sizes, tmp_path, image_name
+        test_stacks["image"], voxel_sizes, tmp_path, image_name
     )
 
     assert image_path.exists() & flipped_path.exists()
     assert image_path.name == f"{image_name}.nii.gz"
     assert flipped_path.name == f"{image_name}_lrflip.nii.gz"
+
+
+@pytest.mark.parametrize(
+    ["image_type", "error"],
+    [
+        pytest.param("image", None, id="sym image: lr-flip == non-flip"),
+        pytest.param(
+            "image_asym", AssertionError, id="asym image: lr-flip != non-flip"
+        ),
+    ],
+)
+def test_save_niftis_lrflip(
+    image_type, error, tmp_path: Path, test_stacks
+) -> None:
+    """Test lr-flipped asym images differ from non-flipped ones."""
+
+    voxel_sizes = [1.0, 1.0, 1.0]
+    image_name = "test_image"
+
+    image_path, flipped_path = _save_niftis(
+        test_stacks[image_type], voxel_sizes, tmp_path, image_name
+    )
+
+    image = load_any(image_path)
+    flipped_image = load_any(flipped_path)
+
+    if error:
+        with assert_raises(error):
+            np.testing.assert_equal(image, flipped_image)
+    else:
+        np.testing.assert_equal(image, flipped_image)
 
 
 @pytest.mark.parametrize(
