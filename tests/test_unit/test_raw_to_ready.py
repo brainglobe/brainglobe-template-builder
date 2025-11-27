@@ -44,7 +44,7 @@ def make_stack(
 
 
 @pytest.fixture()
-def test_stacks():
+def test_stacks() -> dict[str, NDArray[np.float64]]:
     """Create symmetric and asymmetric test images and masks."""
     return {
         "image": make_stack(),
@@ -55,7 +55,9 @@ def test_stacks():
 
 
 @pytest.fixture()
-def test_data(test_stacks: NDArray[np.float64]) -> list[dict[str, Any]]:
+def test_data(
+    test_stacks: dict[str, NDArray[np.float64]],
+) -> list[dict[str, Any]]:
     """Create test data for two subjects with different voxel sizes."""
     return [
         {
@@ -154,7 +156,9 @@ def test_create_subject_dir_exists(tmp_path: Path) -> None:
     _create_subject_dir(sub_id, tmp_path)
 
 
-def test_save_niftis(tmp_path: Path, test_stacks) -> None:
+def test_save_niftis(
+    tmp_path: Path, test_stacks: dict[str, NDArray[np.float64]]
+) -> None:
     """Test that _save_niftis saves both standard and flipped images."""
     voxel_sizes = [1.0, 1.0, 1.0]
     image_name = "test_image"
@@ -178,7 +182,10 @@ def test_save_niftis(tmp_path: Path, test_stacks) -> None:
     ],
 )
 def test_save_niftis_lrflip(
-    image_type, error, tmp_path: Path, test_stacks
+    image_type: str,
+    error: type[Exception] | None,
+    tmp_path: Path,
+    test_stacks: dict[str, NDArray[np.float64]],
 ) -> None:
     """Test lr-flipped asym images differ from non-flipped ones."""
 
@@ -207,7 +214,7 @@ def test_save_niftis_lrflip(
     ],
 )
 def test_process_subject(
-    create_raw_test_data: tuple[Path, Path], n_sub
+    create_raw_test_data: tuple[Path, Path], n_sub: int
 ) -> None:
     """Test _process_subject creates expected files with expected keys."""
     csv_path, config_path = create_raw_test_data
