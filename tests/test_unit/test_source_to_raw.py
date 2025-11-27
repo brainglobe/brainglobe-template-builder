@@ -4,6 +4,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pytest
+from brainglobe_space import AnatomicalSpace
+from brainglobe_utils.IO.image.load import load_nii
 from brainglobe_utils.IO.image.save import save_any
 from numpy.typing import NDArray
 
@@ -135,6 +137,20 @@ def source_csv_with_masks(
 
 
 @pytest.fixture()
+def source_csv_single_image_with_mask(
+    source_dir: Path,
+    test_data: list[dict[str, Any]],
+    mask: NDArray[np.float64],
+) -> Path:
+    """Creates a single source image with mask"""
+
+    single_image = test_data[1]
+    single_image["mask"] = mask
+
+    return write_test_data(source_dir, [single_image])
+
+
+@pytest.fixture()
 def source_csv_with_use(
     source_dir: Path, test_data: list[dict[str, Any]]
 ) -> Path:
@@ -156,20 +172,20 @@ def source_csv_anisotropic(
     """Creates source image and csv in temporary directory -
     input resolution is anisotropic."""
 
-    # Create test data for one subject with anisotropic resolution
-    test_data = [
-        {
-            "image": stack,
-            "mask": None,
-            "subject_id": "a",
-            "resolution_z": 25,
-            "resolution_y": 30,
-            "resolution_x": 40,
-            "origin": "PSL",
-        }
-    ]
-
-    return write_test_data(source_dir, test_data)
+    return write_test_data(
+        source_dir,
+        [
+            {
+                "image": stack,
+                "mask": None,
+                "subject_id": "a",
+                "resolution_z": 25,
+                "resolution_y": 30,
+                "resolution_x": 40,
+                "origin": "PSL",
+            }
+        ],
+    )
 
 
 @pytest.mark.parametrize(
@@ -310,3 +326,35 @@ def test_source_to_raw_anisotropic(source_csv_anisotropic):
         source_to_raw(
             source_csv_anisotropic, source_csv_anisotropic.parents[1]
         )
+
+
+def test_source_to_raw_reorientation(
+    source_csv_single_image_with_mask, stack, mask
+):
+    """Test source_to_raw re-orients images and masks to ASR."""
+
+    output_dir = source_csv_single_image_with_mask.parents[1]
+    source_to_raw(source_csv_single_image_with_mask, output_dir)
+
+    subject_dir = output_dir / "raw" / "sub-b"
+    image_path = subject_dir / "sub-b_res-10x10x10um_origin-asr.nii.gz"
+    mask_path = subject_dir / "sub-b_res-10x10x10um_mask_origin-asr.nii.gz"
+
+    for output_path, source_image in zip(
+        [image_path, mask_path], [stack, mask]
+    ):
+        # No downsampling was specified, so input size / res should
+        # match output
+        image = load_nii(output_path, as_array=False)
+        assert image.header.get_zooms() == (
+            0.01,
+            0.01,
+            0.01,
+        )  # saved to nii as mm
+        assert image.shape == (50, 50, 50)
+
+        # Output should match re-orientation of source image to ASR
+        expected_image = AnatomicalSpace("LSA").map_stack_to(
+            "ASR", source_image
+        )
+        np.testing.assert_equal(image.get_fdata(), expected_image)
