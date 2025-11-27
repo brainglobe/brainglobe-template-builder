@@ -8,8 +8,10 @@ import yaml
 from brainglobe_utils.IO.image.save import save_as_asr_nii
 from numpy.typing import NDArray
 
+from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
 from brainglobe_template_builder.preproc.raw_to_ready import (
     _create_subject_dir,
+    _process_subject,
     _save_niftis,
     raw_to_ready,
 )
@@ -36,13 +38,13 @@ def test_data(stack: NDArray[np.float64]) -> list[dict[str, Any]]:
     """Create test data for two subjects with different voxel sizes."""
     return [
         {
-            "subject_id": "sub-1",
+            "subject_id": "test1",
             "image": stack,
             "voxel_size": [1, 1, 1],
             "origin": "ASR",
         },
         {
-            "subject_id": "sub-2",
+            "subject_id": "test2",
             "image": stack,
             "voxel_size": [2, 2, 2],
             "origin": "ASR",
@@ -145,3 +147,50 @@ def test_save_niftis(tmp_path: Path, stack: NDArray[np.float64]) -> None:
     assert image_path.exists() & flipped_path.exists()
     assert image_path.name == f"{image_name}.nii.gz"
     assert flipped_path.name == f"{image_name}_lrflip.nii.gz"
+
+
+@pytest.mark.parametrize(
+    ["n_sub"],
+    [
+        pytest.param(1, id="1 subject"),
+        pytest.param(2, id="2 subjects"),
+    ],
+)
+def test_process_subject(
+    create_raw_test_data: tuple[Path, Path], n_sub
+) -> None:
+    """Test _process_subject creates expected files with expected keys."""
+    csv_path, config_path = create_raw_test_data
+
+    # load input csv df with first n subject rows
+    input_df = pd.read_csv(csv_path).head(n_sub)
+
+    with open(config_path) as f:
+        config_yaml = yaml.safe_load(f)
+    config = PreprocConfig.model_validate(config_yaml)
+
+    expected_keys = {"image", "mask", "flipped_image", "flipped_mask"}
+
+    for _, row in input_df.iterrows():
+        sub_id = row["subject_id"]
+        paths_dict = _process_subject(row, config)
+
+        # Expected naming conventions
+        expected_parent = f"sub-{sub_id}"
+        expected_filenames = {
+            "image": f"{sub_id}_processed.nii.gz",
+            "mask": f"{sub_id}_processed_mask.nii.gz",
+            "flipped_image": f"{sub_id}_processed_lrflip.nii.gz",
+            "flipped_mask": f"{sub_id}_processed_mask_lrflip.nii.gz",
+        }
+
+        assert set(paths_dict) == expected_keys
+
+        for key, path in paths_dict.items():
+            assert path.exists(), f"{key} not created"
+            assert (
+                path.parent.name == expected_parent
+            ), f"{key} in wrong folder"
+            assert (
+                path.name == expected_filenames[key]
+            ), f"{key} has wrong filename"
