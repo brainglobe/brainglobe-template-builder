@@ -20,15 +20,19 @@ def stack() -> NDArray[np.float64]:
     re-orientation to ASR.
     """
     stack = np.zeros((50, 50, 50))
-    stack[5:30, 5:30, 5:30] = 0.5
+    stack[10:30, 10:30, 10:30] = 0.5
     return stack
 
 
 @pytest.fixture()
 def mask() -> NDArray[np.float64]:
-    """Create 50x50x50 binary mask with 31×31×31 centred foreground."""
+    """Create 50x50x50 binary mask with off-centre object (value = 1).
+
+    The object is off-centre, so we can identify the effects of
+    re-orientation to ASR.
+    """
     mask = np.zeros((50, 50, 50))
-    mask[10:41, 10:41, 10:41] = 1
+    mask[5:35, 5:35, 5:35] = 1
     return mask
 
 
@@ -114,10 +118,9 @@ def test_data(stack: NDArray[np.float64]) -> list[dict[str, Any]]:
 def source_csv_no_masks(
     source_dir: Path, test_data: list[dict[str, Any]]
 ) -> Path:
-    """Creates two source images with corresponding csv in
-    temporary directory - no masks."""
+    """Create test data for two subjects - neither of which
+    have masks."""
 
-    # Create test data for two subjects with different voxel sizes.
     return write_test_data(source_dir, test_data)
 
 
@@ -127,8 +130,8 @@ def source_csv_with_masks(
     test_data: list[dict[str, Any]],
     mask: NDArray[np.float64],
 ) -> Path:
-    """Creates two source images with corresponding csv in
-    temporary directory - with masks."""
+    """Create test data for two subjects, one with a mask and
+    one without."""
 
     test_data[0]["mask"] = mask
     test_data[1]["mask"] = None
@@ -142,7 +145,8 @@ def source_csv_single_image_with_mask(
     test_data: list[dict[str, Any]],
     mask: NDArray[np.float64],
 ) -> Path:
-    """Creates a single source image with mask"""
+    """Create test data for a single subject with a
+    corresponding mask."""
 
     single_image = test_data[1]
     single_image["mask"] = mask
@@ -154,11 +158,9 @@ def source_csv_single_image_with_mask(
 def source_csv_with_use(
     source_dir: Path, test_data: list[dict[str, Any]]
 ) -> Path:
-    """Creates source images and csv in temporary directory -
-    with a 'use' column."""
+    """Create test data for two subjects - one with use=False,
+    and the other with use=True."""
 
-    # Create test data for two subjects - one with use=False,
-    # and the other with use=True
     test_data[0]["use"] = False
     test_data[1]["use"] = True
 
@@ -169,8 +171,8 @@ def source_csv_with_use(
 def source_csv_anisotropic(
     source_dir: Path, stack: NDArray[np.float64]
 ) -> Path:
-    """Creates source image and csv in temporary directory -
-    input resolution is anisotropic."""
+    """Create test data for a single subject with anisotropic
+    resolution."""
 
     return write_test_data(
         source_dir,
@@ -358,3 +360,28 @@ def test_source_to_raw_reorientation(
             "ASR", source_image
         )
         np.testing.assert_equal(image.get_fdata(), expected_image)
+
+
+def test_source_to_raw_downsampling(source_csv_single_image_with_mask):
+    """Test source_to_raw downsamples images + masks to the correct size."""
+
+    output_dir = source_csv_single_image_with_mask.parents[1]
+    output_vox_size = 20
+    source_to_raw(source_csv_single_image_with_mask, output_dir)
+
+    subject_dir = output_dir / "raw" / "sub-b"
+    image_path = subject_dir / "sub-b_res-10x10x10um_origin-asr.nii.gz"
+    mask_path = subject_dir / "sub-b_res-10x10x10um_mask_origin-asr.nii.gz"
+
+    output_vox_sizes_mm = (
+        output_vox_size * 0.001,
+        output_vox_size * 0.001,
+        output_vox_size * 0.001,
+    )
+
+    for output_path in [image_path, mask_path]:
+        # Output voxel size (20) is double input (10) - so image should
+        # be half the size
+        image = load_nii(output_path, as_array=False)
+        assert image.header.get_zooms() == output_vox_sizes_mm
+        assert image.shape == (25, 25, 25)
