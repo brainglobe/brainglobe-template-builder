@@ -367,11 +367,13 @@ def test_source_to_raw_downsampling(source_csv_single_image_with_mask):
 
     output_dir = source_csv_single_image_with_mask.parents[1]
     output_vox_size = 20
-    source_to_raw(source_csv_single_image_with_mask, output_dir)
+    source_to_raw(
+        source_csv_single_image_with_mask, output_dir, output_vox_size
+    )
 
     subject_dir = output_dir / "raw" / "sub-b"
-    image_path = subject_dir / "sub-b_res-10x10x10um_origin-asr.nii.gz"
-    mask_path = subject_dir / "sub-b_res-10x10x10um_mask_origin-asr.nii.gz"
+    image_path = subject_dir / "sub-b_res-20x20x20um_origin-asr.nii.gz"
+    mask_path = subject_dir / "sub-b_res-20x20x20um_mask_origin-asr.nii.gz"
 
     output_vox_sizes_mm = (
         output_vox_size * 0.001,
