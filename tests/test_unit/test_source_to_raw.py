@@ -191,16 +191,71 @@ def source_csv_anisotropic(
 
 
 @pytest.mark.parametrize(
-    (
-        "source_csv",
-        "expected_subject_ids",
-        "expected_image_paths",
-        "expected_mask_paths",
-    ),
+    "source_csv,expected_paths",
     [
         pytest.param(
             "source_csv_no_masks",
-            ["a", "b"],
+            [
+                "raw/sub-a",
+                "raw/sub-b",
+                "raw/raw_images.csv",
+                # subject a images + QC plots
+                "raw/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
+                "raw/sub-a/sub-a_res-50x50x50um_origin-asr-QC.png",
+                "raw/sub-a/sub-a_res-50x50x50um_origin-asr-QC.pdf",
+                # subject b images + QC plots
+                "raw/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
+                "raw/sub-b/sub-b_res-50x50x50um_origin-asr-QC.png",
+                "raw/sub-b/sub-b_res-50x50x50um_origin-asr-QC.pdf",
+            ],
+            id="no mask column",
+        ),
+        pytest.param(
+            "source_csv_with_masks",
+            [
+                "raw/sub-a",
+                "raw/sub-b",
+                "raw/raw_images.csv",
+                # subject a images + masks + QC plots for both
+                "raw/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
+                "raw/sub-a/sub-a_res-50x50x50um_origin-asr-QC.png",
+                "raw/sub-a/sub-a_res-50x50x50um_origin-asr-QC.pdf",
+                "raw/sub-a/sub-a_res-50x50x50um_mask_origin-asr.nii.gz",
+                "raw/sub-a/sub-a_res-50x50x50um_mask_origin-asr-QC.png",
+                "raw/sub-a/sub-a_res-50x50x50um_mask_origin-asr-QC.pdf",
+                # subject b images + QC plots (no mask provided)
+                "raw/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
+                "raw/sub-b/sub-b_res-50x50x50um_origin-asr-QC.png",
+                "raw/sub-b/sub-b_res-50x50x50um_origin-asr-QC.pdf",
+            ],
+            id="with mask column",
+        ),
+    ],
+)
+def test_source_to_raw_filepaths(request, source_csv, expected_paths):
+    """Test source to raw creates all the correct files, in the right
+    directory structure."""
+
+    source_csv_path = request.getfixturevalue(source_csv)
+    output_dir = source_csv_path.parents[1]
+    output_vox_size = 50
+    source_to_raw(source_csv_path, output_dir, output_vox_size)
+
+    # Check correct files / directory structure created
+    raw_dir = output_dir / "raw"
+    assert raw_dir.exists()
+
+    created_paths = list(raw_dir.glob("**/*"))
+    expected_paths = [output_dir / file for file in expected_paths]
+
+    assert sorted(created_paths) == sorted(expected_paths)
+
+
+@pytest.mark.parametrize(
+    "source_csv,expected_image_paths,expected_mask_paths",
+    [
+        pytest.param(
+            "source_csv_no_masks",
             [
                 "raw/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
                 "raw/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
@@ -210,7 +265,6 @@ def source_csv_anisotropic(
         ),
         pytest.param(
             "source_csv_with_masks",
-            ["a", "b"],
             [
                 "raw/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
                 "raw/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
@@ -220,79 +274,40 @@ def source_csv_anisotropic(
         ),
     ],
 )
-def test_source_to_raw_filepaths(
-    request,
-    source_csv,
-    expected_subject_ids,
-    expected_image_paths,
-    expected_mask_paths,
+def test_source_to_raw_output_csv(
+    request, source_csv, expected_image_paths, expected_mask_paths
 ):
-    """Test source to raw creates all the correct files, in the right
-    directory structure."""
+    """Test source to raw creates an output csv with the correct metadata."""
 
     source_csv_path = request.getfixturevalue(source_csv)
     output_dir = source_csv_path.parents[1]
     output_vox_size = 50
     source_to_raw(source_csv_path, output_dir, output_vox_size)
 
-    # Should create a raw dir, with one directory per subject id
-    raw_dir = output_dir / "raw"
-    assert raw_dir.exists()
-    sub_dirs = [path.stem for path in raw_dir.iterdir() if path.is_dir()]
-    assert sorted(sub_dirs) == sorted(
-        [f"sub-{id}" for id in expected_subject_ids]
-    )
+    # Check output csv contains correct paths
+    output_csv_path = output_dir / "raw" / "raw_images.csv"
+    output_csv = pd.read_csv(output_csv_path)
 
-    # Each subject directory should contain an image (+ optional mask)
-    # and QC plots
-    expected_image_paths = [output_dir / path for path in expected_image_paths]
+    expected_image_paths = [
+        str(output_dir / path) for path in expected_image_paths
+    ]
     expected_mask_paths = [
-        output_dir / path if not pd.isna(path) else path
+        str(output_dir / path) if not pd.isna(path) else path
         for path in expected_mask_paths
     ]
 
-    for i, subject_id in enumerate(expected_subject_ids):
-        subject_dir = raw_dir / f"sub-{subject_id}"
-        subject_files = list(subject_dir.iterdir())
-
-        expected_files = [expected_image_paths[i]]
-        if expected_mask_paths and not pd.isna(expected_mask_paths[i]):
-            expected_files.append(expected_mask_paths[i])
-
-        # Add QC plots for every image and mask
-        plot_paths = []
-        for file_path in expected_files:
-            plot_paths.append(
-                Path(str(file_path).removesuffix(".nii.gz") + "-QC.png")
-            )
-            plot_paths.append(
-                Path(str(file_path).removesuffix(".nii.gz") + "-QC.pdf")
-            )
-        expected_files.extend(plot_paths)
-
-        assert sorted(subject_files) == sorted(expected_files)
-
-    # Check output csv exists with correct metadata
-    output_csv_path = raw_dir / "raw_images.csv"
-    assert output_csv_path.exists()
-
-    output_csv = pd.read_csv(output_csv_path)
     expected_output_csv = pd.DataFrame(
         data={
-            "subject_id": expected_subject_ids,
+            "subject_id": ["a", "b"],
             "resolution_z": output_vox_size,
             "resolution_y": output_vox_size,
             "resolution_x": output_vox_size,
             "origin": "ASR",
-            "source_filepath": np.array(expected_image_paths).astype(str),
+            "source_filepath": expected_image_paths,
         }
     )
-    if expected_mask_paths:
-        mask_paths_str = [
-            str(path) if not pd.isna(path) else path
-            for path in expected_mask_paths
-        ]
-        expected_output_csv["mask_filepath"] = mask_paths_str
+    if len(expected_mask_paths) > 0:
+        expected_output_csv["mask_filepath"] = expected_mask_paths
 
     pd.testing.assert_frame_equal(output_csv, expected_output_csv)
 
@@ -301,7 +316,7 @@ def test_source_to_raw_with_use(source_csv_with_use):
     """Test source_to_raw excludes subjects with use=False."""
 
     output_dir = source_csv_with_use.parents[1]
-    source_to_raw(source_csv_with_use, output_dir, 50)
+    source_to_raw(source_csv_with_use, output_dir)
 
     raw_dir = output_dir / "raw"
     assert raw_dir.exists()
