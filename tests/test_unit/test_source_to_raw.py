@@ -53,8 +53,9 @@ def create_test_images(
 
     for data in test_data:
         subject_dir = path / data["subject_id"]
+        subject_dir.mkdir()
+
         image_path = subject_dir / f"{data['subject_id']}.tiff"
-        image_path.parent.mkdir()
         save_any(data["image"], image_path)
         data["source_filepath"] = image_path
 
@@ -83,7 +84,8 @@ def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
 
 
 def write_test_data(source_dir: Path, test_data: list[dict[str, Any]]) -> Path:
-    """Write test data, and return the path to the summary source csv."""
+    """Write test data to source_dir, and return the path to
+    the summary csv."""
     test_data = create_test_images(source_dir, test_data)
     csv_path = create_test_csv(source_dir, test_data)
     return csv_path
