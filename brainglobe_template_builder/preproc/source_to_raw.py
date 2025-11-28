@@ -44,10 +44,11 @@ def _process_image(
     mask: bool = False,
 ) -> None:
     """
-    Standardise a single input image.
+    Standardise a single source image.
 
     Converts to ASR orientation, and downsamples to an isotropic
     resolution of [output_vox_size, output_vox_size, output_vox_size].
+    Also saves QC plots for this image, to verify ASR orientation.
 
     Parameters
     ----------
@@ -141,6 +142,8 @@ def _process_subject(
         subject_row.resolution_z,
     ]
 
+    # Enforce input images must have isotropic voxel size, if no
+    # downsampling
     if output_vox_size is None:
         if len(set(input_vox_sizes)) != 1:
             raise ValueError(
@@ -149,6 +152,7 @@ def _process_subject(
             )
         output_vox_size = input_vox_sizes[0]
 
+    # Process input image
     image_output_path = _get_subject_path(
         raw_dir, subject_id, output_vox_size, mask=False
     )
@@ -161,6 +165,7 @@ def _process_subject(
         mask=False,
     )
 
+    # Process input mask (if provided)
     if ("mask_filepath" in subject_row) and pd.notna(
         subject_row.mask_filepath
     ):
