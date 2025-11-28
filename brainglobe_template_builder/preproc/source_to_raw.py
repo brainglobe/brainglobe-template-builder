@@ -3,10 +3,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from brainglobe_space import AnatomicalSpace
-from brainglobe_utils.IO.image.load import load_any
+from brainglobe_utils.IO.image.load import load_any, read_with_dask
 from brainglobe_utils.IO.image.save import save_as_asr_nii
 
 from brainglobe_template_builder.plots import plot_orthographic
+from brainglobe_template_builder.preproc.transform_utils import (
+    downsample_anisotropic_stack_to_isotropic,
+)
 from brainglobe_template_builder.validate import validate_input_csv
 
 
@@ -65,17 +68,12 @@ def _process_image(
     if (np.array(input_vox_sizes) == output_vox_size).all():
         image = load_any(image_path)
     else:
-        # downsample to target resolution
-        image = load_any(
-            image_path
-        )  # TO REMOVE - placeholder until downsample_anisotropic merged
-        # image_dask = read_with_dask(image_path)
-        # image = downsample_anisotropic_stack_to_isotropic(
-        #     image_dask,
-        #     input_vox_sizes,
-        #     output_vox_size,
-        #     mask=mask
-        # )
+        # downsample to target resolution via dask to handle
+        # out-of-memory images
+        image_dask = read_with_dask(image_path)
+        image = downsample_anisotropic_stack_to_isotropic(
+            image_dask, input_vox_sizes, output_vox_size, mask=mask
+        )
 
     # re-orient to ASR
     space = AnatomicalSpace(origin)
