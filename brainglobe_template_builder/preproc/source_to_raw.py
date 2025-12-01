@@ -63,7 +63,7 @@ def _process_image(
     origin : str
         3-letter anatomical orientation code (e.g., PSL, LSP, RAS)
     input_vox_sizes : list[float]
-        Input voxel sizes in microns - xyz order.
+        Input voxel sizes in microns - matching anatomical axis order.
     output_vox_size : float
         Output voxel size in microns.
     mask : bool, optional
@@ -141,9 +141,9 @@ def _process_subject(
 
     subject_id = subject_row.subject_id
     input_vox_sizes = [
-        subject_row.resolution_x,
-        subject_row.resolution_y,
         subject_row.resolution_z,
+        subject_row.resolution_y,
+        subject_row.resolution_x,
     ]
 
     # Enforce input images must have isotropic voxel size, if no

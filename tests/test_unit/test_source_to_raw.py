@@ -170,23 +170,23 @@ def source_csv_with_use(
 
 
 @pytest.fixture()
-def source_csv_anisotropic(
-    source_dir: Path, stack: NDArray[np.float64]
+def source_csv_anisotropic_with_mask(
+    source_dir: Path, stack: NDArray[np.float64], mask: NDArray[np.float64]
 ) -> Path:
     """Create test data for a single subject with anisotropic
-    resolution."""
+    resolution and a corresponding mask."""
 
     return write_test_data(
         source_dir,
         [
             {
                 "image": stack,
-                "mask": None,
-                "subject_id": "a",
-                "resolution_z": 25,
-                "resolution_y": 30,
-                "resolution_x": 40,
-                "origin": "PSL",
+                "mask": mask,
+                "subject_id": "b",
+                "resolution_z": 10,
+                "resolution_y": 4,
+                "resolution_x": 2,
+                "origin": "ASR",
             }
         ],
     )
@@ -333,17 +333,18 @@ def test_source_to_raw_with_use(source_csv_with_use):
     assert output_csv.subject_id.iloc[0] == "b"
 
 
-def test_source_to_raw_anisotropic(source_csv_anisotropic):
+def test_source_to_raw_anisotropic(source_csv_anisotropic_with_mask):
     """Test source_to_raw errors when anisotropic data is provided with no
     output_vox_size.
     """
 
     with pytest.raises(
         ValueError,
-        match=r"Subject id: a has anisotropic voxel size: \[40, 30, 25\]",
+        match=r"Subject id: b has anisotropic voxel size: \[10, 4, 2\]",
     ):
         source_to_raw(
-            source_csv_anisotropic, source_csv_anisotropic.parents[1]
+            source_csv_anisotropic_with_mask,
+            source_csv_anisotropic_with_mask.parents[1],
         )
 
 
@@ -379,14 +380,28 @@ def test_source_to_raw_reorientation(
         np.testing.assert_equal(image.get_fdata(), expected_image)
 
 
-def test_source_to_raw_downsampling(source_csv_single_image_with_mask):
+@pytest.mark.parametrize(
+    "source_csv,expected_output_size",
+    [
+        pytest.param(
+            "source_csv_single_image_with_mask",
+            (25, 25, 25),
+            id="isotropic input - scale by 0.5, 0.5, 0.5",
+        ),
+        pytest.param(
+            "source_csv_anisotropic_with_mask",
+            (25, 10, 5),
+            id="anisotropic input - scale by 0.5, 0.2, 0.1",
+        ),
+    ],
+)
+def test_source_to_raw_downsampling(request, source_csv, expected_output_size):
     """Test source_to_raw downsamples images + masks to the correct size."""
 
-    output_dir = source_csv_single_image_with_mask.parents[1]
+    source_csv_path = request.getfixturevalue(source_csv)
+    output_dir = source_csv_path.parents[1]
     output_vox_size = 20
-    source_to_raw(
-        source_csv_single_image_with_mask, output_dir, output_vox_size
-    )
+    source_to_raw(source_csv_path, output_dir, output_vox_size)
 
     subject_dir = output_dir / "raw" / "sub-b"
     image_path = subject_dir / "sub-b_res-20x20x20um_origin-asr.nii.gz"
@@ -399,8 +414,6 @@ def test_source_to_raw_downsampling(source_csv_single_image_with_mask):
     )
 
     for output_path in [image_path, mask_path]:
-        # Output voxel size (20) is double input (10) - so image should
-        # be half the size
         image = load_nii(output_path, as_array=False)
         assert image.header.get_zooms() == output_vox_sizes_mm
-        assert image.shape == (25, 25, 25)
+        assert image.shape == expected_output_size
