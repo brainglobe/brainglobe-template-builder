@@ -17,7 +17,11 @@ def _get_subject_path(
     raw_dir: Path, subject_id: str, output_vox_size: float, mask: bool = False
 ) -> Path:
     """Get path to standardised nifti file for subject_id, and create any
-    required parent directories."""
+    required parent directories.
+
+    For example, for a subject with ID 002 at voxel size 2.1 micrometre,
+    return "{raw_dir}/sub-002/sub-002_res-2x2x2um{_mask}_origin-asr.nii.gz".
+    """
 
     # round output vox sizes to nearest int (we don't want decimal
     # points in the filename)

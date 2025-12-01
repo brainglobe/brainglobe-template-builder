@@ -68,7 +68,7 @@ def create_test_images(
 
 
 def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
-    """Creates "source_data" CSV file and returns it's path."""
+    """Creates "source_data" CSV file and returns its path."""
 
     # we don't include the image / mask in the csv file,
     # just metadata about them
