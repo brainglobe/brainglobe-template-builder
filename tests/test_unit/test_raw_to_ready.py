@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Any
 
@@ -129,15 +130,35 @@ def create_raw_test_data(
 
     test_data = create_test_images(raw_dir, test_data)
     csv_path = create_test_csv(raw_dir, test_data)
-    config_path = create_test_yaml(raw_dir)
+    config_path = create_test_yaml(tmp_path)
     return csv_path, config_path
 
 
 def test_raw_to_ready(create_raw_test_data: tuple[Path, Path]) -> None:
-    """Test that raw_to_ready creates expected derivatives directory."""
+    """Test that raw_to_ready creates expected directories and files."""
     csv_path, config_path = create_raw_test_data
     raw_to_ready(csv_path, config_path)
-    assert (create_raw_test_data[0].parents[0] / "derivatives").exists()
+
+    der_dir = create_raw_test_data[0].parents[0].parents[0] / "derivatives"
+
+    assert der_dir.exists()
+    assert os.listdir(der_dir) == [
+        "all_processed_brain_paths.txt",
+        "all_processed_mask_paths.txt",
+        "sub-test1",
+        "sub-test2",
+    ]
+    for i in [1, 2]:
+        assert os.listdir(der_dir / f"sub-test{i}") == (
+            [
+                f"sub-test{i}-QC-mask.pdf",
+                f"sub-test{i}-QC-mask.png",
+                f"test{i}_processed.nii.gz",
+                f"test{i}_processed_lrflip.nii.gz",
+                f"test{i}_processed_mask.nii.gz",
+                f"test{i}_processed_mask_lrflip.nii.gz",
+            ]
+        )
 
 
 def test_create_subject_dir(tmp_path: Path) -> None:
