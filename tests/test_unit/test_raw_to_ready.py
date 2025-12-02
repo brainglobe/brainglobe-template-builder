@@ -94,6 +94,7 @@ def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
         data["resolution_y"] = data["voxel_size"][1]
         data["resolution_x"] = data["voxel_size"][2]
         data.pop("voxel_size")
+        data.pop("image")
     input_csv = pd.DataFrame(data=test_data)
     csv_path = path / "raw_data.csv"
     input_csv.to_csv(csv_path, index=False)
