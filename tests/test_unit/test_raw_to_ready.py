@@ -47,10 +47,8 @@ def make_stack(
 def test_stacks() -> dict[str, NDArray[np.float64]]:
     """Create symmetric and asymmetric test images and masks."""
     return {
-        "image": make_stack(),
-        "mask": make_stack(mask=True),
-        "image_asym": make_stack(offset=5),
-        "mask_asym": make_stack(mask=True, offset=5),
+        "image": make_stack(offset=5),
+        "mask": make_stack(mask=True, offset=5),
     }
 
 
@@ -173,18 +171,7 @@ def test_save_niftis(
     assert flipped_path.name == f"{image_name}_lrflip.nii.gz"
 
 
-@pytest.mark.parametrize(
-    ["image_type", "error"],
-    [
-        pytest.param("image", None, id="sym image: lr-flip == non-flip"),
-        pytest.param(
-            "image_asym", AssertionError, id="asym image: lr-flip != non-flip"
-        ),
-    ],
-)
 def test_save_niftis_lrflip(
-    image_type: str,
-    error: type[Exception] | None,
     tmp_path: Path,
     test_stacks: dict[str, NDArray[np.float64]],
 ) -> None:
@@ -194,16 +181,14 @@ def test_save_niftis_lrflip(
     image_name = "test_image"
 
     image_path, flipped_path = _save_niftis(
-        test_stacks[image_type], voxel_sizes, tmp_path, image_name
+        test_stacks["image"], voxel_sizes, tmp_path, image_name
     )
 
     image = load_any(image_path)
     flipped_image = load_any(flipped_path)
 
-    if error:
-        with assert_raises(error):
-            np.testing.assert_equal(image, flipped_image)
-    else:
+    np.testing.assert_equal(image, np.flip(flipped_image, axis=2))
+    with assert_raises(AssertionError):
         np.testing.assert_equal(image, flipped_image)
 
 
