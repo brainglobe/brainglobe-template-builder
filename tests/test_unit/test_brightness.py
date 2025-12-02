@@ -18,9 +18,6 @@ def test_correct_image_brightness():
     ants_corrected_image = load_any(corrected_image_path())
 
     assert output_image.shape == ants_corrected_image.shape
-    # Check largest pixel value difference between ants correction and
-    # our own is 0.04
-    # Note: the github actions windows runner needs this higher 0.04
-    # threshold, but all others (as well as running locally on a windows
-    # computer), can use a tighter 0.01 threshold
-    assert np.absolute(ants_corrected_image - output_image).max() < 0.04
+    # Note: max difference values can differ slightly across platforms, but
+    # the max relative difference should be below 1E-3 in all cases.
+    np.testing.assert_allclose(output_image, ants_corrected_image, rtol=1e-03)
