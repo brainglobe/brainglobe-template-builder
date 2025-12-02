@@ -142,23 +142,21 @@ def test_raw_to_ready(create_raw_test_data: tuple[Path, Path]) -> None:
     der_dir = create_raw_test_data[0].parents[0].parents[0] / "derivatives"
 
     assert der_dir.exists()
-    assert os.listdir(der_dir) == [
+    assert set(os.listdir(der_dir)) == {
         "all_processed_brain_paths.txt",
         "all_processed_mask_paths.txt",
         "sub-test1",
         "sub-test2",
-    ]
+    }
     for i in [1, 2]:
-        assert os.listdir(der_dir / f"sub-test{i}") == (
-            [
-                f"sub-test{i}-QC-mask.pdf",
-                f"sub-test{i}-QC-mask.png",
-                f"test{i}_processed.nii.gz",
-                f"test{i}_processed_lrflip.nii.gz",
-                f"test{i}_processed_mask.nii.gz",
-                f"test{i}_processed_mask_lrflip.nii.gz",
-            ]
-        )
+        assert set(os.listdir(der_dir / f"sub-test{i}")) == {
+            f"sub-test{i}-QC-mask.pdf",
+            f"sub-test{i}-QC-mask.png",
+            f"test{i}_processed.nii.gz",
+            f"test{i}_processed_lrflip.nii.gz",
+            f"test{i}_processed_mask.nii.gz",
+            f"test{i}_processed_mask_lrflip.nii.gz",
+        }
 
 
 def test_create_subject_dir(tmp_path: Path) -> None:
