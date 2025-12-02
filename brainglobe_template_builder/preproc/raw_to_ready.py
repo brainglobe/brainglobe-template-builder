@@ -153,7 +153,7 @@ def raw_to_ready(raw_csv: Path, config_file: Path) -> None:
     masks ready for template creation.
 
     This assumes source_to_raw has already been run to downsample images,
-    re-orient them to ASR and save them to the derivatives directory.
+    re-orient them to ASR and save them to the raw directory.
 
     raw_to_ready saves the following to each subject id's sub-dir
     inside the derivatives directory:
