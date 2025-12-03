@@ -134,6 +134,43 @@ def create_raw_test_data(
     return csv_path, config_path
 
 
+@pytest.mark.parametrize(
+    ["use", "expected_listdir"],
+    [
+        pytest.param(["false", "false"], {}, id="false, false"),
+        pytest.param(["False", "false"], {}, id="False, false"),
+        pytest.param(["false", "true"], {"sub-test2"}, id="false, true"),
+        pytest.param(["", "false"], {"sub-test1"}, id="empty (true), false"),
+        pytest.param(
+            ["F", "T"], {"sub-test1", "sub-test2"}, id="F (true), T (true)"
+        ),
+        pytest.param(
+            ["0", "1"], {"sub-test1", "sub-test2"}, id="0 (true), 1 (true)"
+        ),
+    ],
+)
+def test_raw_to_ready_use_input(
+    use: list[str],
+    expected_listdir: set,
+    create_raw_test_data: tuple[Path, Path],
+) -> None:
+    """Test exclusion/inclusion based on optional 'use' column values."""
+    csv_path, config_path = create_raw_test_data
+    input_df = pd.read_csv(csv_path)
+    input_df["use"] = use
+    input_df.to_csv(csv_path, index=False)
+
+    der_dir = create_raw_test_data[0].parents[0].parents[0] / "derivatives"
+
+    always_expect = {
+        "all_processed_brain_paths.txt",
+        "all_processed_mask_paths.txt",
+    }
+
+    raw_to_ready(csv_path, config_path)
+    assert set(os.listdir(der_dir)) == always_expect.union(expected_listdir)
+
+
 def test_raw_to_ready(create_raw_test_data: tuple[Path, Path]) -> None:
     """Test that raw_to_ready creates expected directories and files."""
     csv_path, config_path = create_raw_test_data
