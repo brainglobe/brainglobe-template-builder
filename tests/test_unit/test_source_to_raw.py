@@ -193,7 +193,7 @@ def source_csv_anisotropic_with_mask(
 
 
 @pytest.mark.parametrize(
-    "source_csv,expected_paths",
+    "source_csv,expected_raw_paths,expected_raw_qc_paths",
     [
         pytest.param(
             "source_csv_no_masks",
@@ -201,14 +201,14 @@ def source_csv_anisotropic_with_mask(
                 "raw/sub-a",
                 "raw/sub-b",
                 "raw/raw_images.csv",
-                # subject a images + QC plots
                 "raw/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
-                "raw/sub-a/sub-a_res-50x50x50um_origin-asr-QC.png",
-                "raw/sub-a/sub-a_res-50x50x50um_origin-asr-QC.pdf",
-                # subject b images + QC plots
                 "raw/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
-                "raw/sub-b/sub-b_res-50x50x50um_origin-asr-QC.png",
-                "raw/sub-b/sub-b_res-50x50x50um_origin-asr-QC.pdf",
+            ],
+            [
+                "raw-qc/sub-a-QC-orthographic.png",
+                "raw-qc/sub-a-QC-orthographic.pdf",
+                "raw-qc/sub-b-QC-orthographic.png",
+                "raw-qc/sub-b-QC-orthographic.pdf",
             ],
             id="no mask column",
         ),
@@ -218,23 +218,29 @@ def source_csv_anisotropic_with_mask(
                 "raw/sub-a",
                 "raw/sub-b",
                 "raw/raw_images.csv",
-                # subject a images + masks + QC plots for both
+                # subject a image + mask
                 "raw/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
-                "raw/sub-a/sub-a_res-50x50x50um_origin-asr-QC.png",
-                "raw/sub-a/sub-a_res-50x50x50um_origin-asr-QC.pdf",
                 "raw/sub-a/sub-a_res-50x50x50um_mask_origin-asr.nii.gz",
-                "raw/sub-a/sub-a_res-50x50x50um_mask_origin-asr-QC.png",
-                "raw/sub-a/sub-a_res-50x50x50um_mask_origin-asr-QC.pdf",
-                # subject b images + QC plots (no mask provided)
+                # subject b image (no mask provided)
                 "raw/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
-                "raw/sub-b/sub-b_res-50x50x50um_origin-asr-QC.png",
-                "raw/sub-b/sub-b_res-50x50x50um_origin-asr-QC.pdf",
+            ],
+            [
+                # subject a QC plots for image + mask
+                "raw-qc/sub-a-QC-orthographic.png",
+                "raw-qc/sub-a-QC-orthographic.pdf",
+                "raw-qc/sub-a-mask-QC-orthographic.png",
+                "raw-qc/sub-a-mask-QC-orthographic.pdf",
+                # subject b QC plot for image (no mask provided)
+                "raw-qc/sub-b-QC-orthographic.png",
+                "raw-qc/sub-b-QC-orthographic.pdf",
             ],
             id="with mask column",
         ),
     ],
 )
-def test_source_to_raw_filepaths(request, source_csv, expected_paths):
+def test_source_to_raw_filepaths(
+    request, source_csv, expected_raw_paths, expected_raw_qc_paths
+):
     """Test source to raw creates all the correct files, in the right
     directory structure."""
 
@@ -245,12 +251,17 @@ def test_source_to_raw_filepaths(request, source_csv, expected_paths):
 
     # Check correct files / directory structure created
     raw_dir = output_dir / "raw"
-    assert raw_dir.exists()
+    raw_qc_dir = output_dir / "raw-qc"
 
-    created_paths = list(raw_dir.glob("**/*"))
-    expected_paths = [output_dir / file for file in expected_paths]
+    for dir_path, expected_paths in zip(
+        [raw_dir, raw_qc_dir], [expected_raw_paths, expected_raw_qc_paths]
+    ):
+        assert dir_path.exists()
 
-    assert sorted(created_paths) == sorted(expected_paths)
+        created_paths = list(dir_path.glob("**/*"))
+        expected_paths = [output_dir / file for file in expected_paths]
+
+        assert sorted(created_paths) == sorted(expected_paths)
 
 
 @pytest.mark.parametrize(

@@ -110,9 +110,9 @@ def _write_QC_plots(
     """
 
     if mask:
-        plot_path = raw_qc_dir / f"{subject_id}-mask-QC-orthographic.png"
+        plot_path = raw_qc_dir / f"sub-{subject_id}-mask-QC-orthographic.png"
     else:
-        plot_path = raw_qc_dir / f"{subject_id}-QC-orthographic.png"
+        plot_path = raw_qc_dir / f"sub-{subject_id}-QC-orthographic.png"
 
     if mask:
         plot_orthographic(
