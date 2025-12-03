@@ -298,9 +298,7 @@ def test_process_subject(
 def test_process_subject_padding(
     create_raw_test_data: tuple[Path, Path],
 ) -> None:
-    """Test whether _process_subject uses padding from config file correctly.
-
-    Resulting mask shape should differ with default (5) vs no padding."""
+    """Test whether _process_subject uses padding from config file."""
     csv_path, config_path = create_raw_test_data
     subject_row = pd.read_csv(csv_path).iloc[0]
 
@@ -312,6 +310,7 @@ def test_process_subject_padding(
     cfg_default = PreprocConfig.model_validate(base_cfg)
     paths_default = _process_subject(subject_row, cfg_default)
     mask_default = load_any(paths_default["mask"])
+    image_default = load_any(paths_default["image"])
 
     no_pad_cfg = dict(base_cfg)
     no_pad_cfg["pad_pixels"] = 0
@@ -319,5 +318,10 @@ def test_process_subject_padding(
     paths_nopad = _process_subject(subject_row, cfg_nopad)
     mask_nopad = load_any(paths_nopad["mask"])
 
-    expected_shape = tuple(s - default_pad * 2 for s in mask_default.shape)
-    assert mask_nopad.shape == expected_shape
+    assert (
+        image_default.shape == mask_default.shape
+    ), "Padding should be added to the image as well as the mask."
+
+    assert mask_nopad.shape == tuple(
+        s - default_pad * 2 for s in mask_default.shape
+    ), "Mask shape should differ with default (5) vs no padding."
