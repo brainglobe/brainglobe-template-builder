@@ -226,13 +226,13 @@ def source_csv_anisotropic_with_mask(
             ],
             [
                 # subject a QC plots for image + mask
-                "raw-qc/sub-a-QC-orthographic.png",
-                "raw-qc/sub-a-QC-orthographic.pdf",
-                "raw-qc/sub-a-mask-QC-orthographic.png",
-                "raw-qc/sub-a-mask-QC-orthographic.pdf",
+                "raw-QC/sub-a-QC-orthographic.png",
+                "raw-QC/sub-a-QC-orthographic.pdf",
+                "raw-QC/sub-a-mask-QC-orthographic.png",
+                "raw-QC/sub-a-mask-QC-orthographic.pdf",
                 # subject b QC plot for image (no mask provided)
-                "raw-qc/sub-b-QC-orthographic.png",
-                "raw-qc/sub-b-QC-orthographic.pdf",
+                "raw-QC/sub-b-QC-orthographic.png",
+                "raw-QC/sub-b-QC-orthographic.pdf",
             ],
             id="with mask column",
         ),
@@ -251,7 +251,7 @@ def test_source_to_raw_filepaths(
 
     # Check correct files / directory structure created
     raw_dir = output_dir / "raw"
-    raw_qc_dir = output_dir / "raw-qc"
+    raw_qc_dir = output_dir / "raw-QC"
 
     for dir_path, expected_paths in zip(
         [raw_dir, raw_qc_dir], [expected_raw_paths, expected_raw_qc_paths]

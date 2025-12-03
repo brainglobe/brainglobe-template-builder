@@ -111,10 +111,6 @@ def _write_QC_plots(
 
     if mask:
         plot_path = raw_qc_dir / f"sub-{subject_id}-mask-QC-orthographic.png"
-    else:
-        plot_path = raw_qc_dir / f"sub-{subject_id}-QC-orthographic.png"
-
-    if mask:
         plot_orthographic(
             image,
             anat_space="ASR",
@@ -123,6 +119,7 @@ def _write_QC_plots(
             vmax=image.max(),
         )
     else:
+        plot_path = raw_qc_dir / f"sub-{subject_id}-QC-orthographic.png"
         plot_orthographic(image, anat_space="ASR", save_path=plot_path)
 
 
@@ -252,7 +249,7 @@ def source_to_raw(
     source_df = pd.read_csv(source_csv)
 
     raw_dir = output_dir / "raw"
-    raw_qc_dir = output_dir / "raw-qc"
+    raw_qc_dir = output_dir / "raw-QC"
     for directory in [raw_dir, raw_qc_dir]:
         directory.mkdir(parents=True, exist_ok=True)
 
