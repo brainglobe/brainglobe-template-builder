@@ -295,7 +295,7 @@ def test_process_subject(
             ), f"{key} has wrong filename"
 
 
-def test_process_subject_padding(
+def test_process_subject_config_padding(
     create_raw_test_data: tuple[Path, Path],
 ) -> None:
     """Test whether _process_subject uses padding from config file."""
@@ -303,25 +303,47 @@ def test_process_subject_padding(
     subject_row = pd.read_csv(csv_path).iloc[0]
 
     with open(config_path) as f:
-        base_cfg = yaml.safe_load(f)
+        config_yaml = yaml.safe_load(f)
 
     default_pad = 5
-    base_cfg["pad_pixels"] = default_pad
-    cfg_default = PreprocConfig.model_validate(base_cfg)
-    paths_default = _process_subject(subject_row, cfg_default)
+    config_yaml["pad_pixels"] = default_pad
+    config_default = PreprocConfig.model_validate(config_yaml)
+    paths_default = _process_subject(subject_row, config_default)
     mask_default = load_any(paths_default["mask"])
     image_default = load_any(paths_default["image"])
 
-    no_pad_cfg = dict(base_cfg)
-    no_pad_cfg["pad_pixels"] = 0
-    cfg_nopad = PreprocConfig.model_validate(no_pad_cfg)
-    paths_nopad = _process_subject(subject_row, cfg_nopad)
+    config_yaml["pad_pixels"] = 0
+    config_nopad = PreprocConfig.model_validate(config_yaml)
+    paths_nopad = _process_subject(subject_row, config_nopad)
     mask_nopad = load_any(paths_nopad["mask"])
 
     assert (
         image_default.shape == mask_default.shape
     ), "Padding should be added to the image as well as the mask."
+    expected_shape = tuple(s - default_pad * 2 for s in mask_default.shape)
+    assert (
+        mask_nopad.shape == expected_shape
+    ), f"Mask with no padding should be {default_pad * 2} smaller per dim."
 
-    assert mask_nopad.shape == tuple(
-        s - default_pad * 2 for s in mask_default.shape
-    ), "Mask shape should differ with default (5) vs no padding."
+
+def test_process_subject_config_mask(
+    create_raw_test_data: tuple[Path, Path],
+) -> None:
+    """Test whether _process_subject uses mask from config file."""
+    csv_path, config_path = create_raw_test_data
+    subject_row = pd.read_csv(csv_path).iloc[0]
+
+    with open(config_path) as f:
+        config_yaml = yaml.safe_load(f)
+
+    config_default = PreprocConfig.model_validate(config_yaml)
+    paths_default = _process_subject(subject_row, config_default)
+    mask_default = load_any(paths_default["mask"])
+
+    config_yaml["mask"]["closing_size"] += 5  # increase closing size
+    config_changed_mask = PreprocConfig.model_validate(config_yaml)
+    paths_changed_mask = _process_subject(subject_row, config_changed_mask)
+    mask_changed = load_any(paths_changed_mask["mask"])
+
+    with assert_raises(AssertionError):
+        np.testing.assert_equal(mask_changed, mask_default)
