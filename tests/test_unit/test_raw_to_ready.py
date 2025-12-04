@@ -81,7 +81,8 @@ def create_test_images(
     for data in test_data:
         image_path = path / data["subject_id"] / f"{data['subject_id']}.nii.gz"
         image_path.parent.mkdir()
-        save_as_asr_nii(data["image"], data["voxel_size"], image_path)
+        voxel_dimensions_in_mm = [v * 0.001 for v in data["voxel_size"]]
+        save_as_asr_nii(data["image"], voxel_dimensions_in_mm, image_path)
         data["source_filepath"] = image_path
     return test_data
 

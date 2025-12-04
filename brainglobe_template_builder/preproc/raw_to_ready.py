@@ -40,7 +40,7 @@ def _save_niftis(
     image : np.ndarray
         Processed brain image.
     voxel_sizes_mm : list[float]
-        Voxel sizes in mm - [x, y, z].
+        Voxel sizes in mm -  in order of the image array axes.
     subject_dir : Path
         Subject directory to save nifti files.
     image_name : str
