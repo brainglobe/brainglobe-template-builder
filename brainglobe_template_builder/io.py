@@ -117,7 +117,7 @@ def tiff_to_nifti(tiff_path: Path, nifti_path: Path, vox_sizes: list):
     nifti_path : pathlib.Path
         path to save the nifti image
     vox_sizes : list
-        list of voxel dimensions in mm. The order is 'x', 'y', 'z'
+        list of voxel dimensions in mm, in the same order as the image axes.
     """
     stack = load_any(tiff_path.as_posix())
     save_as_asr_nii(stack, vox_sizes, nifti_path)
