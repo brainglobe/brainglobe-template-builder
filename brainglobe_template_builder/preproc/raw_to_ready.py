@@ -132,7 +132,7 @@ def _process_subject(
     # Save image + mask, as well as flipped versions
     filename_prefix = image_path.stem.split(".")[0]
     image_path, flipped_image_path = _save_niftis(
-        image, vox_sizes_mm[::-1], subject_dir, filename_prefix + "_processed"
+        image, vox_sizes_mm, subject_dir, filename_prefix + "_processed"
     )
     mask_path, flipped_mask_path = _save_niftis(
         mask.astype("uint8"),
