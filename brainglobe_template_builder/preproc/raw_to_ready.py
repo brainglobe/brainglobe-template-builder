@@ -136,7 +136,7 @@ def _process_subject(
     )
     mask_path, flipped_mask_path = _save_niftis(
         mask.astype("uint8"),
-        vox_sizes_mm[::-1],
+        vox_sizes_mm,
         subject_dir,
         filename_prefix + "_processed_mask",
     )
