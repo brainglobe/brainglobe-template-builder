@@ -165,9 +165,9 @@ def _process_subject(
 
     subject_id = subject_row.subject_id
     input_vox_sizes = [
-        subject_row.resolution_z,
-        subject_row.resolution_y,
-        subject_row.resolution_x,
+        subject_row.resolution_0,
+        subject_row.resolution_1,
+        subject_row.resolution_2,
     ]
 
     # Enforce input images must have isotropic voxel size, if no
@@ -274,8 +274,8 @@ def source_to_raw(
         output_df.mask_filepath = processed_mask_paths
 
     if output_vox_size is not None:
-        output_df.resolution_z = output_vox_size
-        output_df.resolution_y = output_vox_size
-        output_df.resolution_x = output_vox_size
+        output_df.resolution_0 = output_vox_size
+        output_df.resolution_1 = output_vox_size
+        output_df.resolution_2 = output_vox_size
 
     output_df.to_csv(raw_dir / "raw_images.csv", index=False)

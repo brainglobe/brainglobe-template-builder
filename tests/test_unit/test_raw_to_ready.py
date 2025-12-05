@@ -90,9 +90,9 @@ def create_test_images(
 def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
     """Creates "raw_data" CSV file and returns it's path."""
     for data in test_data:
-        data["resolution_z"] = data["voxel_size"][0]
-        data["resolution_y"] = data["voxel_size"][1]
-        data["resolution_x"] = data["voxel_size"][2]
+        data["resolution_0"] = data["voxel_size"][0]
+        data["resolution_1"] = data["voxel_size"][1]
+        data["resolution_2"] = data["voxel_size"][2]
         data.pop("voxel_size")
         data.pop("image")
     input_csv = pd.DataFrame(data=test_data)

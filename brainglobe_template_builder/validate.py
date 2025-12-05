@@ -101,9 +101,9 @@ def validate_input_csv(input_csv_path: str | Path) -> None:
 
     required_columns = [
         "subject_id",
-        "resolution_z",
-        "resolution_x",
-        "resolution_y",
+        "resolution_0",
+        "resolution_1",
+        "resolution_2",
         "origin",
         "filepath",
     ]

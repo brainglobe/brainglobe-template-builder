@@ -93,9 +93,9 @@ def _process_subject(
 
     image = load_any(image_path)
     vox_sizes_mm = [
-        subject_row.resolution_z * 0.001,
-        subject_row.resolution_y * 0.001,
-        subject_row.resolution_x * 0.001,
+        subject_row.resolution_0 * 0.001,
+        subject_row.resolution_1 * 0.001,
+        subject_row.resolution_2 * 0.001,
     ]
 
     # n4 bias field correction
