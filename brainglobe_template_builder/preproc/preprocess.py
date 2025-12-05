@@ -15,12 +15,12 @@ from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
 from brainglobe_template_builder.validate import validate_input_csv
 
-DERIVATIVES_DIR_NAME = "derivatives"
+PREPROCESSED_DIR_NAME = "preprocessed"
 
 
 def _create_subject_dir(subject_id: str, output_dir: Path) -> Path:
-    """Create subject dir inside of the derivatives directory."""
-    subject_dir = output_dir / DERIVATIVES_DIR_NAME / f"sub-{subject_id}"
+    """Create subject dir inside of the preprocessed directory."""
+    subject_dir = output_dir / PREPROCESSED_DIR_NAME / f"sub-{subject_id}"
     subject_dir.mkdir(parents=True, exist_ok=True)
 
     return subject_dir
@@ -72,7 +72,7 @@ def _process_subject(
     Parameters
     ----------
     subject_row : pd.Series
-        Subject row from raw csv file.
+        Subject row from standardised csv file.
     config : PreprocConfig
         Preprocessing config - contains settings for pre-processing steps.
 
@@ -148,22 +148,22 @@ def _process_subject(
     }
 
 
-def raw_to_ready(raw_csv: Path, config_file: Path) -> None:
+def preprocess(standardised_csv: Path, config_file: Path) -> None:
     """Process nifti files in ASR orientation to create output images +
     masks ready for template creation.
 
-    This assumes source_to_raw has already been run to downsample images,
-    re-orient them to ASR and save them to the raw directory.
+    This assumes 'standardise' has already been run to downsample images,
+    re-orient them to ASR and save them to the standardised directory.
 
-    raw_to_ready saves the following to each subject id's sub-dir
-    inside the derivatives directory:
+    preprocess saves the following to each subject id's sub-dir
+    inside the preprocessed directory:
     - ..._processed.nii.gz : the processed brain image
     - ..._processed_mask.nii.gz : the mask of the brain image
     - ..._processed_lrflip.nii.gz : the lr-flipped processed brain image
     - ..._processed_mask_lrflip.nii.gz : the lr-flipped mask of the brain image
     - ..-QC-mask.png: a plot showing the mask overlaid on the brain image
 
-    At the top level of the derivatives dir, two text files are produced:
+    At the top level of the preprocessed dir, two text files are produced:
     - all_processed_brain_paths.txt : paths of processed images (including
     flipped) for all subject ids
     - all_processed_mask_paths.txt : paths of masks (including flipped)
@@ -171,22 +171,22 @@ def raw_to_ready(raw_csv: Path, config_file: Path) -> None:
 
     Parameters
     ----------
-    raw_csv : Path
-        Raw csv file path. One row per sample, each with a
-        unique 'subject_id' - this is created via `source_to_raw`.
+    standardised_csv : Path
+        Standardised csv file path. One row per sample, each with a
+        unique 'subject_id' - this is created via `standardise`.
     config_file : Path
         Config yaml file path. Contains settings for pre-processing steps.
     """
 
-    validate_input_csv(raw_csv)
-    input_df = pd.read_csv(raw_csv)
+    validate_input_csv(standardised_csv)
+    input_df = pd.read_csv(standardised_csv)
 
     with open(config_file) as f:
         config_yaml = yaml.safe_load(f)
 
     config = PreprocConfig.model_validate(config_yaml)
-    derivatives_dir = config.output_dir / DERIVATIVES_DIR_NAME
-    derivatives_dir.mkdir(parents=True, exist_ok=True)
+    preprocessed_dir = config.output_dir / PREPROCESSED_DIR_NAME
+    preprocessed_dir.mkdir(parents=True, exist_ok=True)
 
     image_paths = []
     mask_paths = []
@@ -200,12 +200,12 @@ def raw_to_ready(raw_csv: Path, config_file: Path) -> None:
         mask_paths.extend([paths_dict["mask"], paths_dict["flipped_mask"]])
 
     np.savetxt(
-        derivatives_dir / "all_processed_brain_paths.txt",
+        preprocessed_dir / "all_processed_brain_paths.txt",
         image_paths,
         fmt="%s",
     )
     np.savetxt(
-        derivatives_dir / "all_processed_mask_paths.txt",
+        preprocessed_dir / "all_processed_mask_paths.txt",
         mask_paths,
         fmt="%s",
     )
