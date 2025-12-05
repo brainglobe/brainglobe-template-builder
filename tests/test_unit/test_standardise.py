@@ -9,7 +9,7 @@ from brainglobe_utils.IO.image.load import load_nii
 from brainglobe_utils.IO.image.save import save_any
 from numpy.typing import NDArray
 
-from brainglobe_template_builder.preproc.source_to_raw import source_to_raw
+from brainglobe_template_builder.preproc.standardise import standardise
 
 
 @pytest.fixture()
@@ -193,68 +193,69 @@ def source_csv_anisotropic_with_mask(
 
 
 @pytest.mark.parametrize(
-    "source_csv,expected_raw_paths,expected_raw_qc_paths",
+    "source_csv,expected_standardised_paths,expected_qc_paths",
     [
         pytest.param(
             "source_csv_no_masks",
             [
-                "raw/sub-a",
-                "raw/sub-b",
-                "raw/raw_images.csv",
-                "raw/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
-                "raw/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-a",
+                "standardised/sub-b",
+                "standardised/standardised_images.csv",
+                "standardised/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
             ],
             [
-                "raw-QC/sub-a-QC-orthographic.png",
-                "raw-QC/sub-a-QC-orthographic.pdf",
-                "raw-QC/sub-b-QC-orthographic.png",
-                "raw-QC/sub-b-QC-orthographic.pdf",
+                "standardised-QC/sub-a-QC-orthographic.png",
+                "standardised-QC/sub-a-QC-orthographic.pdf",
+                "standardised-QC/sub-b-QC-orthographic.png",
+                "standardised-QC/sub-b-QC-orthographic.pdf",
             ],
             id="no mask column",
         ),
         pytest.param(
             "source_csv_with_masks",
             [
-                "raw/sub-a",
-                "raw/sub-b",
-                "raw/raw_images.csv",
+                "standardised/sub-a",
+                "standardised/sub-b",
+                "standardised/standardised_images.csv",
                 # subject a image + mask
-                "raw/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
-                "raw/sub-a/sub-a_res-50x50x50um_mask_origin-asr.nii.gz",
+                "standardised/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-a/sub-a_res-50x50x50um_mask_origin-asr.nii.gz",
                 # subject b image (no mask provided)
-                "raw/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
             ],
             [
                 # subject a QC plots for image + mask
-                "raw-QC/sub-a-QC-orthographic.png",
-                "raw-QC/sub-a-QC-orthographic.pdf",
-                "raw-QC/sub-a-mask-QC-orthographic.png",
-                "raw-QC/sub-a-mask-QC-orthographic.pdf",
+                "standardised-QC/sub-a-QC-orthographic.png",
+                "standardised-QC/sub-a-QC-orthographic.pdf",
+                "standardised-QC/sub-a-mask-QC-orthographic.png",
+                "standardised-QC/sub-a-mask-QC-orthographic.pdf",
                 # subject b QC plot for image (no mask provided)
-                "raw-QC/sub-b-QC-orthographic.png",
-                "raw-QC/sub-b-QC-orthographic.pdf",
+                "standardised-QC/sub-b-QC-orthographic.png",
+                "standardised-QC/sub-b-QC-orthographic.pdf",
             ],
             id="with mask column",
         ),
     ],
 )
-def test_source_to_raw_filepaths(
-    request, source_csv, expected_raw_paths, expected_raw_qc_paths
+def test_standardise_filepaths(
+    request, source_csv, expected_standardised_paths, expected_qc_paths
 ):
-    """Test source to raw creates all the correct files, in the right
+    """Test standardise creates all the correct files, in the right
     directory structure."""
 
     source_csv_path = request.getfixturevalue(source_csv)
     output_dir = source_csv_path.parents[1]
     output_vox_size = 50
-    source_to_raw(source_csv_path, output_dir, output_vox_size)
+    standardise(source_csv_path, output_dir, output_vox_size)
 
     # Check correct files / directory structure created
-    raw_dir = output_dir / "raw"
-    raw_qc_dir = output_dir / "raw-QC"
+    standardised_dir = output_dir / "standardised"
+    qc_dir = output_dir / "standardised-QC"
 
     for dir_path, expected_paths in zip(
-        [raw_dir, raw_qc_dir], [expected_raw_paths, expected_raw_qc_paths]
+        [standardised_dir, qc_dir],
+        [expected_standardised_paths, expected_qc_paths],
     ):
         assert dir_path.exists()
 
@@ -270,8 +271,8 @@ def test_source_to_raw_filepaths(
         pytest.param(
             "source_csv_no_masks",
             [
-                "raw/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
-                "raw/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
             ],
             [],
             id="no mask column",
@@ -279,26 +280,29 @@ def test_source_to_raw_filepaths(
         pytest.param(
             "source_csv_with_masks",
             [
-                "raw/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
-                "raw/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
             ],
-            ["raw/sub-a/sub-a_res-50x50x50um_mask_origin-asr.nii.gz", np.nan],
+            [
+                "standardised/sub-a/sub-a_res-50x50x50um_mask_origin-asr.nii.gz",
+                np.nan,
+            ],
             id="with mask column",
         ),
     ],
 )
-def test_source_to_raw_output_csv(
+def test_standardise_output_csv(
     request, source_csv, expected_image_paths, expected_mask_paths
 ):
-    """Test source to raw creates an output csv with the correct metadata."""
+    """Test standardise creates an output csv with the correct metadata."""
 
     source_csv_path = request.getfixturevalue(source_csv)
     output_dir = source_csv_path.parents[1]
     output_vox_size = 50
-    source_to_raw(source_csv_path, output_dir, output_vox_size)
+    standardise(source_csv_path, output_dir, output_vox_size)
 
     # Check output csv contains correct paths
-    output_csv_path = output_dir / "raw" / "raw_images.csv"
+    output_csv_path = output_dir / "standardised" / "standardised_images.csv"
     output_csv = pd.read_csv(output_csv_path)
 
     expected_image_paths = [
@@ -325,18 +329,18 @@ def test_source_to_raw_output_csv(
     pd.testing.assert_frame_equal(output_csv, expected_output_csv)
 
 
-def test_source_to_raw_with_use(source_csv_with_use):
-    """Test source_to_raw excludes subjects with use=False."""
+def test_standardise_with_use(source_csv_with_use):
+    """Test standardise excludes subjects with use=False."""
 
     output_dir = source_csv_with_use.parents[1]
-    source_to_raw(source_csv_with_use, output_dir)
+    standardise(source_csv_with_use, output_dir)
 
-    raw_dir = output_dir / "raw"
-    assert raw_dir.exists()
-    assert not (raw_dir / "sub-a").exists()  # subject a has use=False
-    assert (raw_dir / "sub-b").exists()  # subject b has use=True
+    standardised_dir = output_dir / "standardised"
+    assert standardised_dir.exists()
+    assert not (standardised_dir / "sub-a").exists()  # subject a has use=False
+    assert (standardised_dir / "sub-b").exists()  # subject b has use=True
 
-    output_csv_path = output_dir / "raw" / "raw_images.csv"
+    output_csv_path = standardised_dir / "standardised_images.csv"
     assert output_csv_path.exists()
 
     output_csv = pd.read_csv(output_csv_path)
@@ -344,8 +348,8 @@ def test_source_to_raw_with_use(source_csv_with_use):
     assert output_csv.subject_id.iloc[0] == "b"
 
 
-def test_source_to_raw_anisotropic(source_csv_anisotropic_with_mask):
-    """Test source_to_raw errors when anisotropic data is provided with no
+def test_standardise_anisotropic(source_csv_anisotropic_with_mask):
+    """Test standardise errors when anisotropic data is provided with no
     output_vox_size.
     """
 
@@ -353,21 +357,21 @@ def test_source_to_raw_anisotropic(source_csv_anisotropic_with_mask):
         ValueError,
         match=r"Subject id: b has anisotropic voxel size: \[10, 4, 2\]",
     ):
-        source_to_raw(
+        standardise(
             source_csv_anisotropic_with_mask,
             source_csv_anisotropic_with_mask.parents[1],
         )
 
 
-def test_source_to_raw_reorientation(
+def test_standardise_reorientation(
     source_csv_single_image_with_mask, stack, mask
 ):
-    """Test source_to_raw re-orients images and masks to ASR."""
+    """Test standardise re-orients images and masks to ASR."""
 
     output_dir = source_csv_single_image_with_mask.parents[1]
-    source_to_raw(source_csv_single_image_with_mask, output_dir)
+    standardise(source_csv_single_image_with_mask, output_dir)
 
-    subject_dir = output_dir / "raw" / "sub-b"
+    subject_dir = output_dir / "standardised" / "sub-b"
     image_path = subject_dir / "sub-b_res-10x10x10um_origin-asr.nii.gz"
     mask_path = subject_dir / "sub-b_res-10x10x10um_mask_origin-asr.nii.gz"
 
@@ -406,15 +410,15 @@ def test_source_to_raw_reorientation(
         ),
     ],
 )
-def test_source_to_raw_downsampling(request, source_csv, expected_output_size):
-    """Test source_to_raw downsamples images + masks to the correct size."""
+def test_standardise_downsampling(request, source_csv, expected_output_size):
+    """Test standardise downsamples images + masks to the correct size."""
 
     source_csv_path = request.getfixturevalue(source_csv)
     output_dir = source_csv_path.parents[1]
     output_vox_size = 20
-    source_to_raw(source_csv_path, output_dir, output_vox_size)
+    standardise(source_csv_path, output_dir, output_vox_size)
 
-    subject_dir = output_dir / "raw" / "sub-b"
+    subject_dir = output_dir / "standardised" / "sub-b"
     image_path = subject_dir / "sub-b_res-20x20x20um_origin-asr.nii.gz"
     mask_path = subject_dir / "sub-b_res-20x20x20um_mask_origin-asr.nii.gz"
 
