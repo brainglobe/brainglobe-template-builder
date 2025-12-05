@@ -12,11 +12,11 @@ from numpy.testing import assert_raises
 from numpy.typing import NDArray
 
 from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
-from brainglobe_template_builder.preproc.raw_to_ready import (
+from brainglobe_template_builder.preproc.preprocess import (
     _create_subject_dir,
     _process_subject,
     _save_niftis,
-    raw_to_ready,
+    preprocess,
 )
 
 
@@ -88,7 +88,7 @@ def create_test_images(
 
 
 def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
-    """Creates "raw_data" CSV file and returns it's path."""
+    """Creates "standardised_data" CSV file and returns its path."""
     for data in test_data:
         data["resolution_z"] = data["voxel_size"][0]
         data["resolution_y"] = data["voxel_size"][1]
@@ -96,7 +96,7 @@ def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
         data.pop("voxel_size")
         data.pop("image")
     input_csv = pd.DataFrame(data=test_data)
-    csv_path = path / "raw_data.csv"
+    csv_path = path / "standardised_data.csv"
     input_csv.to_csv(csv_path, index=False)
     return csv_path
 
@@ -122,15 +122,16 @@ def create_test_yaml(path: Path) -> Path:
 
 
 @pytest.fixture()
-def create_raw_test_data(
+def create_standardised_test_data(
     tmp_path: Path, test_data: list[dict[str, Any]]
 ) -> tuple[Path, Path]:
-    """Sets up temp directory with "raw" test images, CSV, and config files."""
-    raw_dir = tmp_path / "raw"
-    raw_dir.mkdir(parents=True, exist_ok=True)
+    """Sets up temp directory with "standardised" test images, CSV,
+    and config files."""
+    standardised_dir = tmp_path / "standardised"
+    standardised_dir.mkdir(parents=True, exist_ok=True)
 
-    test_data = create_test_images(raw_dir, test_data)
-    csv_path = create_test_csv(raw_dir, test_data)
+    test_data = create_test_images(standardised_dir, test_data)
+    csv_path = create_test_csv(standardised_dir, test_data)
     config_path = create_test_yaml(tmp_path)
     return csv_path, config_path
 
@@ -150,44 +151,46 @@ def create_raw_test_data(
         ),
     ],
 )
-def test_raw_to_ready_use_input(
+def test_preprocess_use_input(
     use: list[str],
     expected_listdir: set,
-    create_raw_test_data: tuple[Path, Path],
+    create_standardised_test_data: tuple[Path, Path],
 ) -> None:
     """Test exclusion/inclusion based on optional 'use' column values."""
-    csv_path, config_path = create_raw_test_data
+    csv_path, config_path = create_standardised_test_data
     input_df = pd.read_csv(csv_path)
     input_df["use"] = use
     input_df.to_csv(csv_path, index=False)
 
-    der_dir = create_raw_test_data[0].parents[0].parents[0] / "derivatives"
+    preprocessed_dir = csv_path.parents[1] / "preprocessed"
 
     always_expect = {
         "all_processed_brain_paths.txt",
         "all_processed_mask_paths.txt",
     }
 
-    raw_to_ready(csv_path, config_path)
-    assert set(os.listdir(der_dir)) == always_expect.union(expected_listdir)
+    preprocess(csv_path, config_path)
+    assert set(os.listdir(preprocessed_dir)) == always_expect.union(
+        expected_listdir
+    )
 
 
-def test_raw_to_ready(create_raw_test_data: tuple[Path, Path]) -> None:
-    """Test that raw_to_ready creates expected directories and files."""
-    csv_path, config_path = create_raw_test_data
-    raw_to_ready(csv_path, config_path)
+def test_preprocess(create_standardised_test_data: tuple[Path, Path]) -> None:
+    """Test that preprocess creates expected directories and files."""
+    csv_path, config_path = create_standardised_test_data
+    preprocess(csv_path, config_path)
 
-    der_dir = create_raw_test_data[0].parents[0].parents[0] / "derivatives"
+    preprocessed_dir = csv_path.parents[1] / "preprocessed"
 
-    assert der_dir.exists()
-    assert set(os.listdir(der_dir)) == {
+    assert preprocessed_dir.exists()
+    assert set(os.listdir(preprocessed_dir)) == {
         "all_processed_brain_paths.txt",
         "all_processed_mask_paths.txt",
         "sub-test1",
         "sub-test2",
     }
     for i in [1, 2]:
-        assert set(os.listdir(der_dir / f"sub-test{i}")) == {
+        assert set(os.listdir(preprocessed_dir / f"sub-test{i}")) == {
             f"sub-test{i}-QC-mask.pdf",
             f"sub-test{i}-QC-mask.png",
             f"test{i}_processed.nii.gz",
@@ -202,7 +205,7 @@ def test_create_subject_dir(tmp_path: Path) -> None:
     sub_id = "test123"
     sub_dir = _create_subject_dir(sub_id, tmp_path)
     assert sub_dir.exists()
-    assert sub_dir == tmp_path / "derivatives" / f"sub-{sub_id}"
+    assert sub_dir == tmp_path / "preprocessed" / f"sub-{sub_id}"
 
 
 def test_create_subject_dir_exists(tmp_path: Path) -> None:
@@ -257,10 +260,10 @@ def test_save_niftis_lrflip(
     ],
 )
 def test_process_subject(
-    create_raw_test_data: tuple[Path, Path], n_sub: int
+    create_standardised_test_data: tuple[Path, Path], n_sub: int
 ) -> None:
     """Test _process_subject creates expected files with expected keys."""
-    csv_path, config_path = create_raw_test_data
+    csv_path, config_path = create_standardised_test_data
 
     # load input csv df with first n subject rows
     input_df = pd.read_csv(csv_path).head(n_sub)
@@ -297,10 +300,10 @@ def test_process_subject(
 
 
 def test_process_subject_config_padding(
-    create_raw_test_data: tuple[Path, Path],
+    create_standardised_test_data: tuple[Path, Path],
 ) -> None:
     """Test whether _process_subject uses padding from config file."""
-    csv_path, config_path = create_raw_test_data
+    csv_path, config_path = create_standardised_test_data
     subject_row = pd.read_csv(csv_path).iloc[0]
 
     with open(config_path) as f:
@@ -328,10 +331,10 @@ def test_process_subject_config_padding(
 
 
 def test_process_subject_config_mask(
-    create_raw_test_data: tuple[Path, Path],
+    create_standardised_test_data: tuple[Path, Path],
 ) -> None:
     """Test whether _process_subject uses mask from config file."""
-    csv_path, config_path = create_raw_test_data
+    csv_path, config_path = create_standardised_test_data
     subject_row = pd.read_csv(csv_path).iloc[0]
 
     with open(config_path) as f:
