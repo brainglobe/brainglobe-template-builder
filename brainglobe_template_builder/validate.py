@@ -51,7 +51,7 @@ def validate_required_columns(
             missing_list = ", ".join(f"'{col}'" for col in missing)
             raise ValueError(
                 f"{column_str} with {name_str} {missing_list} required "
-                f"but missing from source CSV."
+                f"but missing from input CSV."
             )
 
 
@@ -79,7 +79,7 @@ def validate_column_names_unique(column_names: Sequence[str]) -> None:
         List of column names to validate
     """
     if len(set(column_names)) != len(column_names):
-        raise ValueError("Column names of source CSV are not unique.")
+        raise ValueError("Column names of input CSV are not unique.")
 
 
 def validate_input_csv(input_csv_path: str | Path) -> None:
@@ -105,7 +105,7 @@ def validate_input_csv(input_csv_path: str | Path) -> None:
         "resolution_x",
         "resolution_y",
         "origin",
-        "source_filepath",
+        "filepath",
     ]
 
     # Validate file extension

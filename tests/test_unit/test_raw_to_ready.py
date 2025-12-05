@@ -83,7 +83,7 @@ def create_test_images(
         image_path.parent.mkdir()
         voxel_dimensions_in_mm = [v * 0.001 for v in data["voxel_size"]]
         save_as_asr_nii(data["image"], voxel_dimensions_in_mm, image_path)
-        data["source_filepath"] = image_path
+        data["filepath"] = image_path
     return test_data
 
 

@@ -181,7 +181,7 @@ def _process_subject(
         output_vox_size = input_vox_sizes[0]
 
     # Get path of image + (optional) mask
-    image_path = Path(subject_row.source_filepath)
+    image_path = Path(subject_row.filepath)
     if ("mask_filepath" in subject_row) and pd.notna(
         subject_row.mask_filepath
     ):
@@ -268,7 +268,7 @@ def source_to_raw(
     # Make output csv for processed images
     output_df = source_df.copy()
     output_df.origin = "ASR"
-    output_df.source_filepath = processed_image_paths
+    output_df.filepath = processed_image_paths
 
     if "mask_filepath" in output_df:
         output_df.mask_filepath = processed_mask_paths

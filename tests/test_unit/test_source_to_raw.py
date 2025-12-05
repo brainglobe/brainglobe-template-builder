@@ -57,7 +57,7 @@ def create_test_images(
 
         image_path = subject_dir / f"{data['subject_id']}.tiff"
         save_any(data["image"], image_path)
-        data["source_filepath"] = image_path
+        data["filepath"] = image_path
 
         if data["mask"] is not None:
             mask_path = subject_dir / f"{data['subject_id']}_mask.tiff"
@@ -316,7 +316,7 @@ def test_source_to_raw_output_csv(
             "resolution_y": output_vox_size,
             "resolution_x": output_vox_size,
             "origin": "ASR",
-            "source_filepath": expected_image_paths,
+            "filepath": expected_image_paths,
         }
     )
     if len(expected_mask_paths) > 0:

@@ -27,7 +27,7 @@ def valid_df():
         "resolution_x": 50,
         "channel": "green",
         "origin": ["PSL", "PSL", "LAS", "SAL", "LPI"],
-        "source_filepath": [f"/path/to/atlas-{i + 1}" for i in range(5)],
+        "filepath": [f"/path/to/atlas-{i + 1}" for i in range(5)],
     }
     return pd.DataFrame(data)
 
@@ -67,14 +67,14 @@ def test_validate_file_extension(filepath, extension, is_valid):
         pytest.param(
             ["col1"],
             ["col1", "col2"],
-            "Column with name 'col2' required but missing from source CSV.",
+            "Column with name 'col2' required but missing from input CSV.",
             id="invalid (col2 missing)",
         ),
         pytest.param(
             [],
             ["col1", "col2"],
             "Columns with names 'col1', 'col2' required but missing from"
-            " source CSV.",
+            " input CSV.",
             id="invalid (multiple cols missing)",
         ),
         pytest.param(
@@ -130,7 +130,7 @@ def test_validate_column_names_format(column_names, error_message):
         pytest.param(["col1", "col2", "col3"], None, id="valid (all unique)"),
         pytest.param(
             ["col1", "col2", "col1"],
-            "Column names of source CSV are not unique.",
+            "Column names of input CSV are not unique.",
             id="invalid (duplicate col1)",
         ),
         pytest.param(
