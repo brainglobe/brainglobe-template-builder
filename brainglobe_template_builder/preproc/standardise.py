@@ -14,13 +14,17 @@ from brainglobe_template_builder.validate import validate_input_csv
 
 
 def _get_subject_path(
-    raw_dir: Path, subject_id: str, output_vox_size: float, mask: bool = False
+    standardised_dir: Path,
+    subject_id: str,
+    output_vox_size: float,
+    mask: bool = False,
 ) -> Path:
     """Get path to standardised nifti file for subject_id, and create any
     required parent directories.
 
     For example, for a subject with ID 002 at voxel size 2.1 micrometre,
-    return "{raw_dir}/sub-002/sub-002_res-2x2x2um{_mask}_origin-asr.nii.gz".
+    return:
+    "{standardised_dir}/sub-002/sub-002_res-2x2x2um{_mask}_origin-asr.nii.gz".
     """
 
     # round output vox sizes to nearest int (we don't want decimal
@@ -28,7 +32,7 @@ def _get_subject_path(
     rounded_size = round(output_vox_size)
     resolution_string = f"res-{rounded_size}x{rounded_size}x{rounded_size}um"
 
-    subject_dir = raw_dir / f"sub-{subject_id}"
+    subject_dir = standardised_dir / f"sub-{subject_id}"
     file_name = f"sub-{subject_id}_{resolution_string}"
     if mask:
         dest_path = subject_dir / f"{file_name}_mask_origin-asr.nii.gz"
@@ -93,14 +97,17 @@ def _process_image(
 
 
 def _write_QC_plots(
-    raw_qc_dir: Path, subject_id: str, image: np.ndarray, mask: bool = False
+    standardised_qc_dir: Path,
+    subject_id: str,
+    image: np.ndarray,
+    mask: bool = False,
 ) -> None:
     """Write QC plots for a standardised image/mask.
 
     Parameters
     ----------
-    raw_qc_dir : Path
-        Path to raw QC directory.
+    standardised_qc_dir : Path
+        Path to standardised QC directory.
     subject_id : str
         Subject id.
     image : np.ndarray
@@ -110,7 +117,9 @@ def _write_QC_plots(
     """
 
     if mask:
-        plot_path = raw_qc_dir / f"sub-{subject_id}-mask-QC-orthographic.png"
+        plot_path = (
+            standardised_qc_dir / f"sub-{subject_id}-mask-QC-orthographic.png"
+        )
         plot_orthographic(
             image,
             anat_space="ASR",
@@ -119,34 +128,37 @@ def _write_QC_plots(
             vmax=image.max(),
         )
     else:
-        plot_path = raw_qc_dir / f"sub-{subject_id}-QC-orthographic.png"
+        plot_path = (
+            standardised_qc_dir / f"sub-{subject_id}-QC-orthographic.png"
+        )
         plot_orthographic(image, anat_space="ASR", save_path=plot_path)
 
 
 def _process_subject(
     subject_row: pd.Series,
-    raw_dir: Path,
-    raw_qc_dir: Path,
+    standardised_dir: Path,
+    standardised_qc_dir: Path,
     output_vox_size: float | None = None,
 ) -> tuple[Path | None, ...]:
     """Standardise source images of an individual subject.
 
-    A directory is created inside 'raw_dir' for the subject containing:
+    A directory is created inside 'standardised_dir' for the subject
+    containing:
     - the standardised nifti image file
     - the standardised nifti mask file (if a mask_filepath was provided)
 
     QC plots are written for the standardised images/masks into
-    'raw_qc_dir' to verify the ASR orientation.
+    'standardised_qc_dir' to verify the ASR orientation.
 
     Parameters
     ----------
     subject_row : pd.Series
         Subject row from input csv file (in standardised format
         defined in the atlas-forge documentation).
-    raw_dir : Path
-        Raw directory to write processed subject images/masks to.
-    raw_qc_dir: Path
-        Raw QC directory to write subject QC plots to.
+    standardised_dir : Path
+        Directory to write standardised subject images/masks to.
+    standardised_qc_dir : Path
+        Directory to write subject QC plots to.
     output_vox_size : float | None, optional
         Output voxel size in micrometre. Images will be downsampled to
         an isotropic resolution of
@@ -198,7 +210,7 @@ def _process_subject(
             continue
 
         output_path = _get_subject_path(
-            raw_dir, subject_id, output_vox_size, mask=mask
+            standardised_dir, subject_id, output_vox_size, mask=mask
         )
         processed_image = _process_image(
             path,
@@ -208,27 +220,29 @@ def _process_subject(
             output_vox_size,
             mask=mask,
         )
-        _write_QC_plots(raw_qc_dir, subject_id, processed_image, mask=mask)
+        _write_QC_plots(
+            standardised_qc_dir, subject_id, processed_image, mask=mask
+        )
         output_paths.append(output_path)
 
     return tuple(output_paths)
 
 
-def source_to_raw(
+def standardise(
     source_csv: Path, output_dir: Path, output_vox_size: float | None = None
 ) -> None:
     """Standardise source images to the same resolution and orientation (ASR).
 
-    A 'raw' directory is created inside 'output_dir', containing a folder for
-    each subject id with:
+    A 'standardised' directory is created inside 'output_dir', containing a
+    folder for each subject id with:
     - the standardised nifti image file
     - the standardised nifti mask file (if a mask_filepath was provided)
 
-    A 'raw-QC' directory is created inside 'output_dir' containing:
+    A 'standardised-QC' directory is created inside 'output_dir' containing:
     - a QC plot for every subject image + mask to verify ASR orientation
 
-    At the top level of the 'raw' dir, a csv file is created summarising the
-    properties / locations of the standardised image files.
+    At the top level of the 'standardised' dir, a csv file is created
+    summarising the properties / locations of the standardised image files.
 
     Parameters
     ----------
@@ -248,9 +262,9 @@ def source_to_raw(
     validate_input_csv(source_csv)
     source_df = pd.read_csv(source_csv)
 
-    raw_dir = output_dir / "raw"
-    raw_qc_dir = output_dir / "raw-QC"
-    for directory in [raw_dir, raw_qc_dir]:
+    standardised_dir = output_dir / "standardised"
+    standardised_qc_dir = output_dir / "standardised-QC"
+    for directory in [standardised_dir, standardised_qc_dir]:
         directory.mkdir(parents=True, exist_ok=True)
 
     if "use" in source_df:
@@ -260,7 +274,7 @@ def source_to_raw(
     processed_mask_paths = []
     for _, row in source_df.iterrows():
         image_path, mask_path = _process_subject(
-            row, raw_dir, raw_qc_dir, output_vox_size
+            row, standardised_dir, standardised_qc_dir, output_vox_size
         )
         processed_image_paths.append(image_path)
         processed_mask_paths.append(mask_path)
@@ -278,4 +292,4 @@ def source_to_raw(
         output_df.resolution_y = output_vox_size
         output_df.resolution_x = output_vox_size
 
-    output_df.to_csv(raw_dir / "raw_images.csv", index=False)
+    output_df.to_csv(standardised_dir / "standardised_images.csv", index=False)
