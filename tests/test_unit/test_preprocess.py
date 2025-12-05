@@ -102,7 +102,7 @@ def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
 
 
 def create_test_yaml(path: Path) -> Path:
-    """Creates YAML config file and returns it's path."""
+    """Creates YAML config file and returns its path."""
     yaml_dict = {
         "output_dir": str(path.resolve()),
         "mask": {
