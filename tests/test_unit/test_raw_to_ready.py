@@ -83,16 +83,16 @@ def create_test_images(
         image_path.parent.mkdir()
         voxel_dimensions_in_mm = [v * 0.001 for v in data["voxel_size"]]
         save_as_asr_nii(data["image"], voxel_dimensions_in_mm, image_path)
-        data["source_filepath"] = image_path
+        data["filepath"] = image_path
     return test_data
 
 
 def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
     """Creates "raw_data" CSV file and returns it's path."""
     for data in test_data:
-        data["resolution_z"] = data["voxel_size"][0]
-        data["resolution_y"] = data["voxel_size"][1]
-        data["resolution_x"] = data["voxel_size"][2]
+        data["resolution_0"] = data["voxel_size"][0]
+        data["resolution_1"] = data["voxel_size"][1]
+        data["resolution_2"] = data["voxel_size"][2]
         data.pop("voxel_size")
         data.pop("image")
     input_csv = pd.DataFrame(data=test_data)

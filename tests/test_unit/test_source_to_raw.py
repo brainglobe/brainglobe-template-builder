@@ -57,7 +57,7 @@ def create_test_images(
 
         image_path = subject_dir / f"{data['subject_id']}.tiff"
         save_any(data["image"], image_path)
-        data["source_filepath"] = image_path
+        data["filepath"] = image_path
 
         if data["mask"] is not None:
             mask_path = subject_dir / f"{data['subject_id']}_mask.tiff"
@@ -99,18 +99,18 @@ def test_data(stack: NDArray[np.float64]) -> list[dict[str, Any]]:
             "image": stack,
             "mask": None,
             "subject_id": "a",
-            "resolution_z": 25,
-            "resolution_y": 25,
-            "resolution_x": 25,
+            "resolution_0": 25,
+            "resolution_1": 25,
+            "resolution_2": 25,
             "origin": "PSL",
         },
         {
             "image": stack,
             "mask": None,
             "subject_id": "b",
-            "resolution_z": 10,
-            "resolution_y": 10,
-            "resolution_x": 10,
+            "resolution_0": 10,
+            "resolution_1": 10,
+            "resolution_2": 10,
             "origin": "LSA",
         },
     ]
@@ -183,9 +183,9 @@ def source_csv_anisotropic_with_mask(
                 "image": stack,
                 "mask": mask,
                 "subject_id": "b",
-                "resolution_z": 10,
-                "resolution_y": 4,
-                "resolution_x": 2,
+                "resolution_0": 10,
+                "resolution_1": 4,
+                "resolution_2": 2,
                 "origin": "ASR",
             }
         ],
@@ -312,11 +312,11 @@ def test_source_to_raw_output_csv(
     expected_output_csv = pd.DataFrame(
         data={
             "subject_id": ["a", "b"],
-            "resolution_z": output_vox_size,
-            "resolution_y": output_vox_size,
-            "resolution_x": output_vox_size,
+            "resolution_0": output_vox_size,
+            "resolution_1": output_vox_size,
+            "resolution_2": output_vox_size,
             "origin": "ASR",
-            "source_filepath": expected_image_paths,
+            "filepath": expected_image_paths,
         }
     )
     if len(expected_mask_paths) > 0:

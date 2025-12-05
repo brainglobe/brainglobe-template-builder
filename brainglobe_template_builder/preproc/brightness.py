@@ -32,7 +32,7 @@ def correct_image_brightness(
 
     sitk_image = sitk.GetImageFromArray(input_image)
 
-    # Conversion to sitk flips the axis order [z, y, x] -> [x, y, z],
+    # Conversion to sitk flips the axis order [0, 1, 2] -> [2, 1, 0],
     # so we must flip the spacing too
     sitk_image.SetSpacing(spacing[::-1])
 

@@ -165,9 +165,9 @@ def _process_subject(
 
     subject_id = subject_row.subject_id
     input_vox_sizes = [
-        subject_row.resolution_z,
-        subject_row.resolution_y,
-        subject_row.resolution_x,
+        subject_row.resolution_0,
+        subject_row.resolution_1,
+        subject_row.resolution_2,
     ]
 
     # Enforce input images must have isotropic voxel size, if no
@@ -181,7 +181,7 @@ def _process_subject(
         output_vox_size = input_vox_sizes[0]
 
     # Get path of image + (optional) mask
-    image_path = Path(subject_row.source_filepath)
+    image_path = Path(subject_row.filepath)
     if ("mask_filepath" in subject_row) and pd.notna(
         subject_row.mask_filepath
     ):
@@ -268,14 +268,14 @@ def source_to_raw(
     # Make output csv for processed images
     output_df = source_df.copy()
     output_df.origin = "ASR"
-    output_df.source_filepath = processed_image_paths
+    output_df.filepath = processed_image_paths
 
     if "mask_filepath" in output_df:
         output_df.mask_filepath = processed_mask_paths
 
     if output_vox_size is not None:
-        output_df.resolution_z = output_vox_size
-        output_df.resolution_y = output_vox_size
-        output_df.resolution_x = output_vox_size
+        output_df.resolution_0 = output_vox_size
+        output_df.resolution_1 = output_vox_size
+        output_df.resolution_2 = output_vox_size
 
     output_df.to_csv(raw_dir / "raw_images.csv", index=False)
