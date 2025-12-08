@@ -100,9 +100,9 @@ def _write_QC_plots(
     standardised_qc_dir: Path,
     subject_id: str,
     image: np.ndarray,
-    mask: bool = False,
+    mask: np.ndarray | None = None,
 ) -> None:
-    """Write QC plots for a standardised image/mask.
+    """Write QC plots for the standardised image and (optional) mask.
 
     Parameters
     ----------
@@ -112,26 +112,26 @@ def _write_QC_plots(
         Subject id.
     image : np.ndarray
         Standardised image (output from _process_image).
-    mask : bool
-        Whether the image is a mask, by default False.
+    mask : np.ndarray | None
+        Optional standardised mask (output from _process_image)
     """
 
-    if mask:
+    # Orthographic image plot
+    plot_path = standardised_qc_dir / f"sub-{subject_id}-QC-orthographic.png"
+    plot_orthographic(image, anat_space="ASR", save_path=plot_path)
+
+    # Orthographic image + mask plot
+    if mask is not None:
         plot_path = (
             standardised_qc_dir / f"sub-{subject_id}-mask-QC-orthographic.png"
         )
         plot_orthographic(
             image,
+            overlay=mask,
             anat_space="ASR",
+            overlay_is_mask=True,
             save_path=plot_path,
-            vmin=image.min(),
-            vmax=image.max(),
         )
-    else:
-        plot_path = (
-            standardised_qc_dir / f"sub-{subject_id}-QC-orthographic.png"
-        )
-        plot_orthographic(image, anat_space="ASR", save_path=plot_path)
 
 
 def _process_subject(
@@ -193,39 +193,55 @@ def _process_subject(
         output_vox_size = input_vox_sizes[0]
 
     # Get path of image + (optional) mask
-    image_path = Path(subject_row.filepath)
+    paths_to_process: dict[str, Path | None] = {}
+    paths_to_process["image"] = Path(subject_row.filepath)
+
     if ("mask_filepath" in subject_row) and pd.notna(
         subject_row.mask_filepath
     ):
-        mask_path = Path(subject_row.mask_filepath)
+        paths_to_process["mask"] = Path(subject_row.mask_filepath)
     else:
-        mask_path = None
+        paths_to_process["mask"] = None
 
-    # Process image + (optional) mask and write QC plots
-    output_paths: list[Path | None] = []
-    for path, mask in zip([image_path, mask_path], [False, True]):
+    # Process image + (optional) mask
+    output_paths: dict[str, Path | None] = {}
+    output_images: dict[str, np.ndarray | None] = {}
+    for image_name, image_path in paths_to_process.items():
 
-        if path is None:
-            output_paths.append(path)
+        if image_path is None:
+            output_paths[image_name] = None
+            output_images[image_name] = None
             continue
 
+        if image_name == "mask":
+            is_mask = True
+        else:
+            is_mask = False
+
         output_path = _get_subject_path(
-            standardised_dir, subject_id, output_vox_size, mask=mask
+            standardised_dir, subject_id, output_vox_size, mask=is_mask
         )
         processed_image = _process_image(
-            path,
+            image_path,
             output_path,
             subject_row.origin,
             input_vox_sizes,
             output_vox_size,
-            mask=mask,
+            mask=is_mask,
         )
-        _write_QC_plots(
-            standardised_qc_dir, subject_id, processed_image, mask=mask
-        )
-        output_paths.append(output_path)
 
-    return tuple(output_paths)
+        output_paths[image_name] = output_path
+        output_images[image_name] = processed_image
+
+    # Write QC plots for image and (optionally) mask overlaid on image
+    _write_QC_plots(
+        standardised_qc_dir,
+        subject_id,
+        image=output_images["image"],
+        mask=output_images["mask"],
+    )
+
+    return (output_paths["image"], output_paths["mask"])
 
 
 def standardise(
