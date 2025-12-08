@@ -381,11 +381,14 @@ def test_standardise_reorientation(
         # No downsampling was specified, so input size / res should
         # match output
         image = load_nii(output_path, as_array=False)
-        assert image.header.get_zooms() == (
+
+        expected_zooms = (
             0.01,
             0.01,
             0.01,
         )  # saved to nii as mm
+
+        np.testing.assert_allclose(image.header.get_zooms(), expected_zooms)
         assert image.shape == (50, 50, 50)
 
         # Output should match re-orientation of source image to ASR
@@ -422,7 +425,7 @@ def test_standardise_downsampling(request, source_csv, expected_output_size):
     image_path = subject_dir / "sub-b_res-20x20x20um_origin-asr.nii.gz"
     mask_path = subject_dir / "sub-b_res-20x20x20um_mask_origin-asr.nii.gz"
 
-    output_vox_sizes_mm = (
+    expected_output_vox_sizes_mm = (
         output_vox_size * 0.001,
         output_vox_size * 0.001,
         output_vox_size * 0.001,
@@ -430,5 +433,7 @@ def test_standardise_downsampling(request, source_csv, expected_output_size):
 
     for output_path in [image_path, mask_path]:
         image = load_nii(output_path, as_array=False)
-        assert image.header.get_zooms() == output_vox_sizes_mm
+        np.testing.assert_allclose(
+            image.header.get_zooms(), expected_output_vox_sizes_mm
+        )
         assert image.shape == expected_output_size
