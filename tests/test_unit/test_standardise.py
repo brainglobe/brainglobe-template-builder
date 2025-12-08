@@ -7,33 +7,8 @@ import pytest
 from brainglobe_space import AnatomicalSpace
 from brainglobe_utils.IO.image.load import load_nii
 from brainglobe_utils.IO.image.save import save_any
-from numpy.typing import NDArray
 
 from brainglobe_template_builder.preproc.standardise import standardise
-
-
-@pytest.fixture()
-def stack() -> NDArray[np.float64]:
-    """Create 50x50x50 stack with a small off-centre object (value 0.5).
-
-    The object is off-centre, so we can identify the effects of
-    re-orientation to ASR.
-    """
-    stack = np.zeros((50, 50, 50))
-    stack[10:30, 10:30, 10:30] = 0.5
-    return stack
-
-
-@pytest.fixture()
-def mask() -> NDArray[np.float64]:
-    """Create 50x50x50 binary mask with off-centre object (value = 1).
-
-    The object is off-centre, so we can identify the effects of
-    re-orientation to ASR.
-    """
-    mask = np.zeros((50, 50, 50))
-    mask[5:35, 5:35, 5:35] = 1
-    return mask
 
 
 @pytest.fixture()
@@ -92,11 +67,11 @@ def write_test_data(source_dir: Path, test_data: list[dict[str, Any]]) -> Path:
 
 
 @pytest.fixture()
-def test_data(stack: NDArray[np.float64]) -> list[dict[str, Any]]:
+def test_data(test_stacks) -> list[dict[str, Any]]:
     """Creates test data for two images with LSA and PSL orientation."""
     return [
         {
-            "image": stack,
+            "image": test_stacks["image"],
             "mask": None,
             "subject_id": "a",
             "resolution_0": 25,
@@ -105,7 +80,7 @@ def test_data(stack: NDArray[np.float64]) -> list[dict[str, Any]]:
             "origin": "PSL",
         },
         {
-            "image": stack,
+            "image": test_stacks["image"],
             "mask": None,
             "subject_id": "b",
             "resolution_0": 10,
@@ -128,14 +103,12 @@ def source_csv_no_masks(
 
 @pytest.fixture()
 def source_csv_with_masks(
-    source_dir: Path,
-    test_data: list[dict[str, Any]],
-    mask: NDArray[np.float64],
+    source_dir: Path, test_data: list[dict[str, Any]], test_stacks
 ) -> Path:
     """Create test data for two subjects, one with a mask and
     one without."""
 
-    test_data[0]["mask"] = mask
+    test_data[0]["mask"] = test_stacks["mask"]
     test_data[1]["mask"] = None
 
     return write_test_data(source_dir, test_data)
@@ -143,15 +116,13 @@ def source_csv_with_masks(
 
 @pytest.fixture()
 def source_csv_single_image_with_mask(
-    source_dir: Path,
-    test_data: list[dict[str, Any]],
-    mask: NDArray[np.float64],
+    source_dir: Path, test_data: list[dict[str, Any]], test_stacks
 ) -> Path:
     """Create test data for a single subject with a
     corresponding mask."""
 
     single_image = test_data[1]
-    single_image["mask"] = mask
+    single_image["mask"] = test_stacks["mask"]
 
     return write_test_data(source_dir, [single_image])
 
@@ -170,9 +141,7 @@ def source_csv_with_use(
 
 
 @pytest.fixture()
-def source_csv_anisotropic_with_mask(
-    source_dir: Path, stack: NDArray[np.float64], mask: NDArray[np.float64]
-) -> Path:
+def source_csv_anisotropic_with_mask(source_dir: Path, test_stacks) -> Path:
     """Create test data for a single subject with anisotropic
     resolution and a corresponding mask."""
 
@@ -180,8 +149,8 @@ def source_csv_anisotropic_with_mask(
         source_dir,
         [
             {
-                "image": stack,
-                "mask": mask,
+                "image": test_stacks["image"],
+                "mask": test_stacks["mask"],
                 "subject_id": "b",
                 "resolution_0": 10,
                 "resolution_1": 4,
@@ -364,7 +333,7 @@ def test_standardise_anisotropic(source_csv_anisotropic_with_mask):
 
 
 def test_standardise_reorientation(
-    source_csv_single_image_with_mask, stack, mask
+    source_csv_single_image_with_mask, test_stacks
 ):
     """Test standardise re-orients images and masks to ASR."""
 
@@ -376,7 +345,7 @@ def test_standardise_reorientation(
     mask_path = subject_dir / "sub-b_res-10x10x10um_mask_origin-asr.nii.gz"
 
     for output_path, source_image in zip(
-        [image_path, mask_path], [stack, mask]
+        [image_path, mask_path], [test_stacks["image"], test_stacks["mask"]]
     ):
         # No downsampling was specified, so input size / res should
         # match output
