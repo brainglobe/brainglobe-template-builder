@@ -92,6 +92,7 @@ def _process_subject(
         subject_row.subject_id, config.output_dir
     )
     qc_dir = config.output_dir / QC_DIR_NAME
+    qc_dir.mkdir(parents=True, exist_ok=True)
 
     image = load_any(image_path)
     vox_sizes_mm = [
