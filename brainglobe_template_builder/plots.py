@@ -8,9 +8,13 @@ from matplotlib import pyplot as plt
 
 def plot_orthographic(
     img: np.ndarray,
+    overlay: np.ndarray | None = None,
     anat_space: str = "ASR",
     show_slices: tuple[int, int, int] | None = None,
     mip_attenuation: float = 0.01,
+    overlay_alpha: float = 0.5,
+    overlay_cmap: str = "inferno",
+    overlay_is_mask: bool = False,
     save_path: Path | None = None,
     **kwargs,
 ) -> tuple[plt.Figure, np.ndarray]:
@@ -24,6 +28,8 @@ def plot_orthographic(
     ----------
     img : np.ndarray
         Image volume to plot.
+    overlay: np.ndarray, optional
+        Image volume to overlay on top of img.
     anat_space : str, optional
         Anatomical space of the image volume according to the Brainglobe
         definition (origin and order of axes), by default "ASR".
@@ -33,6 +39,13 @@ def plot_orthographic(
     mip_attenuation : float, optional
         Attenuation factor for the MIP, by default 0.01.
         A value of 0 means no attenuation.
+    overlay_alpha: float, optional
+        Transparency alpha of overlay.
+    overlay_cmap: str, optional
+        Name of matplotlib colormap to use for overlay.
+    overlay_is_mask: boolean, optional
+        Whether the overlay is a mask / segmentation. When False, contrast
+        will be auto-adjusted as described for img above.
     save_path : Path, optional
         Path to save the plot, by default None (no saving).
     **kwargs
@@ -45,6 +58,9 @@ def plot_orthographic(
 
     """
 
+    if (overlay is not None) and (overlay.shape != img.shape):
+        raise ValueError("Overlay dimensions must match img")
+
     space = AnatomicalSpace(anat_space)
     vertical_axis = space.get_axis_idx("vertical")
 
@@ -54,28 +70,46 @@ def plot_orthographic(
     else:
         slices_list = list(show_slices)
 
-    # Pad the image with zeros to make it cubic
-    # so projections along different axes have the same size
-    img, pad_sizes = _pad_with_zeros(img, target=max(img.shape))
-    slices_list = [s + pad_sizes[i] for i, s in enumerate(slices_list)]
-
-    # Compute (attenuated) MIP along the vertical axis
-    mip, mip_label = _compute_attenuated_mip(
-        img, vertical_axis, mip_attenuation
-    )
+    # Set imshow kwargs for img and (optionally) overlay
+    images_to_plot = [img]
+    image_kwargs = [_set_imshow_defaults(img, kwargs)]
+    if overlay is not None:
+        images_to_plot.append(overlay)
+        overlay_kwargs = _set_overlay_kwargs(
+            overlay, overlay_alpha, overlay_cmap, overlay_is_mask, kwargs
+        )
+        image_kwargs.append(overlay_kwargs)
 
     # Create figure with 4 subplots (3 orthogonal views + MIP)
     fig, axs = plt.subplots(1, 4, figsize=(14, 4))
-    views = [img.take(slc, axis=i) for i, slc in enumerate(slices_list)]
-    views.append(mip)
+
+    # Plot slices from img and (optionally) overlay
+    for plot_image, plot_kwargs in zip(images_to_plot, image_kwargs):
+
+        # Pad the image with zeros to make it cubic
+        # so projections along different axes have the same size
+        plot_image, pad_sizes = _pad_with_zeros(
+            plot_image, target=max(plot_image.shape)
+        )
+        plot_slices = [s + pad_sizes[i] for i, s in enumerate(slices_list)]
+
+        # Compute (attenuated) MIP along the vertical axis
+        mip, mip_label = _compute_attenuated_mip(
+            plot_image, vertical_axis, mip_attenuation
+        )
+
+        # Plot 3 orthogonal views followed by MIP
+        views = [
+            plot_image.take(slc, axis=i) for i, slc in enumerate(plot_slices)
+        ]
+        views.append(mip)
+        for ax, view in zip(axs, views):
+            ax.imshow(view, **plot_kwargs)
+
+    # Add plot / axis titles
     axis_labels = [*space.axis_labels, space.axis_labels[vertical_axis]]
     section_names = [s.capitalize() for s in space.sections] + [mip_label]
-
-    kwargs = _set_imshow_defaults(img, kwargs)
-
-    for j, (section, labels) in enumerate(zip(section_names, axis_labels)):
-        ax = axs[j]
-        ax.imshow(views[j], **kwargs)
+    for ax, section, labels in zip(axs, section_names, axis_labels):
         ax.set_title(section)
         ax.set_ylabel(labels[0])
         ax.set_xlabel(labels[1])
@@ -188,14 +222,8 @@ def plot_grid(
         grid_overlay = _grid_from_slices(
             [overlay.take(slc, axis=axis_idx) for slc in show_slices]
         )
-
-        overlay_kwargs = kwargs.copy()
-        overlay_kwargs["cmap"] = overlay_cmap
-        overlay_kwargs["alpha"] = overlay_alpha
-        # Only auto-adjust contrast when the overlay isn't a mask
-        adjust_contrast = not overlay_is_mask
-        overlay_kwargs = _set_imshow_defaults(
-            overlay, overlay_kwargs, adjust_contrast=adjust_contrast
+        overlay_kwargs = _set_overlay_kwargs(
+            overlay, overlay_alpha, overlay_cmap, overlay_is_mask, kwargs
         )
         ax.imshow(grid_overlay, **overlay_kwargs)
 
@@ -318,6 +346,28 @@ def _set_imshow_defaults(
             kwargs.setdefault(key, defaults[key])
 
     return kwargs
+
+
+def _set_overlay_kwargs(
+    overlay: np.ndarray,
+    overlay_alpha: float,
+    overlay_cmap: str,
+    overlay_is_mask: bool,
+    kwargs: dict,
+) -> dict:
+    """Set kwargs to pass to imshow for an overlay."""
+
+    overlay_kwargs = kwargs.copy()
+    overlay_kwargs["cmap"] = overlay_cmap
+    overlay_kwargs["alpha"] = overlay_alpha
+
+    # Only auto-adjust contrast when the overlay isn't a mask
+    adjust_contrast = not overlay_is_mask
+    overlay_kwargs = _set_imshow_defaults(
+        overlay, overlay_kwargs, adjust_contrast=adjust_contrast
+    )
+
+    return overlay_kwargs
 
 
 def _choose_slices(
