@@ -173,7 +173,7 @@ def preprocess(standardised_csv: Path, config_file: Path) -> None:
 
     The following plots are also saved to the 'preprocessed-QC' dir for
     every subject:
-    - ..-mask-QC.png: a plot showing the mask overlaid on the brain image
+    - ..-mask-QC-grid.png: a plot showing the mask overlaid on the brain image
 
     Parameters
     ----------
