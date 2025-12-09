@@ -151,7 +151,7 @@ def _process_subject(
     }
 
 
-def preprocess(standardised_csv: Path, config_file: Path) -> None:
+def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
     """Process nifti files in ASR orientation to create output images +
     masks ready for template creation.
 
@@ -180,19 +180,23 @@ def preprocess(standardised_csv: Path, config_file: Path) -> None:
     standardised_csv : Path
         Standardised csv file path. One row per sample, each with a
         unique 'subject_id' - this is created via `standardise`.
-    config_file : Path
-        Config yaml file path. Contains settings for pre-processing steps.
+    config : Path | PreprocConfig
+        Config yaml file path, or PreprocConfig object. Contains settings for
+        pre-processing steps.
     """
 
     validate_input_csv(standardised_csv)
     input_df = pd.read_csv(standardised_csv)
 
-    with open(config_file) as f:
-        config_yaml = yaml.safe_load(f)
+    if isinstance(config, Path):
+        with open(config) as f:
+            config_yaml = yaml.safe_load(f)
+        preproc_config = PreprocConfig.model_validate(config_yaml)
+    else:
+        preproc_config = config
 
-    config = PreprocConfig.model_validate(config_yaml)
-    preprocessed_dir = config.output_dir / PREPROCESSED_DIR_NAME
-    qc_dir = config.output_dir / QC_DIR_NAME
+    preprocessed_dir = preproc_config.output_dir / PREPROCESSED_DIR_NAME
+    qc_dir = preproc_config.output_dir / QC_DIR_NAME
     for directory in [preprocessed_dir, qc_dir]:
         directory.mkdir(parents=True, exist_ok=True)
 
@@ -203,7 +207,7 @@ def preprocess(standardised_csv: Path, config_file: Path) -> None:
         if ("use" in row) and (row.use is False):
             continue
 
-        paths_dict = _process_subject(row, config)
+        paths_dict = _process_subject(row, preproc_config)
         image_paths.extend([paths_dict["image"], paths_dict["flipped_image"]])
         mask_paths.extend([paths_dict["mask"], paths_dict["flipped_mask"]])
 
