@@ -68,14 +68,16 @@ def test_data(
         {
             "subject_id": "test1",
             "image": test_stacks["image"],
-            "voxel_size": [1, 1, 1],
-            "origin": "ASR",
+            "mask": None,
+            "voxel_size": [25, 25, 25],
+            "origin": "PSL",
         },
         {
             "subject_id": "test2",
             "image": test_stacks["image"],
-            "voxel_size": [2, 2, 2],
-            "origin": "ASR",
+            "mask": None,
+            "voxel_size": [10, 10, 10],
+            "origin": "LSA",
         },
     ]
 
