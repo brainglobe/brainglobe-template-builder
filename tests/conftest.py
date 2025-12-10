@@ -11,21 +11,6 @@ from loguru import logger
 from numpy.typing import NDArray
 
 
-@pytest.fixture
-def caplog(caplog: LogCaptureFixture):
-    """Override the pytest caplog fixture, so that it will
-    work correctly with loguru."""
-    handler_id = logger.add(
-        caplog.handler,
-        format="{message}",
-        level=0,
-        filter=lambda record: record["level"].no >= caplog.handler.level,
-        enqueue=False,
-    )
-    yield caplog
-    logger.remove(handler_id)
-
-
 def _make_stack(
     offset: int | None = None,
     mask: bool = False,
@@ -88,7 +73,7 @@ def _create_test_images(
 def _create_test_csv(
     path: Path, test_data: list[dict[str, Any]], csv_name: str
 ) -> Path:
-    """Creates CSV file and returns its path."""
+    """Create CSV file and returns its path."""
 
     data_dict = test_data.copy()
     for data in data_dict:
@@ -101,6 +86,41 @@ def _create_test_csv(
     csv_path = path / f"{csv_name}.csv"
     pd.DataFrame(data=data_dict).to_csv(csv_path, index=False)
     return csv_path
+
+
+def _create_test_yaml(path: Path) -> Path:
+    """Create YAML config file and returns its path."""
+    yaml_dict = {
+        "output_dir": str(path.resolve()),
+        "mask": {
+            "gaussian_sigma": 3,
+            "threshold_method": "triangle",
+            "closing_size": 5,
+            "erode_size": 0,
+        },
+        "pad_pixels": 5,
+    }
+
+    config_path = path / "config.yaml"
+    with open(config_path, "w") as outfile:
+        yaml.dump(yaml_dict, outfile, default_flow_style=False)
+
+    return config_path
+
+
+@pytest.fixture
+def caplog(caplog: LogCaptureFixture):
+    """Override the pytest caplog fixture, so that it will
+    work correctly with loguru."""
+    handler_id = logger.add(
+        caplog.handler,
+        format="{message}",
+        level=0,
+        filter=lambda record: record["level"].no >= caplog.handler.level,
+        enqueue=False,
+    )
+    yield caplog
+    logger.remove(handler_id)
 
 
 @pytest.fixture()
@@ -145,23 +165,3 @@ def make_tmp_dir(tmp_path: Path):
         return subdir
 
     return _make_subdir
-
-
-def _create_test_yaml(path: Path) -> Path:
-    """Creates YAML config file and returns its path."""
-    yaml_dict = {
-        "output_dir": str(path.resolve()),
-        "mask": {
-            "gaussian_sigma": 3,
-            "threshold_method": "triangle",
-            "closing_size": 5,
-            "erode_size": 0,
-        },
-        "pad_pixels": 5,
-    }
-
-    config_path = path / "config.yaml"
-    with open(config_path, "w") as outfile:
-        yaml.dump(yaml_dict, outfile, default_flow_style=False)
-
-    return config_path
