@@ -1,8 +1,6 @@
-import datetime
 from pathlib import Path
 from typing import Any
 
-import fancylog
 import numpy as np
 import pandas as pd
 import pytest
@@ -242,8 +240,9 @@ def source_csv_anisotropic_with_mask(
         ),
     ],
 )
+@pytest.mark.usefixtures("mock_fancylog_datetime")
 def test_standardise_filepaths(
-    request, mocker, source_csv, expected_standardised_paths, expected_qc_paths
+    request, source_csv, expected_standardised_paths, expected_qc_paths
 ):
     """Test standardise creates all the correct files, in the right
     directory structure."""
@@ -252,12 +251,6 @@ def test_standardise_filepaths(
     output_dir = source_csv_path.parents[1]
     output_vox_size = 50
 
-    # Mock datetime.now for fancylog - so the log filename timestamp
-    # remains consistent
-    mocker.patch("fancylog.fancylog.datetime")
-    fancylog.fancylog.datetime.now.return_value = datetime.datetime(
-        2025, 12, 10, 15, 15
-    )
     standardise(source_csv_path, output_dir, output_vox_size)
 
     # Check correct files / directory structure created
