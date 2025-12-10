@@ -26,7 +26,7 @@ def caplog(caplog: LogCaptureFixture):
     logger.remove(handler_id)
 
 
-def make_stack(
+def _make_stack(
     offset: int | None = None,
     mask: bool = False,
 ) -> NDArray[np.float64]:
@@ -50,39 +50,7 @@ def make_stack(
     return stack
 
 
-@pytest.fixture()
-def test_stacks() -> dict[str, NDArray[np.float64]]:
-    """Create symmetric and asymmetric test images and masks."""
-    return {
-        "image": make_stack(offset=5),
-        "mask": make_stack(mask=True, offset=5),
-    }
-
-
-@pytest.fixture()
-def test_data(
-    test_stacks: dict[str, NDArray[np.float64]],
-) -> list[dict[str, Any]]:
-    """Create test data for two subjects with different voxel sizes."""
-    return [
-        {
-            "subject_id": "test1",
-            "image": test_stacks["image"],
-            "mask": None,
-            "voxel_size": [25, 25, 25],
-            "origin": "PSL",
-        },
-        {
-            "subject_id": "test2",
-            "image": test_stacks["image"],
-            "mask": None,
-            "voxel_size": [10, 10, 10],
-            "origin": "LSA",
-        },
-    ]
-
-
-def create_test_images(
+def _create_test_images(
     path: Path,
     test_data: list[dict[str, Any]],
     image_type: str = "nifti",
@@ -117,7 +85,7 @@ def create_test_images(
     return test_data
 
 
-def create_test_csv(
+def _create_test_csv(
     path: Path, test_data: list[dict[str, Any]], csv_name: str
 ) -> Path:
     """Creates CSV file and returns its path."""
@@ -135,7 +103,51 @@ def create_test_csv(
     return csv_path
 
 
-def create_test_yaml(path: Path) -> Path:
+@pytest.fixture()
+def test_stacks() -> dict[str, NDArray[np.float64]]:
+    """Create symmetric and asymmetric test images and masks."""
+    return {
+        "image": _make_stack(offset=5),
+        "mask": _make_stack(mask=True, offset=5),
+    }
+
+
+@pytest.fixture()
+def test_data(
+    test_stacks: dict[str, NDArray[np.float64]],
+) -> list[dict[str, Any]]:
+    """Create test data for two subjects with different voxel sizes."""
+    return [
+        {
+            "subject_id": "test1",
+            "image": test_stacks["image"],
+            "mask": None,
+            "voxel_size": [25, 25, 25],
+            "origin": "PSL",
+        },
+        {
+            "subject_id": "test2",
+            "image": test_stacks["image"],
+            "mask": None,
+            "voxel_size": [10, 10, 10],
+            "origin": "LSA",
+        },
+    ]
+
+
+@pytest.fixture()
+def make_tmp_dir(tmp_path: Path):
+    """Callable that creates a subdirectory under tmp_path."""
+
+    def _make_subdir(name: str) -> Path:
+        subdir = tmp_path / name
+        subdir.mkdir(parents=True, exist_ok=True)
+        return subdir
+
+    return _make_subdir
+
+
+def _create_test_yaml(path: Path) -> Path:
     """Creates YAML config file and returns its path."""
     yaml_dict = {
         "output_dir": str(path.resolve()),
@@ -153,31 +165,3 @@ def create_test_yaml(path: Path) -> Path:
         yaml.dump(yaml_dict, outfile, default_flow_style=False)
 
     return config_path
-
-
-@pytest.fixture()
-def make_tmp_dir(tmp_path):
-    """Callable that creates a subdirectory under tmp_path."""
-
-    def _make_subdir(name: str) -> Path:
-        subdir = tmp_path / name
-        subdir.mkdir(parents=True, exist_ok=True)
-        return subdir
-
-    return _make_subdir
-
-
-@pytest.fixture()
-def create_standardised_test_data(
-    make_tmp_dir, test_data: list[dict[str, Any]]
-) -> tuple[Path, Path]:
-    """Sets up temp directory with "standardised" test images, CSV,
-    and config files."""
-
-    standardised_dir = make_tmp_dir("standardised")
-    test_data = create_test_images(standardised_dir, test_data, "nifti")
-    csv_path = create_test_csv(
-        standardised_dir, test_data, "standardised_data"
-    )
-    config_path = create_test_yaml(standardised_dir.parent)
-    return csv_path, config_path

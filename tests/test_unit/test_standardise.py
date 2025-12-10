@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
@@ -8,11 +8,11 @@ from brainglobe_space import AnatomicalSpace
 from brainglobe_utils.IO.image.load import load_nii
 
 from brainglobe_template_builder.preproc.standardise import standardise
-from tests.conftest import create_test_csv, create_test_images
+from tests.conftest import _create_test_csv, _create_test_images
 
 
 @pytest.fixture()
-def source_dir(make_tmp_dir) -> Path:
+def source_dir(make_tmp_dir: Callable[[str], Path]) -> Path:
     """Create a temporary 'source' directory."""
     return make_tmp_dir("source")
 
@@ -20,8 +20,8 @@ def source_dir(make_tmp_dir) -> Path:
 def write_test_data(source_dir: Path, test_data: list[dict[str, Any]]) -> Path:
     """Write test data to source_dir, and return the path to
     the summary csv."""
-    test_data = create_test_images(source_dir, test_data, "tif")
-    csv_path = create_test_csv(source_dir, test_data, "source_data")
+    test_data = _create_test_images(source_dir, test_data, "tif")
+    csv_path = _create_test_csv(source_dir, test_data, "source_data")
     return csv_path
 
 
@@ -31,7 +31,6 @@ def source_csv_no_masks(
 ) -> Path:
     """Create test data for two subjects - neither of which
     have masks."""
-
     return write_test_data(source_dir, test_data)
 
 

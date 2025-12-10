@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,27 @@ from brainglobe_template_builder.preproc.preprocess import (
     _save_niftis,
     preprocess,
 )
+from tests.conftest import (
+    _create_test_csv,
+    _create_test_images,
+    _create_test_yaml,
+)
+
+
+@pytest.fixture()
+def create_standardised_test_data(
+    make_tmp_dir: Callable[[str], Path], test_data: list[dict[str, Any]]
+) -> tuple[Path, Path]:
+    """Sets up temp directory with "standardised" test images, CSV,
+    and config files."""
+
+    standardised_dir = make_tmp_dir("standardised")
+    test_data = _create_test_images(standardised_dir, test_data, "nifti")
+    csv_path = _create_test_csv(
+        standardised_dir, test_data, "standardised_data"
+    )
+    config_path = _create_test_yaml(standardised_dir.parent)
+    return csv_path, config_path
 
 
 @pytest.mark.parametrize(
