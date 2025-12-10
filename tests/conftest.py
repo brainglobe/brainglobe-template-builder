@@ -95,17 +95,21 @@ def create_test_images(
     return test_data
 
 
-def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
-    """Creates "standardised_data" CSV file and returns its path."""
-    for data in test_data:
+def create_test_csv(
+    path: Path, test_data: list[dict[str, Any]], csv_name: str
+) -> Path:
+    """Creates CSV file and returns its path."""
+
+    data_dict = test_data.copy()
+    for data in data_dict:
         data["resolution_0"] = data["voxel_size"][0]
         data["resolution_1"] = data["voxel_size"][1]
         data["resolution_2"] = data["voxel_size"][2]
-        data.pop("voxel_size")
-        data.pop("image")
-    input_csv = pd.DataFrame(data=test_data)
-    csv_path = path / "standardised_data.csv"
-    input_csv.to_csv(csv_path, index=False)
+        for k in ("voxel_size", "image", "mask"):
+            data.pop(k)
+
+    csv_path = path / f"{csv_name}.csv"
+    pd.DataFrame(data=data_dict).to_csv(csv_path, index=False)
     return csv_path
 
 
@@ -139,6 +143,8 @@ def create_standardised_test_data(
     standardised_dir.mkdir(parents=True, exist_ok=True)
 
     test_data = create_test_images(standardised_dir, test_data)
-    csv_path = create_test_csv(standardised_dir, test_data)
+    csv_path = create_test_csv(
+        standardised_dir, test_data, "standardised_data"
+    )
     config_path = create_test_yaml(tmp_path)
     return csv_path, config_path

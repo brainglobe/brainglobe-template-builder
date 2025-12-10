@@ -9,6 +9,7 @@ from brainglobe_utils.IO.image.load import load_nii
 from brainglobe_utils.IO.image.save import save_any
 
 from brainglobe_template_builder.preproc.standardise import standardise
+from tests.conftest import create_test_csv
 
 
 @pytest.fixture()
@@ -42,31 +43,11 @@ def create_test_images(
     return test_data
 
 
-def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
-    """Creates "source_data" CSV file and returns its path."""
-
-    # we don't include the image / mask in the csv file,
-    # just metadata about them
-    df_data = test_data.copy()
-    for data in df_data:
-        data["resolution_0"] = data["voxel_size"][0]
-        data["resolution_1"] = data["voxel_size"][1]
-        data["resolution_2"] = data["voxel_size"][2]
-        data.pop("voxel_size")
-        data.pop("image")
-        data.pop("mask")
-
-    input_csv = pd.DataFrame(data=df_data)
-    csv_path = path / "source_data.csv"
-    input_csv.to_csv(csv_path, index=False)
-    return csv_path
-
-
 def write_test_data(source_dir: Path, test_data: list[dict[str, Any]]) -> Path:
     """Write test data to source_dir, and return the path to
     the summary csv."""
     test_data = create_test_images(source_dir, test_data)
-    csv_path = create_test_csv(source_dir, test_data)
+    csv_path = create_test_csv(source_dir, test_data, "source_data")
     return csv_path
 
 
