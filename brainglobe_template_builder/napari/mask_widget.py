@@ -45,6 +45,11 @@ class CreateMask(QWidget):
         self.closing_size.setValue(5)
         self.mask_groupbox.layout().addRow("closing size:", self.closing_size)
 
+        self.erode_size = QSpinBox(parent=self.mask_groupbox)
+        self.erode_size.setRange(0, 20)
+        self.erode_size.setValue(0)
+        self.mask_groupbox.layout().addRow("erode size:", self.erode_size)
+
         self.create_mask_button = QPushButton("Create mask", parent=self)
         self.mask_groupbox.layout().addRow(self.create_mask_button)
         self.create_mask_button.clicked.connect(self._on_button_click)
@@ -69,6 +74,7 @@ class CreateMask(QWidget):
             gauss_sigma=self.gauss_sigma.value(),
             threshold_method=self.threshold_method.currentText(),
             closing_size=self.closing_size.value(),
+            erode_size=self.erode_size.value(),
         )
 
         mask_name = f"{image.name}_label-brain"
