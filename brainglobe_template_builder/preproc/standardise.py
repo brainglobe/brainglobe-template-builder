@@ -263,7 +263,9 @@ def standardise(
     - a QC plot for every subject image + mask to verify ASR orientation
 
     At the top level of the 'standardised' dir, a csv file is created
-    summarising the properties / locations of the standardised image files.
+    summarising the properties / locations of the standardised image files. A
+    log file is also created at this level (template_builder_...) providing a
+    summary of package / python versions used, and any log messages.
 
     Parameters
     ----------

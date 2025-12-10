@@ -169,11 +169,13 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
     - ..._processed_lrflip.nii.gz : the lr-flipped processed brain image
     - ..._processed_mask_lrflip.nii.gz : the lr-flipped mask of the brain image
 
-    At the top level of the preprocessed dir, two text files are produced:
+    At the top level of the preprocessed dir, the following files are created:
     - all_processed_brain_paths.txt : paths of processed images (including
     flipped) for all subject ids
     - all_processed_mask_paths.txt : paths of masks (including flipped)
     for all subject ids
+    - template_builder...log : A log file providing a summary of package /
+    python versions used, and any log messages.
 
     The following plots are also saved to the 'preprocessed-QC' dir for
     every subject:
