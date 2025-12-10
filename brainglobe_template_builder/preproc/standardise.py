@@ -1,16 +1,21 @@
+import logging
 from pathlib import Path
 
+import fancylog
 import numpy as np
 import pandas as pd
 from brainglobe_space import AnatomicalSpace
 from brainglobe_utils.IO.image.load import load_any, read_with_dask
 from brainglobe_utils.IO.image.save import save_as_asr_nii
 
+import brainglobe_template_builder as package_for_log
 from brainglobe_template_builder.plots import plot_orthographic
 from brainglobe_template_builder.preproc.transform_utils import (
     downsample_anisotropic_stack_to_isotropic,
 )
 from brainglobe_template_builder.validate import validate_input_csv
+
+logger = logging.getLogger(__name__)
 
 
 def _get_subject_path(
@@ -275,13 +280,27 @@ def standardise(
         isotropic resolution!).
     """
 
-    validate_input_csv(source_csv)
-    source_df = pd.read_csv(source_csv)
-
     standardised_dir = output_dir / "standardised"
     standardised_qc_dir = output_dir / "standardised-QC"
     for directory in [standardised_dir, standardised_qc_dir]:
         directory.mkdir(parents=True, exist_ok=True)
+
+    fancylog.start_logging(
+        output_dir=standardised_dir,
+        package=package_for_log,
+        filename="template_builder",
+        timestamp=True,
+        write_cli_args=False,
+        verbose=False,
+        file_log_level="INFO",
+        log_header="BRAINGLOBE TEMPLATE BUILDER",
+    )
+
+    logger.info(f"Source csv path: {source_csv}")
+    logger.info(f"Output voxel size: {output_vox_size}")
+
+    validate_input_csv(source_csv)
+    source_df = pd.read_csv(source_csv)
 
     if "use" in source_df:
         source_df = source_df[source_df.use]
