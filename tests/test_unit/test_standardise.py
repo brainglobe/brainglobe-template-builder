@@ -250,7 +250,6 @@ def test_standardise_filepaths(
     source_csv_path = request.getfixturevalue(source_csv)
     output_dir = source_csv_path.parents[1]
     output_vox_size = 50
-
     standardise(source_csv_path, output_dir, output_vox_size)
 
     # Check correct files / directory structure created
