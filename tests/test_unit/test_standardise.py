@@ -12,12 +12,9 @@ from tests.conftest import create_test_csv, create_test_images
 
 
 @pytest.fixture()
-def source_dir(tmp_path) -> Path:
+def source_dir(make_tmp_dir) -> Path:
     """Create a temporary 'source' directory."""
-    source_dir = tmp_path / "source"
-    source_dir.mkdir(parents=True, exist_ok=True)
-
-    return source_dir
+    return make_tmp_dir("source")
 
 
 def write_test_data(source_dir: Path, test_data: list[dict[str, Any]]) -> Path:

@@ -156,17 +156,28 @@ def create_test_yaml(path: Path) -> Path:
 
 
 @pytest.fixture()
+def make_tmp_dir(tmp_path):
+    """Callable that creates a subdirectory under tmp_path."""
+
+    def _make_subdir(name: str) -> Path:
+        subdir = tmp_path / name
+        subdir.mkdir(parents=True, exist_ok=True)
+        return subdir
+
+    return _make_subdir
+
+
+@pytest.fixture()
 def create_standardised_test_data(
-    tmp_path: Path, test_data: list[dict[str, Any]]
+    make_tmp_dir, test_data: list[dict[str, Any]]
 ) -> tuple[Path, Path]:
     """Sets up temp directory with "standardised" test images, CSV,
     and config files."""
-    standardised_dir = tmp_path / "standardised"
-    standardised_dir.mkdir(parents=True, exist_ok=True)
 
+    standardised_dir = make_tmp_dir("standardised")
     test_data = create_test_images(standardised_dir, test_data, "nifti")
     csv_path = create_test_csv(
         standardised_dir, test_data, "standardised_data"
     )
-    config_path = create_test_yaml(tmp_path)
+    config_path = create_test_yaml(standardised_dir.parent)
     return csv_path, config_path
