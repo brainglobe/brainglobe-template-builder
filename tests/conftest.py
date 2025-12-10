@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 import yaml
 from _pytest.logging import LogCaptureFixture
-from brainglobe_utils.IO.image.save import save_as_asr_nii
+from brainglobe_utils.IO.image.save import save_any, save_as_asr_nii
 from loguru import logger
 from numpy.typing import NDArray
 
@@ -83,15 +83,41 @@ def test_data(
 
 
 def create_test_images(
-    path: Path, test_data: list[dict[str, Any]]
+    path: Path,
+    test_data: list[dict[str, Any]],
+    image_type: str = "nifti",
 ) -> list[dict[str, Any]]:
     """Save test images and add their paths to the returned test data dicts."""
+
+    file_ext = ".nii.gz" if image_type == "nifti" else ".tif"
+
     for data in test_data:
-        image_path = path / data["subject_id"] / f"{data['subject_id']}.nii.gz"
-        image_path.parent.mkdir()
-        voxel_dimensions_in_mm = [v * 0.001 for v in data["voxel_size"]]
-        save_as_asr_nii(data["image"], voxel_dimensions_in_mm, image_path)
+        subject_dir = path / data["subject_id"]
+        subject_dir.mkdir(parents=True, exist_ok=True)
+
+        image_path = subject_dir / f"{data['subject_id']}{file_ext}"
+        if image_type == "nifti":
+            save_as_asr_nii(
+                data["image"],
+                [v * 0.001 for v in data["voxel_size"]],
+                image_path,
+            )
+        else:
+            save_any(data["image"], image_path)
         data["filepath"] = image_path
+
+        if data["mask"] is not None:
+            mask_path = subject_dir / f"{data['subject_id']}_mask{file_ext}"
+            if image_type == "nifti":
+                save_as_asr_nii(
+                    data["mask"],
+                    [v * 0.001 for v in data["voxel_size"]],
+                    mask_path,
+                )
+            else:
+                save_any(data["mask"], mask_path)
+            data["mask_filepath"] = mask_path
+
     return test_data
 
 
@@ -142,7 +168,7 @@ def create_standardised_test_data(
     standardised_dir = tmp_path / "standardised"
     standardised_dir.mkdir(parents=True, exist_ok=True)
 
-    test_data = create_test_images(standardised_dir, test_data)
+    test_data = create_test_images(standardised_dir, test_data, "nifti")
     csv_path = create_test_csv(
         standardised_dir, test_data, "standardised_data"
     )

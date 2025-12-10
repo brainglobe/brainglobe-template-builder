@@ -6,10 +6,9 @@ import pandas as pd
 import pytest
 from brainglobe_space import AnatomicalSpace
 from brainglobe_utils.IO.image.load import load_nii
-from brainglobe_utils.IO.image.save import save_any
 
 from brainglobe_template_builder.preproc.standardise import standardise
-from tests.conftest import create_test_csv
+from tests.conftest import create_test_csv, create_test_images
 
 
 @pytest.fixture()
@@ -21,32 +20,10 @@ def source_dir(tmp_path) -> Path:
     return source_dir
 
 
-def create_test_images(
-    path: Path, test_data: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
-    """Save test images/masks and add their paths to the
-    returned test data dicts."""
-
-    for data in test_data:
-        subject_dir = path / data["subject_id"]
-        subject_dir.mkdir()
-
-        image_path = subject_dir / f"{data['subject_id']}.tiff"
-        save_any(data["image"], image_path)
-        data["filepath"] = image_path
-
-        if data["mask"] is not None:
-            mask_path = subject_dir / f"{data['subject_id']}_mask.tiff"
-            save_any(data["mask"], mask_path)
-            data["mask_filepath"] = mask_path
-
-    return test_data
-
-
 def write_test_data(source_dir: Path, test_data: list[dict[str, Any]]) -> Path:
     """Write test data to source_dir, and return the path to
     the summary csv."""
-    test_data = create_test_images(source_dir, test_data)
+    test_data = create_test_images(source_dir, test_data, "tif")
     csv_path = create_test_csv(source_dir, test_data, "source_data")
     return csv_path
 
