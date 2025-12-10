@@ -95,28 +95,24 @@ def create_test_images(
         subject_dir = path / data["subject_id"]
         subject_dir.mkdir(parents=True, exist_ok=True)
 
-        image_path = subject_dir / f"{data['subject_id']}{file_ext}"
-        if image_type == "nifti":
-            save_as_asr_nii(
-                data["image"],
-                [v * 0.001 for v in data["voxel_size"]],
-                image_path,
-            )
-        else:
-            save_any(data["image"], image_path)
-        data["filepath"] = image_path
+        data["filepath"] = subject_dir / f"{data['subject_id']}{file_ext}"
+        stacks = {"image": (data["image"], data["filepath"])}
 
         if data["mask"] is not None:
-            mask_path = subject_dir / f"{data['subject_id']}_mask{file_ext}"
+            data["mask_filepath"] = (
+                subject_dir / f"{data['subject_id']}_mask{file_ext}"
+            )
+            stacks["mask"] = (data["mask"], data["mask_filepath"])
+
+        for _, (stack, stack_path) in stacks.items():
             if image_type == "nifti":
                 save_as_asr_nii(
-                    data["mask"],
+                    stack,
                     [v * 0.001 for v in data["voxel_size"]],
-                    mask_path,
+                    stack_path,
                 )
             else:
-                save_any(data["mask"], mask_path)
-            data["mask_filepath"] = mask_path
+                save_any(stack, stack_path)
 
     return test_data
 
