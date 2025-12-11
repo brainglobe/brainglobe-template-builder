@@ -80,18 +80,27 @@ def test_preprocess(write_standardised_test_data: tuple[Path, Path]) -> None:
     preprocess(csv_path, config_path)
 
     preprocessed_dir = csv_path.parents[1] / "preprocessed"
+    qc_dir = csv_path.parents[1] / "preprocessed-QC"
 
     assert preprocessed_dir.exists()
+    assert qc_dir.exists()
+
     assert set(os.listdir(preprocessed_dir)) == {
         "all_processed_brain_paths.txt",
         "all_processed_mask_paths.txt",
         "sub-test1",
         "sub-test2",
     }
+
+    assert set(os.listdir(qc_dir)) == {
+        "sub-test1-mask-QC-grid.pdf",
+        "sub-test1-mask-QC-grid.png",
+        "sub-test2-mask-QC-grid.pdf",
+        "sub-test2-mask-QC-grid.png",
+    }
+
     for i in [1, 2]:
         assert set(os.listdir(preprocessed_dir / f"sub-test{i}")) == {
-            f"sub-test{i}-QC-mask.pdf",
-            f"sub-test{i}-QC-mask.png",
             f"test{i}_processed.nii.gz",
             f"test{i}_processed_lrflip.nii.gz",
             f"test{i}_processed_mask.nii.gz",

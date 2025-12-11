@@ -16,6 +16,7 @@ from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
 from brainglobe_template_builder.validate import validate_input_csv
 
 PREPROCESSED_DIR_NAME = "preprocessed"
+QC_DIR_NAME = "preprocessed-QC"
 
 
 def _create_subject_dir(subject_id: str, output_dir: Path) -> Path:
@@ -90,6 +91,8 @@ def _process_subject(
     subject_dir = _create_subject_dir(
         subject_row.subject_id, config.output_dir
     )
+    qc_dir = config.output_dir / QC_DIR_NAME
+    qc_dir.mkdir(parents=True, exist_ok=True)
 
     image = load_any(image_path)
     vox_sizes_mm = [
@@ -126,7 +129,7 @@ def _process_subject(
         anat_space="ASR",
         section="frontal",
         overlay_is_mask=True,
-        save_path=subject_dir / f"sub-{subject_row.subject_id}-QC-mask.png",
+        save_path=qc_dir / f"sub-{subject_row.subject_id}-mask-QC-grid.png",
     )
 
     # Save image + mask, as well as flipped versions
@@ -148,7 +151,7 @@ def _process_subject(
     }
 
 
-def preprocess(standardised_csv: Path, config_file: Path) -> None:
+def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
     """Process nifti files in ASR orientation to create output images +
     masks ready for template creation.
 
@@ -161,7 +164,6 @@ def preprocess(standardised_csv: Path, config_file: Path) -> None:
     - ..._processed_mask.nii.gz : the mask of the brain image
     - ..._processed_lrflip.nii.gz : the lr-flipped processed brain image
     - ..._processed_mask_lrflip.nii.gz : the lr-flipped mask of the brain image
-    - ..-QC-mask.png: a plot showing the mask overlaid on the brain image
 
     At the top level of the preprocessed dir, two text files are produced:
     - all_processed_brain_paths.txt : paths of processed images (including
@@ -169,24 +171,34 @@ def preprocess(standardised_csv: Path, config_file: Path) -> None:
     - all_processed_mask_paths.txt : paths of masks (including flipped)
     for all subject ids
 
+    The following plots are also saved to the 'preprocessed-QC' dir for
+    every subject:
+    - ..-mask-QC-grid.png: a plot showing the mask overlaid on the brain image
+
     Parameters
     ----------
     standardised_csv : Path
         Standardised csv file path. One row per sample, each with a
         unique 'subject_id' - this is created via `standardise`.
-    config_file : Path
-        Config yaml file path. Contains settings for pre-processing steps.
+    config : Path | PreprocConfig
+        Config yaml file path, or PreprocConfig object. Contains settings for
+        pre-processing steps.
     """
 
     validate_input_csv(standardised_csv)
     input_df = pd.read_csv(standardised_csv)
 
-    with open(config_file) as f:
-        config_yaml = yaml.safe_load(f)
+    if isinstance(config, Path):
+        with open(config) as f:
+            config_yaml = yaml.safe_load(f)
+        preproc_config = PreprocConfig.model_validate(config_yaml)
+    else:
+        preproc_config = config
 
-    config = PreprocConfig.model_validate(config_yaml)
-    preprocessed_dir = config.output_dir / PREPROCESSED_DIR_NAME
-    preprocessed_dir.mkdir(parents=True, exist_ok=True)
+    preprocessed_dir = preproc_config.output_dir / PREPROCESSED_DIR_NAME
+    qc_dir = preproc_config.output_dir / QC_DIR_NAME
+    for directory in [preprocessed_dir, qc_dir]:
+        directory.mkdir(parents=True, exist_ok=True)
 
     image_paths = []
     mask_paths = []
@@ -195,7 +207,7 @@ def preprocess(standardised_csv: Path, config_file: Path) -> None:
         if ("use" in row) and (row.use is False):
             continue
 
-        paths_dict = _process_subject(row, config)
+        paths_dict = _process_subject(row, preproc_config)
         image_paths.extend([paths_dict["image"], paths_dict["flipped_image"]])
         mask_paths.extend([paths_dict["mask"], paths_dict["flipped_mask"]])
 

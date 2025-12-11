@@ -42,18 +42,18 @@ class SaveFiles(QWidget):
     def _create_voxel_size_widget(self):
         """Create 3 fields for entering the voxel size."""
         self.voxel_size_layout = QHBoxLayout()
-        self.z_size = QLineEdit()
-        self.y_size = QLineEdit()
-        self.x_size = QLineEdit()
-        self.z_size.setText("1")
-        self.y_size.setText("1")
-        self.x_size.setText("1")
-        self.voxel_size_layout.addWidget(self.z_size)
-        self.voxel_size_layout.addWidget(self.y_size)
-        self.voxel_size_layout.addWidget(self.x_size)
+        self.axis_0_size = QLineEdit()
+        self.axis_1_size = QLineEdit()
+        self.axis_2_size = QLineEdit()
+        self.axis_0_size.setText("1")
+        self.axis_1_size.setText("1")
+        self.axis_2_size.setText("1")
+        self.voxel_size_layout.addWidget(self.axis_0_size)
+        self.voxel_size_layout.addWidget(self.axis_1_size)
+        self.voxel_size_layout.addWidget(self.axis_2_size)
 
         self.save_groupbox.layout().addRow(
-            "Voxel size (zyx) in mm:", self.voxel_size_layout
+            "Voxel size (axes 0, 1, 2) in mm:", self.voxel_size_layout
         )
 
     def _create_save_path_widget(self):
@@ -90,9 +90,9 @@ class SaveFiles(QWidget):
         # Get voxel sizes
         try:
             vox_sizes = [
-                float(self.z_size.text()),
-                float(self.y_size.text()),
-                float(self.x_size.text()),
+                float(self.axis_0_size.text()),
+                float(self.axis_1_size.text()),
+                float(self.axis_2_size.text()),
             ]
         except ValueError:
             show_info("Please enter valid voxel sizes in mm.")
