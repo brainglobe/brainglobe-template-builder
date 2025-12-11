@@ -45,14 +45,10 @@ def write_standardised_test_data(
     [
         pytest.param(["false", "false"], {}, id="false, false"),
         pytest.param(["False", "false"], {}, id="False, false"),
-        pytest.param(["false", "true"], {"sub-test2"}, id="false, true"),
-        pytest.param(["", "false"], {"sub-test1"}, id="empty (true), false"),
-        pytest.param(
-            ["F", "T"], {"sub-test1", "sub-test2"}, id="F (true), T (true)"
-        ),
-        pytest.param(
-            ["0", "1"], {"sub-test1", "sub-test2"}, id="0 (true), 1 (true)"
-        ),
+        pytest.param(["false", "true"], {"sub-b"}, id="false, true"),
+        pytest.param(["", "false"], {"sub-a"}, id="empty (true), false"),
+        pytest.param(["F", "T"], {"sub-a", "sub-b"}, id="F (true), T (true)"),
+        pytest.param(["0", "1"], {"sub-a", "sub-b"}, id="0 (true), 1 (true)"),
     ],
 )
 def test_preprocess_use_input(
@@ -109,29 +105,29 @@ def test_preprocess(
     assert set(os.listdir(preprocessed_dir)) == {
         "all_processed_brain_paths.txt",
         "all_processed_mask_paths.txt",
-        "sub-test1",
-        "sub-test2",
+        "sub-a",
+        "sub-b",
     }
 
     assert set(os.listdir(qc_dir)) == {
-        "sub-test1-mask-QC-grid.pdf",
-        "sub-test1-mask-QC-grid.png",
-        "sub-test2-mask-QC-grid.pdf",
-        "sub-test2-mask-QC-grid.png",
+        "sub-a-mask-QC-grid.pdf",
+        "sub-a-mask-QC-grid.png",
+        "sub-b-mask-QC-grid.pdf",
+        "sub-b-mask-QC-grid.png",
     }
 
-    for i in [1, 2]:
-        assert set(os.listdir(preprocessed_dir / f"sub-test{i}")) == {
-            f"test{i}_processed.nii.gz",
-            f"test{i}_processed_lrflip.nii.gz",
-            f"test{i}_processed_mask.nii.gz",
-            f"test{i}_processed_mask_lrflip.nii.gz",
+    for sub_id in ["a", "b"]:
+        assert set(os.listdir(preprocessed_dir / f"sub-{sub_id}")) == {
+            f"{sub_id}_processed.nii.gz",
+            f"{sub_id}_processed_lrflip.nii.gz",
+            f"{sub_id}_processed_mask.nii.gz",
+            f"{sub_id}_processed_mask_lrflip.nii.gz",
         }
 
 
 def test_create_subject_dir(tmp_path: Path) -> None:
     """Test that _create_subject_dir creates correct directory structure."""
-    sub_id = "test123"
+    sub_id = "a"
     sub_dir = _create_subject_dir(sub_id, tmp_path)
     assert sub_dir.exists()
     assert sub_dir == tmp_path / "preprocessed" / f"sub-{sub_id}"
@@ -139,7 +135,7 @@ def test_create_subject_dir(tmp_path: Path) -> None:
 
 def test_create_subject_dir_exists(tmp_path: Path) -> None:
     """Test exist_ok=True for _create_subject_dir."""
-    sub_id = "test123"
+    sub_id = "a"
     _create_subject_dir(sub_id, tmp_path)
     _create_subject_dir(sub_id, tmp_path)
 

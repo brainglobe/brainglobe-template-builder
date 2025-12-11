@@ -155,14 +155,14 @@ def test_data(
     """Create test data for two subjects with different voxel sizes."""
     return [
         {
-            "subject_id": "test1",
+            "subject_id": "a",
             "image": test_stacks["image"],
             "mask": None,
             "voxel_size": [25, 25, 25],
             "origin": "PSL",
         },
         {
-            "subject_id": "test2",
+            "subject_id": "b",
             "image": test_stacks["image"],
             "mask": None,
             "voxel_size": [10, 10, 10],

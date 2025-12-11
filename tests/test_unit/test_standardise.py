@@ -92,7 +92,7 @@ def source_csv_anisotropic_with_mask(
         {
             "image": test_stacks["image"],
             "mask": test_stacks["mask"],
-            "subject_id": "test2",
+            "subject_id": "b",
             "voxel_size": [10, 4, 2],
             "origin": "ASR",
         }
@@ -106,41 +106,41 @@ def source_csv_anisotropic_with_mask(
         pytest.param(
             "source_csv_no_masks",
             [
-                "standardised/sub-test1",
-                "standardised/sub-test2",
+                "standardised/sub-a",
+                "standardised/sub-b",
                 "standardised/standardised_images.csv",
-                "standardised/sub-test1/sub-test1_res-50x50x50um_origin-asr.nii.gz",
-                "standardised/sub-test2/sub-test2_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
             ],
             [
-                "standardised-QC/sub-test1-QC-orthographic.png",
-                "standardised-QC/sub-test1-QC-orthographic.pdf",
-                "standardised-QC/sub-test2-QC-orthographic.png",
-                "standardised-QC/sub-test2-QC-orthographic.pdf",
+                "standardised-QC/sub-a-QC-orthographic.png",
+                "standardised-QC/sub-a-QC-orthographic.pdf",
+                "standardised-QC/sub-b-QC-orthographic.png",
+                "standardised-QC/sub-b-QC-orthographic.pdf",
             ],
             id="no mask column",
         ),
         pytest.param(
             "source_csv_with_masks",
             [
-                "standardised/sub-test1",
-                "standardised/sub-test2",
+                "standardised/sub-a",
+                "standardised/sub-b",
                 "standardised/standardised_images.csv",
                 # subject a image + mask
-                "standardised/sub-test1/sub-test1_res-50x50x50um_origin-asr.nii.gz",
-                "standardised/sub-test1/sub-test1_res-50x50x50um_mask_origin-asr.nii.gz",
+                "standardised/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-a/sub-a_res-50x50x50um_mask_origin-asr.nii.gz",
                 # subject b image (no mask provided)
-                "standardised/sub-test2/sub-test2_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
             ],
             [
                 # subject a QC plots for image + mask
-                "standardised-QC/sub-test1-QC-orthographic.png",
-                "standardised-QC/sub-test1-QC-orthographic.pdf",
-                "standardised-QC/sub-test1-mask-QC-orthographic.png",
-                "standardised-QC/sub-test1-mask-QC-orthographic.pdf",
+                "standardised-QC/sub-a-QC-orthographic.png",
+                "standardised-QC/sub-a-QC-orthographic.pdf",
+                "standardised-QC/sub-a-mask-QC-orthographic.png",
+                "standardised-QC/sub-a-mask-QC-orthographic.pdf",
                 # subject b QC plot for image (no mask provided)
-                "standardised-QC/sub-test2-QC-orthographic.png",
-                "standardised-QC/sub-test2-QC-orthographic.pdf",
+                "standardised-QC/sub-b-QC-orthographic.png",
+                "standardised-QC/sub-b-QC-orthographic.pdf",
             ],
             id="with mask column",
         ),
@@ -179,8 +179,8 @@ def test_standardise_filepaths(
         pytest.param(
             "source_csv_no_masks",
             [
-                "standardised/sub-test1/sub-test1_res-50x50x50um_origin-asr.nii.gz",
-                "standardised/sub-test2/sub-test2_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
             ],
             [],
             id="no mask column",
@@ -188,11 +188,11 @@ def test_standardise_filepaths(
         pytest.param(
             "source_csv_with_masks",
             [
-                "standardised/sub-test1/sub-test1_res-50x50x50um_origin-asr.nii.gz",
-                "standardised/sub-test2/sub-test2_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
+                "standardised/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
             ],
             [
-                "standardised/sub-test1/sub-test1_res-50x50x50um_mask_origin-asr.nii.gz",
+                "standardised/sub-a/sub-a_res-50x50x50um_mask_origin-asr.nii.gz",
                 np.nan,
             ],
             id="with mask column",
@@ -223,7 +223,7 @@ def test_standardise_output_csv(
 
     expected_output_csv = pd.DataFrame(
         data={
-            "subject_id": ["test1", "test2"],
+            "subject_id": ["a", "b"],
             "resolution_0": output_vox_size,
             "resolution_1": output_vox_size,
             "resolution_2": output_vox_size,
@@ -247,17 +247,15 @@ def test_standardise_with_use(source_csv_with_use):
 
     standardised_dir = output_dir / "standardised"
     assert standardised_dir.exists()
-    assert not (
-        standardised_dir / "sub-test1"
-    ).exists()  # subject a has use=False
-    assert (standardised_dir / "sub-test2").exists()  # subject b has use=True
+    assert not (standardised_dir / "sub-a").exists()  # subject a has use=False
+    assert (standardised_dir / "sub-b").exists()  # subject b has use=True
 
     output_csv_path = standardised_dir / "standardised_images.csv"
     assert output_csv_path.exists()
 
     output_csv = pd.read_csv(output_csv_path)
     assert len(output_csv) == 1
-    assert output_csv.subject_id.iloc[0] == "test2"
+    assert output_csv.subject_id.iloc[0] == "b"
 
 
 def test_standardise_anisotropic(source_csv_anisotropic_with_mask):
@@ -267,7 +265,7 @@ def test_standardise_anisotropic(source_csv_anisotropic_with_mask):
 
     with pytest.raises(
         ValueError,
-        match=r"Subject id: test2 has anisotropic voxel size: \[10, 4, 2\]",
+        match=r"Subject id: b has anisotropic voxel size: \[10, 4, 2\]",
     ):
         standardise(
             source_csv_anisotropic_with_mask,
@@ -283,9 +281,9 @@ def test_standardise_reorientation(
     output_dir = source_csv_single_image_with_mask.parents[1]
     standardise(source_csv_single_image_with_mask, output_dir)
 
-    subject_dir = output_dir / "standardised" / "sub-test2"
-    image_path = subject_dir / "sub-test2_res-10x10x10um_origin-asr.nii.gz"
-    mask_path = subject_dir / "sub-test2_res-10x10x10um_mask_origin-asr.nii.gz"
+    subject_dir = output_dir / "standardised" / "sub-b"
+    image_path = subject_dir / "sub-b_res-10x10x10um_origin-asr.nii.gz"
+    mask_path = subject_dir / "sub-b_res-10x10x10um_mask_origin-asr.nii.gz"
 
     for output_path, source_image in zip(
         [image_path, mask_path], [test_stacks["image"], test_stacks["mask"]]
@@ -333,9 +331,9 @@ def test_standardise_downsampling(request, source_csv, expected_output_size):
     output_vox_size = 20
     standardise(source_csv_path, output_dir, output_vox_size)
 
-    subject_dir = output_dir / "standardised" / "sub-test2"
-    image_path = subject_dir / "sub-test2_res-20x20x20um_origin-asr.nii.gz"
-    mask_path = subject_dir / "sub-test2_res-20x20x20um_mask_origin-asr.nii.gz"
+    subject_dir = output_dir / "standardised" / "sub-b"
+    image_path = subject_dir / "sub-b_res-20x20x20um_origin-asr.nii.gz"
+    mask_path = subject_dir / "sub-b_res-20x20x20um_mask_origin-asr.nii.gz"
 
     output_vox_sizes_mm = (
         output_vox_size * 0.001,
