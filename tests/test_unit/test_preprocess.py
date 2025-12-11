@@ -74,10 +74,26 @@ def test_preprocess_use_input(
     )
 
 
-def test_preprocess(write_standardised_test_data: tuple[Path, Path]) -> None:
-    """Test that preprocess creates expected directories and files."""
+@pytest.mark.parametrize(
+    "config_type",
+    ["config_file", "PreprocConfig object"],
+)
+def test_preprocess(
+    write_standardised_test_data: tuple[Path, Path], config_type: str
+) -> None:
+    """Test that preprocess creates expected directories and files - both
+    with a config yaml file path as input OR a PreprocConfig object."""
     csv_path, config_path = write_standardised_test_data
-    preprocess(csv_path, config_path)
+
+    config: Path | PreprocConfig
+    if config_type == "config_file":
+        config = config_path
+    else:
+        with open(config_path) as f:
+            config_yaml = yaml.safe_load(f)
+        config = PreprocConfig.model_validate(config_yaml)
+
+    preprocess(csv_path, config)
 
     preprocessed_dir = csv_path.parents[1] / "preprocessed"
     qc_dir = csv_path.parents[1] / "preprocessed-QC"
