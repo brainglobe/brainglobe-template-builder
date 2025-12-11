@@ -26,6 +26,11 @@ def write_standardised_test_data(
     make_tmp_dir,
 ) -> tuple[Path, Path] | Path:
     """Create standardised test data with CSV and config."""
+
+    # Assuming reorientation to ASR has happened
+    for test_data_i in test_data:
+        test_data_i["origin"] = "ASR"
+
     return _write_test_data(
         dir=make_tmp_dir("standardised"),
         test_data=test_data,
