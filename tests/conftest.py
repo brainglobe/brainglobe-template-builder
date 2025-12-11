@@ -1,18 +1,17 @@
+import datetime
+
+import fancylog
 import pytest
-from _pytest.logging import LogCaptureFixture
-from loguru import logger
 
 
-@pytest.fixture
-def caplog(caplog: LogCaptureFixture):
-    """Override the pytest caplog fixture, so that it will
-    work correctly with loguru."""
-    handler_id = logger.add(
-        caplog.handler,
-        format="{message}",
-        level=0,
-        filter=lambda record: record["level"].no >= caplog.handler.level,
-        enqueue=False,
+@pytest.fixture()
+def mock_fancylog_datetime(mocker):
+    """Mock datetime.now for fancylog to 2025-12-10 15:15.
+
+    This allows the log filename timestamp to remain consistent
+    for testing.
+    """
+    mocker.patch("fancylog.fancylog.datetime")
+    fancylog.fancylog.datetime.now.return_value = datetime.datetime(
+        2025, 12, 10, 15, 15
     )
-    yield caplog
-    logger.remove(handler_id)

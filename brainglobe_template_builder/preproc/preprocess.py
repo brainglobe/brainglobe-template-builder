@@ -1,11 +1,14 @@
+import logging
 from pathlib import Path
 
+import fancylog
 import numpy as np
 import pandas as pd
 import yaml
 from brainglobe_utils.IO.image.load import load_any
 from brainglobe_utils.IO.image.save import save_as_asr_nii
 
+import brainglobe_template_builder as package_for_log
 from brainglobe_template_builder.plots import plot_grid
 from brainglobe_template_builder.preproc.brightness import (
     correct_image_brightness,
@@ -15,6 +18,7 @@ from brainglobe_template_builder.preproc.masking import create_mask
 from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
 from brainglobe_template_builder.validate import validate_input_csv
 
+logger = logging.getLogger(__name__)
 PREPROCESSED_DIR_NAME = "preprocessed"
 QC_DIR_NAME = "preprocessed-QC"
 
@@ -165,11 +169,13 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
     - ..._processed_lrflip.nii.gz : the lr-flipped processed brain image
     - ..._processed_mask_lrflip.nii.gz : the lr-flipped mask of the brain image
 
-    At the top level of the preprocessed dir, two text files are produced:
+    At the top level of the preprocessed dir, the following files are created:
     - all_processed_brain_paths.txt : paths of processed images (including
     flipped) for all subject ids
     - all_processed_mask_paths.txt : paths of masks (including flipped)
     for all subject ids
+    - template_builder...log : A log file providing a summary of package /
+    python versions used, and any log messages.
 
     The following plots are also saved to the 'preprocessed-QC' dir for
     every subject:
@@ -185,9 +191,6 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
         pre-processing steps.
     """
 
-    validate_input_csv(standardised_csv)
-    input_df = pd.read_csv(standardised_csv)
-
     if isinstance(config, Path):
         with open(config) as f:
             config_yaml = yaml.safe_load(f)
@@ -199,6 +202,23 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
     qc_dir = preproc_config.output_dir / QC_DIR_NAME
     for directory in [preprocessed_dir, qc_dir]:
         directory.mkdir(parents=True, exist_ok=True)
+
+    fancylog.start_logging(
+        output_dir=preprocessed_dir,
+        package=package_for_log,
+        filename="template_builder",
+        timestamp=True,
+        write_cli_args=False,
+        verbose=False,
+        file_log_level="INFO",
+        log_header="BRAINGLOBE TEMPLATE BUILDER",
+    )
+
+    logger.info(f"Csv file path: {standardised_csv}")
+    logger.info(f"Config: {config}")
+
+    validate_input_csv(standardised_csv)
+    input_df = pd.read_csv(standardised_csv)
 
     image_paths = []
     mask_paths = []
