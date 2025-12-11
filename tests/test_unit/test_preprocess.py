@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,27 +17,22 @@ from brainglobe_template_builder.preproc.preprocess import (
     _save_niftis,
     preprocess,
 )
-from tests.conftest import (
-    _create_test_csv,
-    _create_test_images,
-    _create_test_yaml,
-)
+from tests.conftest import _write_test_data
 
 
 @pytest.fixture()
-def create_standardised_test_data(
-    make_tmp_dir: Callable[[str], Path], test_data: list[dict[str, Any]]
-) -> tuple[Path, Path]:
-    """Sets up temp directory with "standardised" test images, CSV,
-    and config files."""
-
-    standardised_dir = make_tmp_dir("standardised")
-    test_data = _create_test_images(standardised_dir, test_data, "nifti")
-    csv_path = _create_test_csv(
-        standardised_dir, test_data, "standardised_data"
+def write_standardised_test_data(
+    test_data: list[dict[str, Any]],
+    make_tmp_dir,
+) -> tuple[Path, Path] | Path:
+    """Create standardised test data with CSV and config."""
+    return _write_test_data(
+        dir=make_tmp_dir("standardised"),
+        test_data=test_data,
+        image_type="nifti",
+        csv_name="standardised_data",
+        config=True,
     )
-    config_path = _create_test_yaml(standardised_dir.parent)
-    return csv_path, config_path
 
 
 @pytest.mark.parametrize(
@@ -58,10 +53,10 @@ def create_standardised_test_data(
 def test_preprocess_use_input(
     use: list[str],
     expected_listdir: set,
-    create_standardised_test_data: tuple[Path, Path],
+    write_standardised_test_data: tuple[Path, Path],
 ) -> None:
     """Test exclusion/inclusion based on optional 'use' column values."""
-    csv_path, config_path = create_standardised_test_data
+    csv_path, config_path = write_standardised_test_data
     input_df = pd.read_csv(csv_path)
     input_df["use"] = use
     input_df.to_csv(csv_path, index=False)
@@ -79,9 +74,9 @@ def test_preprocess_use_input(
     )
 
 
-def test_preprocess(create_standardised_test_data: tuple[Path, Path]) -> None:
+def test_preprocess(write_standardised_test_data: tuple[Path, Path]) -> None:
     """Test that preprocess creates expected directories and files."""
-    csv_path, config_path = create_standardised_test_data
+    csv_path, config_path = write_standardised_test_data
     preprocess(csv_path, config_path)
 
     preprocessed_dir = csv_path.parents[1] / "preprocessed"
@@ -164,10 +159,10 @@ def test_save_niftis_lrflip(
     ],
 )
 def test_process_subject(
-    create_standardised_test_data: tuple[Path, Path], n_sub: int
+    write_standardised_test_data: tuple[Path, Path], n_sub: int
 ) -> None:
     """Test _process_subject creates expected files with expected keys."""
-    csv_path, config_path = create_standardised_test_data
+    csv_path, config_path = write_standardised_test_data
 
     # load input csv df with first n subject rows
     input_df = pd.read_csv(csv_path).head(n_sub)
@@ -204,10 +199,10 @@ def test_process_subject(
 
 
 def test_process_subject_config_padding(
-    create_standardised_test_data: tuple[Path, Path],
+    write_standardised_test_data: tuple[Path, Path],
 ) -> None:
     """Test whether _process_subject uses padding from config file."""
-    csv_path, config_path = create_standardised_test_data
+    csv_path, config_path = write_standardised_test_data
     subject_row = pd.read_csv(csv_path).iloc[0]
 
     with open(config_path) as f:
@@ -235,10 +230,10 @@ def test_process_subject_config_padding(
 
 
 def test_process_subject_config_mask(
-    create_standardised_test_data: tuple[Path, Path],
+    write_standardised_test_data: tuple[Path, Path],
 ) -> None:
     """Test whether _process_subject uses mask from config file."""
-    csv_path, config_path = create_standardised_test_data
+    csv_path, config_path = write_standardised_test_data
     subject_row = pd.read_csv(csv_path).iloc[0]
 
     with open(config_path) as f:

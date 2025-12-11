@@ -108,6 +108,22 @@ def _create_test_yaml(path: Path) -> Path:
     return config_path
 
 
+def _write_test_data(
+    dir: Path,
+    test_data: list[dict[str, Any]],
+    image_type: str,
+    csv_name: str,
+    config: bool,
+) -> tuple[Path, Path] | Path:
+    """Write test data, return csv path or (csv, config) paths."""
+    test_data = _create_test_images(dir, test_data, image_type)
+    csv_path = _create_test_csv(dir, test_data, csv_name)
+    if config:
+        config_path = _create_test_yaml(dir.parent)
+        return csv_path, config_path
+    return csv_path
+
+
 @pytest.fixture
 def caplog(caplog: LogCaptureFixture):
     """Override the pytest caplog fixture, so that it will

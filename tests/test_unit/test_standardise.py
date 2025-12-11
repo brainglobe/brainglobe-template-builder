@@ -6,90 +6,98 @@ import pandas as pd
 import pytest
 from brainglobe_space import AnatomicalSpace
 from brainglobe_utils.IO.image.load import load_nii
+from numpy._typing._array_like import NDArray
 
 from brainglobe_template_builder.preproc.standardise import standardise
-from tests.conftest import _create_test_csv, _create_test_images
+from tests.conftest import (
+    _write_test_data,
+)
 
 
 @pytest.fixture()
-def source_dir(make_tmp_dir: Callable[[str], Path]) -> Path:
+def source_dir(
+    make_tmp_dir: Callable[[str], Path],
+) -> tuple[Path, Path] | Path:
     """Create a temporary 'source' directory."""
     return make_tmp_dir("source")
 
 
-def write_test_data(source_dir: Path, test_data: list[dict[str, Any]]) -> Path:
-    """Write test data to source_dir, and return the path to
-    the summary csv."""
-    test_data = _create_test_images(source_dir, test_data, "tif")
-    csv_path = _create_test_csv(source_dir, test_data, "source_data")
-    return csv_path
+@pytest.fixture()
+def source_data_kwargs(make_tmp_dir, test_data):
+    return {
+        "image_type": "tif",
+        "csv_name": "source_data",
+        "config": False,
+        "dir": make_tmp_dir("source"),
+        "test_data": test_data,
+    }
 
 
 @pytest.fixture()
-def source_csv_no_masks(
-    source_dir: Path, test_data: list[dict[str, Any]]
-) -> Path:
-    """Create test data for two subjects - neither of which
-    have masks."""
-    return write_test_data(source_dir, test_data)
+def source_csv_no_masks(source_data_kwargs: dict) -> tuple[Path, Path] | Path:
+    """Create source test data with CSV and config."""
+    return _write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_with_masks(
-    source_dir: Path, test_data: list[dict[str, Any]], test_stacks
-) -> Path:
+    source_data_kwargs: dict[str, Any],
+    test_stacks: dict[str, NDArray[np.float64]],
+) -> tuple[Path, Path] | Path:
     """Create test data for two subjects, one with a mask and
     one without."""
 
-    test_data[0]["mask"] = test_stacks["mask"]
-    test_data[1]["mask"] = None
+    source_data_kwargs["test_data"][0]["mask"] = test_stacks["mask"]
+    source_data_kwargs["test_data"][1]["mask"] = None
 
-    return write_test_data(source_dir, test_data)
+    return _write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_single_image_with_mask(
-    source_dir: Path, test_data: list[dict[str, Any]], test_stacks
-) -> Path:
+    source_data_kwargs: dict[str, Any],
+    test_stacks: dict[str, NDArray[np.float64]],
+) -> tuple[Path, Path] | Path:
     """Create test data for a single subject with a
     corresponding mask."""
 
-    single_image = test_data[1]
-    single_image["mask"] = test_stacks["mask"]
+    source_data_kwargs["test_data"] = [source_data_kwargs["test_data"][1]]
+    source_data_kwargs["test_data"][0]["mask"] = test_stacks["mask"]
 
-    return write_test_data(source_dir, [single_image])
+    return _write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_with_use(
-    source_dir: Path, test_data: list[dict[str, Any]]
-) -> Path:
+    source_data_kwargs: dict[str, Any],
+) -> tuple[Path, Path] | Path:
     """Create test data for two subjects - one with use=False,
     and the other with use=True."""
 
-    test_data[0]["use"] = False
-    test_data[1]["use"] = True
+    source_data_kwargs["test_data"][0]["use"] = False
+    source_data_kwargs["test_data"][1]["use"] = True
 
-    return write_test_data(source_dir, test_data)
+    return _write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
-def source_csv_anisotropic_with_mask(source_dir: Path, test_stacks) -> Path:
+def source_csv_anisotropic_with_mask(
+    source_data_kwargs: dict[str, Any],
+    test_stacks: dict[str, NDArray[np.float64]],
+) -> tuple[Path, Path] | Path:
     """Create test data for a single subject with anisotropic
     resolution and a corresponding mask."""
 
-    return write_test_data(
-        source_dir,
-        [
-            {
-                "image": test_stacks["image"],
-                "mask": test_stacks["mask"],
-                "subject_id": "test2",
-                "voxel_size": [10, 4, 2],
-                "origin": "ASR",
-            }
-        ],
-    )
+    source_data_kwargs["test_data"] = [
+        {
+            "image": test_stacks["image"],
+            "mask": test_stacks["mask"],
+            "subject_id": "test2",
+            "voxel_size": [10, 4, 2],
+            "origin": "ASR",
+        }
+    ]
+    return _write_test_data(**source_data_kwargs)
 
 
 @pytest.mark.parametrize(
