@@ -58,32 +58,6 @@ class SaveFiles(QWidget):
             "Voxel size (axes 0, 1, 2) in mm:", self.voxel_size_layout
         )
 
-    # def _create_save_path_widget(self):
-    #     """Create a line edit and browse button for selecting a save path.
-
-    #     The path has to be a valid directory path.
-    #     """
-    #     self.path_edit = QLineEdit()
-    #     self.browse_button = QPushButton("browse")
-    #     self.browse_button.clicked.connect(self._open_save_dialog)
-
-    #     self.path_layout = QHBoxLayout()
-    #     self.path_layout.addWidget(self.path_edit)
-    #     self.path_layout.addWidget(self.browse_button)
-    #     self.save_groupbox.layout().addRow(
-    #         "Output directory:", self.path_layout
-    #     )
-
-    # def _open_save_dialog(self):
-    #     """Select an existing directory path to save files to."""
-    #     dlg = QFileDialog()
-    #     dlg.setFileMode(QFileDialog.Directory)
-    #     dlg.setOption(QFileDialog.ShowDirsOnly, True)
-    #     dlg.AcceptMode(QFileDialog.AcceptSave)
-    #     if dlg.exec_():
-    #         path = dlg.selectedFiles()[0]
-    #         self.path_edit.setText(path)
-
     def save_selected_layers(self):
         save_dir = self.output_dir_widget.get_dir_path()
         if not save_dir:

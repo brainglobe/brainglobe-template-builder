@@ -124,6 +124,12 @@ class CreateMask(QWidget):
         specified in the widget.
         """
 
+        output_dir = self.output_dir_widget.get_dir_path()
+        config_dir = self.config_dir_widget.get_dir_path()
+
+        if not config_dir or not output_dir:
+            return
+
         config = PreprocConfig(
             mask=MaskConfig(
                 gaussian_sigma=self.gauss_sigma.value(),
@@ -131,12 +137,13 @@ class CreateMask(QWidget):
                 closing_size=self.closing_size.value(),
                 erode_size=self.erode_size.value(),
             ),
-            output_dir=self.output_dir_widget.get_dir_path(),
+            output_dir=output_dir,
             pad_pixels=self.pad_pixels.value(),
         )
 
-        config_path = (
-            Path(self.config_dir_widget.get_dir_path()) / "preproc_config.yaml"
-        )
+        config_path = Path(config_dir) / "preproc_config.yaml"
         with open(config_path, "w") as outfile:
             yaml.dump(config.model_dump(mode="json"), outfile)
+
+        info_msg = "Created preproc_config.yaml."
+        show_info(info_msg)
