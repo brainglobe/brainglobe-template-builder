@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from brainglobe_template_builder.preproc.cropping import crop_to_mask
+from brainglobe_template_builder.utils.cropping import crop_to_mask
 
 
 def test_crop_to_mask_invalid_stack_and_mask():

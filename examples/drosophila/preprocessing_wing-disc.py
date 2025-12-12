@@ -11,8 +11,8 @@ from scipy.ndimage import median_filter
 from skimage.util import img_as_uint
 
 from brainglobe_template_builder.io import file_path_with_suffix
-from brainglobe_template_builder.preproc.masking import create_mask
-from brainglobe_template_builder.preproc.wingdisc_utils import (
+from brainglobe_template_builder.utils.masking import create_mask
+from brainglobe_template_builder.utils.wingdisc_utils import (
     normalize_planes_by_mean,
     resize_anisotropic_image_stack,
 )

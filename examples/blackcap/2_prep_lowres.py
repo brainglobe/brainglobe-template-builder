@@ -32,8 +32,8 @@ from brainglobe_template_builder.io import (
     file_path_with_suffix,
     load_tiff,
 )
-from brainglobe_template_builder.preproc.masking import create_mask
-from brainglobe_template_builder.preproc.splitting import (
+from brainglobe_template_builder.utils.masking import create_mask
+from brainglobe_template_builder.utils.splitting import (
     generate_arrays_4template,
     save_array_dict_to_nii,
 )

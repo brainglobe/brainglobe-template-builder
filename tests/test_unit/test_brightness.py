@@ -1,7 +1,7 @@
 import numpy as np
 from brainglobe_utils.IO.image import load_any
 
-from brainglobe_template_builder.preproc.brightness import (
+from brainglobe_template_builder.utils.brightness import (
     correct_image_brightness,
 )
 from tests.fetch_test_data import corrected_image_path, image_path

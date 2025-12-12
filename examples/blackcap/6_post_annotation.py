@@ -14,7 +14,7 @@ import numpy as np
 from brainglobe_utils.IO.image import load_nii, save_as_asr_nii
 from scipy.ndimage import binary_erosion
 
-from brainglobe_template_builder.postproc.annotation_filter import (
+from brainglobe_template_builder.utils.annotation_filter import (
     apply_modal_filter,
 )
 
