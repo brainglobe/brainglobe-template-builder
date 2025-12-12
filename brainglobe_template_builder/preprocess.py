@@ -10,12 +10,12 @@ from brainglobe_utils.IO.image.save import save_as_asr_nii
 
 import brainglobe_template_builder as package_for_log
 from brainglobe_template_builder.plots import plot_grid
-from brainglobe_template_builder.preproc.brightness import (
+from brainglobe_template_builder.utils.brightness import (
     correct_image_brightness,
 )
-from brainglobe_template_builder.preproc.cropping import crop_to_mask
-from brainglobe_template_builder.preproc.masking import create_mask
-from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
+from brainglobe_template_builder.utils.cropping import crop_to_mask
+from brainglobe_template_builder.utils.masking import create_mask
+from brainglobe_template_builder.utils.preproc_config import PreprocConfig
 from brainglobe_template_builder.validate import validate_input_csv
 
 logger = logging.getLogger(__name__)

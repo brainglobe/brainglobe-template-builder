@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from skimage import transform
 
-from brainglobe_template_builder.preproc.transform_utils import (
+from brainglobe_template_builder.utils.transform_utils import (
     downsample_anisotropic_stack_to_isotropic,
 )
 

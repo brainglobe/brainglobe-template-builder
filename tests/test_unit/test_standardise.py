@@ -9,7 +9,7 @@ from brainglobe_utils.IO.image.load import load_nii
 from brainglobe_utils.IO.image.save import save_any
 from numpy.typing import NDArray
 
-from brainglobe_template_builder.preproc.standardise import standardise
+from brainglobe_template_builder.standardise import standardise
 
 
 @pytest.fixture()
