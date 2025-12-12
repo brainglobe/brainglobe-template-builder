@@ -1,11 +1,13 @@
+import logging
 from pathlib import Path
 
 import dask.array as da
 import numpy as np
 from brainglobe_utils.IO.image import read_with_dask, save_any
-from loguru import logger
 from scipy.ndimage import affine_transform
 from skimage import transform
+
+logger = logging.getLogger(__name__)
 
 
 def get_rotation_from_vectors(vec1: np.ndarray, vec2: np.ndarray):

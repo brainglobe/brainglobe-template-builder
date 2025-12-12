@@ -10,6 +10,12 @@ from brainglobe_utils.IO.image.save import save_any, save_as_asr_nii
 from loguru import logger
 from numpy.typing import NDArray
 
+import datetime
+
+import fancylog
+import pytest
+
+
 
 def _make_stack(
     offset: int | None = None,
@@ -124,16 +130,16 @@ def _write_test_data(
     return csv_path
 
 
-@pytest.fixture
-def caplog(caplog: LogCaptureFixture):
-    """Override the pytest caplog fixture, so that it will
-    work correctly with loguru."""
-    handler_id = logger.add(
-        caplog.handler,
-        format="{message}",
-        level=0,
-        filter=lambda record: record["level"].no >= caplog.handler.level,
-        enqueue=False,
+@pytest.fixture()
+def mock_fancylog_datetime(mocker):
+    """Mock datetime.now for fancylog to 2025-12-10 15:15.
+
+    This allows the log filename timestamp to remain consistent
+    for testing.
+    """
+    mocker.patch("fancylog.fancylog.datetime")
+    fancylog.fancylog.datetime.now.return_value = datetime.datetime(
+        2025, 12, 10, 15, 15
     )
     yield caplog
     logger.remove(handler_id)

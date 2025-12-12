@@ -109,6 +109,7 @@ def source_csv_anisotropic_with_mask(
                 "standardised/sub-a",
                 "standardised/sub-b",
                 "standardised/standardised_images.csv",
+                "standardised/template_builder_2025-12-10_15-15-00.log",
                 "standardised/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
                 "standardised/sub-b/sub-b_res-50x50x50um_origin-asr.nii.gz",
             ],
@@ -126,6 +127,7 @@ def source_csv_anisotropic_with_mask(
                 "standardised/sub-a",
                 "standardised/sub-b",
                 "standardised/standardised_images.csv",
+                "standardised/template_builder_2025-12-10_15-15-00.log",
                 # subject a image + mask
                 "standardised/sub-a/sub-a_res-50x50x50um_origin-asr.nii.gz",
                 "standardised/sub-a/sub-a_res-50x50x50um_mask_origin-asr.nii.gz",
@@ -146,6 +148,7 @@ def source_csv_anisotropic_with_mask(
         ),
     ],
 )
+@pytest.mark.usefixtures("mock_fancylog_datetime")
 def test_standardise_filepaths(
     request, source_csv, expected_standardised_paths, expected_qc_paths
 ):
