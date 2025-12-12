@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 from brainglobe_utils.IO.image.load import load_nii
 
@@ -54,3 +55,34 @@ def test_save_stack(save_widget, stack):
     expected_zooms = (0.01, 0.02, 0.03)
     np.testing.assert_allclose(saved_nifti.header.get_zooms(), expected_zooms)
     np.testing.assert_array_equal(saved_nifti.get_fdata(), stack)
+
+
+def test_save_points(save_widget, points):
+    """Test the widget correctly saves a points layer."""
+
+    viewer = save_widget.viewer
+    viewer.add_points(points, name="points_to_save")
+    viewer.layers.selection.select_only(viewer.layers["points_to_save"])
+
+    save_widget.save_selected_layers()
+
+    # Output directory should contain saved point csv files
+    output_dir = Path(save_widget.output_dir_widget.get_dir_path())
+    created_files = [file.name for file in output_dir.iterdir()]
+    assert sorted(created_files) == [
+        "points_to_save.csv",
+        "points_to_save_df.csv",
+    ]
+
+    # Check saved csv files match input points
+    expected_csv = pd.DataFrame(
+        data=points, columns=["axis-0", "axis-1", "axis-2"]
+    )
+    assert pd.read_csv(
+        output_dir / "points_to_save.csv", index_col="index"
+    ).equals(expected_csv)
+
+    expected_df_csv = pd.DataFrame(data=points, columns=["z", "y", "x"])
+    assert pd.read_csv(output_dir / "points_to_save_df.csv").equals(
+        expected_df_csv
+    )
