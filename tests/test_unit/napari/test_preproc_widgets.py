@@ -17,7 +17,7 @@ def test_preproc_widgets(make_napari_viewer):
     )  # layout has one extra spacer item
 
     # Widgets should match the expected titles, and only the first should
-    # expanded (rest are collapsed by default)
+    # be expanded (rest are collapsed by default)
     expected_widget_titles = [
         "Reorient to standard space",
         "Create mask",
