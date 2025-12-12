@@ -1,5 +1,5 @@
 index.rst:1: [redirected permanently] https://codecov.io/gh/brainglobe/brainglobe-template-builder to https://app.codecov.io/gh/brainglobe/brainglobe-template-builder
 index.rst:1: [redirected permanently] https://github.com/charliermarsh/ruff to https://github.com/astral-sh/ruff
-index.rst:1: [redirected with Found] https://doi.org/10.5281/zenodo.14608573 to https://zenodo.org/records/15472567
+index.rst:1: [redirected with Found] https://doi.org/10.5281/zenodo.14608573 to https://zenodo.org/records/17914706
 index.rst:1: [redirected permanently] https://github.com/python/black to https://github.com/psf/black
-index.rst:1: [redirected with Found] https://zenodo.org/badge/700299148.svg to https://zenodo.org/badge/DOI/10.5281/zenodo.15472567.svg
+index.rst:1: [redirected with Found] https://zenodo.org/badge/700299148.svg to https://zenodo.org/badge/DOI/10.5281/zenodo.17914706.svg
