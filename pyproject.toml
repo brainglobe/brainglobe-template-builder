@@ -28,7 +28,8 @@ dependencies = [
     "antspyx",
     "qt-niu",
     "pydantic",
-    "simpleitk"
+    "simpleitk",
+    "fancylog[git]"
 ]
 
 entry-points."napari.manifest".brainglobe-template-builder = "brainglobe_template_builder.napari:napari.yaml"

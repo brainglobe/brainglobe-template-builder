@@ -151,6 +151,7 @@ def create_standardised_test_data(
         ),
     ],
 )
+@pytest.mark.usefixtures("mock_fancylog_datetime")
 def test_preprocess_use_input(
     use: list[str],
     expected_listdir: set,
@@ -167,6 +168,7 @@ def test_preprocess_use_input(
     always_expect = {
         "all_processed_brain_paths.txt",
         "all_processed_mask_paths.txt",
+        "template_builder_2025-12-10_15-15-00.log",
     }
 
     preprocess(csv_path, config_path)
@@ -179,6 +181,7 @@ def test_preprocess_use_input(
     "config_type",
     ["config_file", "PreprocConfig object"],
 )
+@pytest.mark.usefixtures("mock_fancylog_datetime")
 def test_preprocess(
     create_standardised_test_data: tuple[Path, Path], config_type: str
 ) -> None:
@@ -204,6 +207,7 @@ def test_preprocess(
     assert set(os.listdir(preprocessed_dir)) == {
         "all_processed_brain_paths.txt",
         "all_processed_mask_paths.txt",
+        "template_builder_2025-12-10_15-15-00.log",
         "sub-test1",
         "sub-test2",
     }

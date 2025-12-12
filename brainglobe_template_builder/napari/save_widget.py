@@ -5,7 +5,6 @@ from napari.layers import Image, Labels, Points
 from napari.utils.notifications import show_info
 from napari.viewer import Viewer
 from qtpy.QtWidgets import (
-    QFileDialog,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -15,6 +14,7 @@ from qtpy.QtWidgets import (
 )
 
 from brainglobe_template_builder.io import save_3d_points_to_csv
+from brainglobe_template_builder.napari.utils import DirPathWidget
 
 
 class SaveFiles(QWidget):
@@ -31,7 +31,9 @@ class SaveFiles(QWidget):
         self.layout().addRow(self.save_groupbox)
 
         self._create_voxel_size_widget()
-        self._create_save_path_widget()
+        self.output_dir_widget = DirPathWidget(
+            self.save_groupbox, "Output directory:"
+        )
 
         self.save_button = QPushButton(
             "Save selected layers", parent=self.save_groupbox
@@ -56,34 +58,8 @@ class SaveFiles(QWidget):
             "Voxel size (axes 0, 1, 2) in mm:", self.voxel_size_layout
         )
 
-    def _create_save_path_widget(self):
-        """Create a line edit and browse button for selecting a save path.
-
-        The path has to be a valid directory path.
-        """
-        self.path_edit = QLineEdit()
-        self.browse_button = QPushButton("browse")
-        self.browse_button.clicked.connect(self._open_save_dialog)
-
-        self.path_layout = QHBoxLayout()
-        self.path_layout.addWidget(self.path_edit)
-        self.path_layout.addWidget(self.browse_button)
-        self.save_groupbox.layout().addRow(
-            "Output directory:", self.path_layout
-        )
-
-    def _open_save_dialog(self):
-        """Select an existing directory path to save files to."""
-        dlg = QFileDialog()
-        dlg.setFileMode(QFileDialog.Directory)
-        dlg.setOption(QFileDialog.ShowDirsOnly, True)
-        dlg.AcceptMode(QFileDialog.AcceptSave)
-        if dlg.exec_():
-            path = dlg.selectedFiles()[0]
-            self.path_edit.setText(path)
-
     def save_selected_layers(self):
-        save_dir = self.path_edit.text()
+        save_dir = self.output_dir_widget.get_dir_path()
         if not save_dir:
             return
 
