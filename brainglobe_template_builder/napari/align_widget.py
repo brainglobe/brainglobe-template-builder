@@ -12,7 +12,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from brainglobe_template_builder.preproc import (
+from brainglobe_template_builder.utils import (
     MidplaneAligner,
     MidplaneEstimator,
 )

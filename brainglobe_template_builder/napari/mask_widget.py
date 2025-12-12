@@ -14,7 +14,7 @@ from qtpy.QtWidgets import (
 )
 
 from brainglobe_template_builder.napari.utils import DirPathWidget
-from brainglobe_template_builder.preproc import create_mask
+from brainglobe_template_builder.utils import create_mask
 from brainglobe_template_builder.utils.preproc_config import (
     MaskConfig,
     PreprocConfig,
