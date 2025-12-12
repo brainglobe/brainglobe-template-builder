@@ -3,7 +3,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from brainglobe_template_builder.preproc.transform_utils import downsample
+from brainglobe_template_builder.utils.transform_utils import downsample
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Downsample source images")

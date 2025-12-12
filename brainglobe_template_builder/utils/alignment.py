@@ -5,7 +5,7 @@ from typing import Literal
 import numpy as np
 from skimage import measure
 
-from brainglobe_template_builder.preproc.transform_utils import (
+from brainglobe_template_builder.utils.transform_utils import (
     apply_transform,
     get_rotation_from_vectors,
 )
