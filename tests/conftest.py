@@ -1,20 +1,15 @@
+import datetime
 from pathlib import Path
 from typing import Any
 
+import fancylog
 import numpy as np
 import pandas as pd
 import pytest
 import yaml
-from _pytest.logging import LogCaptureFixture
 from brainglobe_utils.IO.image.save import save_any, save_as_asr_nii
 from loguru import logger
 from numpy.typing import NDArray
-
-import datetime
-
-import fancylog
-import pytest
-
 
 
 def _make_stack(
