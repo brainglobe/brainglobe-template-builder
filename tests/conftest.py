@@ -108,7 +108,7 @@ def _create_test_yaml(path: Path) -> Path:
     return config_path
 
 
-@pytest.fixture()
+@pytest.fixture
 def write_test_data() -> Callable:
     """Callable fixture for writing test data files."""
 
@@ -130,7 +130,7 @@ def write_test_data() -> Callable:
     return _write_test_data
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_fancylog_datetime(mocker):
     """Mock datetime.now for fancylog to 2025-12-10 15:15.
 
@@ -143,7 +143,7 @@ def mock_fancylog_datetime(mocker):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_stacks() -> dict[str, NDArray[np.float64]]:
     """Create symmetric and asymmetric test images and masks."""
     return {
@@ -152,7 +152,7 @@ def test_stacks() -> dict[str, NDArray[np.float64]]:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_data(
     test_stacks: dict[str, NDArray[np.float64]],
 ) -> list[dict[str, Any]]:
@@ -175,8 +175,8 @@ def test_data(
     ]
 
 
-@pytest.fixture()
-def make_tmp_dir(tmp_path: Path):
+@pytest.fixture
+def make_tmp_dir(tmp_path: Path) -> Callable:
     """Callable that creates a subdirectory under tmp_path."""
 
     def _make_subdir(name: str) -> Path:

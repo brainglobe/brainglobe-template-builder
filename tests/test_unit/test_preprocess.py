@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
@@ -19,11 +19,11 @@ from brainglobe_template_builder.preprocess import (
 from brainglobe_template_builder.utils.preproc_config import PreprocConfig
 
 
-@pytest.fixture()
+@pytest.fixture
 def write_standardised_test_data(
     test_data: list[dict[str, Any]],
-    make_tmp_dir,
-    write_test_data,
+    make_tmp_dir: Callable,
+    write_test_data: Callable,
 ) -> tuple[Path, Path] | Path:
     """Create standardised test data with CSV and config."""
 
