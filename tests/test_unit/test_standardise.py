@@ -1,195 +1,105 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
 import pytest
 from brainglobe_space import AnatomicalSpace
 from brainglobe_utils.IO.image.load import load_nii
-from brainglobe_utils.IO.image.save import save_any
-from numpy.typing import NDArray
+from numpy._typing._array_like import NDArray
 
 from brainglobe_template_builder.standardise import standardise
 
 
 @pytest.fixture()
-def stack() -> NDArray[np.float64]:
-    """Create 50x50x50 stack with a small off-centre object (value 0.5).
-
-    The object is off-centre, so we can identify the effects of
-    re-orientation to ASR.
-    """
-    stack = np.zeros((50, 50, 50))
-    stack[10:30, 10:30, 10:30] = 0.5
-    return stack
-
-
-@pytest.fixture()
-def mask() -> NDArray[np.float64]:
-    """Create 50x50x50 binary mask with off-centre object (value = 1).
-
-    The object is off-centre, so we can identify the effects of
-    re-orientation to ASR.
-    """
-    mask = np.zeros((50, 50, 50))
-    mask[5:35, 5:35, 5:35] = 1
-    return mask
-
-
-@pytest.fixture()
-def source_dir(tmp_path) -> Path:
+def source_dir(
+    make_tmp_dir: Callable[[str], Path],
+) -> tuple[Path, Path] | Path:
     """Create a temporary 'source' directory."""
-    source_dir = tmp_path / "source"
-    source_dir.mkdir(parents=True, exist_ok=True)
-
-    return source_dir
-
-
-def create_test_images(
-    path: Path, test_data: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
-    """Save test images/masks and add their paths to the
-    returned test data dicts."""
-
-    for data in test_data:
-        subject_dir = path / data["subject_id"]
-        subject_dir.mkdir()
-
-        image_path = subject_dir / f"{data['subject_id']}.tiff"
-        save_any(data["image"], image_path)
-        data["filepath"] = image_path
-
-        if data["mask"] is not None:
-            mask_path = subject_dir / f"{data['subject_id']}_mask.tiff"
-            save_any(data["mask"], mask_path)
-            data["mask_filepath"] = mask_path
-
-    return test_data
-
-
-def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
-    """Creates "source_data" CSV file and returns its path."""
-
-    # we don't include the image / mask in the csv file,
-    # just metadata about them
-    df_data = test_data.copy()
-    for data in df_data:
-        data.pop("image")
-        data.pop("mask")
-
-    input_csv = pd.DataFrame(data=df_data)
-    csv_path = path / "source_data.csv"
-    input_csv.to_csv(csv_path, index=False)
-    return csv_path
-
-
-def write_test_data(source_dir: Path, test_data: list[dict[str, Any]]) -> Path:
-    """Write test data to source_dir, and return the path to
-    the summary csv."""
-    test_data = create_test_images(source_dir, test_data)
-    csv_path = create_test_csv(source_dir, test_data)
-    return csv_path
+    return make_tmp_dir("source")
 
 
 @pytest.fixture()
-def test_data(stack: NDArray[np.float64]) -> list[dict[str, Any]]:
-    """Creates test data for two images with LSA and PSL orientation."""
-    return [
-        {
-            "image": stack,
-            "mask": None,
-            "subject_id": "a",
-            "resolution_0": 25,
-            "resolution_1": 25,
-            "resolution_2": 25,
-            "origin": "PSL",
-        },
-        {
-            "image": stack,
-            "mask": None,
-            "subject_id": "b",
-            "resolution_0": 10,
-            "resolution_1": 10,
-            "resolution_2": 10,
-            "origin": "LSA",
-        },
-    ]
+def source_data_kwargs(make_tmp_dir, test_data):
+    return {
+        "image_type": "tif",
+        "csv_name": "source_data",
+        "config": False,
+        "dir": make_tmp_dir("source"),
+        "test_data": test_data,
+    }
 
 
 @pytest.fixture()
 def source_csv_no_masks(
-    source_dir: Path, test_data: list[dict[str, Any]]
-) -> Path:
-    """Create test data for two subjects - neither of which
-    have masks."""
-
-    return write_test_data(source_dir, test_data)
+    write_test_data: Callable, source_data_kwargs: dict
+) -> tuple[Path, Path] | Path:
+    """Create source test data with CSV and config."""
+    return write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_with_masks(
-    source_dir: Path,
-    test_data: list[dict[str, Any]],
-    mask: NDArray[np.float64],
-) -> Path:
+    source_data_kwargs: dict[str, Any],
+    test_stacks: dict[str, NDArray[np.float64]],
+    write_test_data: Callable,
+) -> tuple[Path, Path] | Path:
     """Create test data for two subjects, one with a mask and
     one without."""
 
-    test_data[0]["mask"] = mask
-    test_data[1]["mask"] = None
+    source_data_kwargs["test_data"][0]["mask"] = test_stacks["mask"]
+    source_data_kwargs["test_data"][1]["mask"] = None
 
-    return write_test_data(source_dir, test_data)
+    return write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_single_image_with_mask(
-    source_dir: Path,
-    test_data: list[dict[str, Any]],
-    mask: NDArray[np.float64],
-) -> Path:
+    source_data_kwargs: dict[str, Any],
+    test_stacks: dict[str, NDArray[np.float64]],
+    write_test_data: Callable,
+) -> tuple[Path, Path] | Path:
     """Create test data for a single subject with a
     corresponding mask."""
 
-    single_image = test_data[1]
-    single_image["mask"] = mask
+    source_data_kwargs["test_data"] = [source_data_kwargs["test_data"][1]]
+    source_data_kwargs["test_data"][0]["mask"] = test_stacks["mask"]
 
-    return write_test_data(source_dir, [single_image])
+    return write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_with_use(
-    source_dir: Path, test_data: list[dict[str, Any]]
-) -> Path:
+    source_data_kwargs: dict[str, Any], write_test_data: Callable
+) -> tuple[Path, Path] | Path:
     """Create test data for two subjects - one with use=False,
     and the other with use=True."""
 
-    test_data[0]["use"] = False
-    test_data[1]["use"] = True
+    source_data_kwargs["test_data"][0]["use"] = False
+    source_data_kwargs["test_data"][1]["use"] = True
 
-    return write_test_data(source_dir, test_data)
+    return write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_anisotropic_with_mask(
-    source_dir: Path, stack: NDArray[np.float64], mask: NDArray[np.float64]
-) -> Path:
+    source_data_kwargs: dict[str, Any],
+    test_stacks: dict[str, NDArray[np.float64]],
+    write_test_data: Callable,
+) -> tuple[Path, Path] | Path:
     """Create test data for a single subject with anisotropic
     resolution and a corresponding mask."""
 
-    return write_test_data(
-        source_dir,
-        [
-            {
-                "image": stack,
-                "mask": mask,
-                "subject_id": "b",
-                "resolution_0": 10,
-                "resolution_1": 4,
-                "resolution_2": 2,
-                "origin": "ASR",
-            }
-        ],
-    )
+    source_data_kwargs["test_data"] = [
+        {
+            "image": test_stacks["image"],
+            "mask": test_stacks["mask"],
+            "subject_id": "b",
+            "voxel_size": [10, 4, 2],
+            "origin": "ASR",
+        }
+    ]
+    return write_test_data(**source_data_kwargs)
 
 
 @pytest.mark.parametrize(
@@ -329,7 +239,9 @@ def test_standardise_output_csv(
     if len(expected_mask_paths) > 0:
         expected_output_csv["mask_filepath"] = expected_mask_paths
 
-    pd.testing.assert_frame_equal(output_csv, expected_output_csv)
+    pd.testing.assert_frame_equal(
+        output_csv, expected_output_csv, check_like=True
+    )
 
 
 def test_standardise_with_use(source_csv_with_use):
@@ -367,7 +279,7 @@ def test_standardise_anisotropic(source_csv_anisotropic_with_mask):
 
 
 def test_standardise_reorientation(
-    source_csv_single_image_with_mask, stack, mask
+    source_csv_single_image_with_mask, test_stacks
 ):
     """Test standardise re-orients images and masks to ASR."""
 
@@ -379,7 +291,7 @@ def test_standardise_reorientation(
     mask_path = subject_dir / "sub-b_res-10x10x10um_mask_origin-asr.nii.gz"
 
     for output_path, source_image in zip(
-        [image_path, mask_path], [stack, mask]
+        [image_path, mask_path], [test_stacks["image"], test_stacks["mask"]]
     ):
         # No downsampling was specified, so input size / res should
         # match output

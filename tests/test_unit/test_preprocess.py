@@ -7,7 +7,6 @@ import pandas as pd
 import pytest
 import yaml
 from brainglobe_utils.IO.image import load_any
-from brainglobe_utils.IO.image.save import save_as_asr_nii
 from numpy.testing import assert_raises
 from numpy.typing import NDArray
 
@@ -20,120 +19,25 @@ from brainglobe_template_builder.preprocess import (
 from brainglobe_template_builder.utils.preproc_config import PreprocConfig
 
 
-def make_stack(
-    offset: int | None = None,
-    mask: bool = False,
-) -> NDArray[np.float64]:
-    """Create a 50x50x50 zeros stack with foreground."""
-
-    shape = [50, 50, 50]
-    obj_size = 20
-    mask_extra = 5
-    value = 1 if mask else 0.5
-
-    stack = np.zeros(shape, dtype=np.float64)
-    foreground_size = obj_size + (mask_extra if mask else 0)
-
-    start = [(s - foreground_size) // 2 for s in shape]
-    if offset:
-        start = [s - offset for s in start]
-    end = [s + foreground_size for s in start]
-
-    stack[start[0] : end[0], start[1] : end[1], start[2] : end[2]] = value
-
-    return stack
-
-
 @pytest.fixture()
-def test_stacks() -> dict[str, NDArray[np.float64]]:
-    """Create symmetric and asymmetric test images and masks."""
-    return {
-        "image": make_stack(offset=5),
-        "mask": make_stack(mask=True, offset=5),
-    }
+def write_standardised_test_data(
+    test_data: list[dict[str, Any]],
+    make_tmp_dir,
+    write_test_data,
+) -> tuple[Path, Path] | Path:
+    """Create standardised test data with CSV and config."""
 
+    # Assuming reorientation to ASR has happened
+    for test_data_i in test_data:
+        test_data_i["origin"] = "ASR"
 
-@pytest.fixture()
-def test_data(
-    test_stacks: dict[str, NDArray[np.float64]],
-) -> list[dict[str, Any]]:
-    """Create test data for two subjects with different voxel sizes."""
-    return [
-        {
-            "subject_id": "test1",
-            "image": test_stacks["image"],
-            "voxel_size": [1, 1, 1],
-            "origin": "ASR",
-        },
-        {
-            "subject_id": "test2",
-            "image": test_stacks["image"],
-            "voxel_size": [2, 2, 2],
-            "origin": "ASR",
-        },
-    ]
-
-
-def create_test_images(
-    path: Path, test_data: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
-    """Save test images and add their paths to the returned test data dicts."""
-    for data in test_data:
-        image_path = path / data["subject_id"] / f"{data['subject_id']}.nii.gz"
-        image_path.parent.mkdir()
-        voxel_dimensions_in_mm = [v * 0.001 for v in data["voxel_size"]]
-        save_as_asr_nii(data["image"], voxel_dimensions_in_mm, image_path)
-        data["filepath"] = image_path
-    return test_data
-
-
-def create_test_csv(path: Path, test_data: list[dict[str, Any]]) -> Path:
-    """Creates "standardised_data" CSV file and returns its path."""
-    for data in test_data:
-        data["resolution_0"] = data["voxel_size"][0]
-        data["resolution_1"] = data["voxel_size"][1]
-        data["resolution_2"] = data["voxel_size"][2]
-        data.pop("voxel_size")
-        data.pop("image")
-    input_csv = pd.DataFrame(data=test_data)
-    csv_path = path / "standardised_data.csv"
-    input_csv.to_csv(csv_path, index=False)
-    return csv_path
-
-
-def create_test_yaml(path: Path) -> Path:
-    """Creates YAML config file and returns its path."""
-    yaml_dict = {
-        "output_dir": str(path.resolve()),
-        "mask": {
-            "gaussian_sigma": 3,
-            "threshold_method": "triangle",
-            "closing_size": 5,
-            "erode_size": 0,
-        },
-        "pad_pixels": 5,
-    }
-
-    config_path = path / "config.yaml"
-    with open(config_path, "w") as outfile:
-        yaml.dump(yaml_dict, outfile, default_flow_style=False)
-
-    return config_path
-
-
-@pytest.fixture()
-def create_standardised_test_data(
-    tmp_path: Path, test_data: list[dict[str, Any]]
-) -> tuple[Path, Path]:
-    """Sets up temp directory with "standardised" test images, CSV,
-    and config files."""
-    standardised_dir = tmp_path / "standardised"
-    standardised_dir.mkdir(parents=True, exist_ok=True)
-
-    test_data = create_test_images(standardised_dir, test_data)
-    csv_path = create_test_csv(standardised_dir, test_data)
-    config_path = create_test_yaml(tmp_path)
-    return csv_path, config_path
+    return write_test_data(
+        dir=make_tmp_dir("standardised"),
+        test_data=test_data,
+        image_type="nifti",
+        csv_name="standardised_data",
+        config=True,
+    )
 
 
 @pytest.mark.parametrize(
@@ -141,24 +45,20 @@ def create_standardised_test_data(
     [
         pytest.param(["false", "false"], {}, id="false, false"),
         pytest.param(["False", "false"], {}, id="False, false"),
-        pytest.param(["false", "true"], {"sub-test2"}, id="false, true"),
-        pytest.param(["", "false"], {"sub-test1"}, id="empty (true), false"),
-        pytest.param(
-            ["F", "T"], {"sub-test1", "sub-test2"}, id="F (true), T (true)"
-        ),
-        pytest.param(
-            ["0", "1"], {"sub-test1", "sub-test2"}, id="0 (true), 1 (true)"
-        ),
+        pytest.param(["false", "true"], {"sub-b"}, id="false, true"),
+        pytest.param(["", "false"], {"sub-a"}, id="empty (true), false"),
+        pytest.param(["F", "T"], {"sub-a", "sub-b"}, id="F (true), T (true)"),
+        pytest.param(["0", "1"], {"sub-a", "sub-b"}, id="0 (true), 1 (true)"),
     ],
 )
 @pytest.mark.usefixtures("mock_fancylog_datetime")
 def test_preprocess_use_input(
     use: list[str],
     expected_listdir: set,
-    create_standardised_test_data: tuple[Path, Path],
+    write_standardised_test_data: tuple[Path, Path],
 ) -> None:
     """Test exclusion/inclusion based on optional 'use' column values."""
-    csv_path, config_path = create_standardised_test_data
+    csv_path, config_path = write_standardised_test_data
     input_df = pd.read_csv(csv_path)
     input_df["use"] = use
     input_df.to_csv(csv_path, index=False)
@@ -183,12 +83,13 @@ def test_preprocess_use_input(
 )
 @pytest.mark.usefixtures("mock_fancylog_datetime")
 def test_preprocess(
-    create_standardised_test_data: tuple[Path, Path], config_type: str
+    write_standardised_test_data: tuple[Path, Path], config_type: str
 ) -> None:
     """Test that preprocess creates expected directories and files - both
     with a config yaml file path as input OR a PreprocConfig object."""
-    csv_path, config_path = create_standardised_test_data
+    csv_path, config_path = write_standardised_test_data
 
+    config: Path | PreprocConfig
     if config_type == "config_file":
         config = config_path
     else:
@@ -196,7 +97,7 @@ def test_preprocess(
             config_yaml = yaml.safe_load(f)
         config = PreprocConfig.model_validate(config_yaml)
 
-    preprocess(csv_path, config=config)
+    preprocess(csv_path, config)
 
     preprocessed_dir = csv_path.parents[1] / "preprocessed"
     qc_dir = csv_path.parents[1] / "preprocessed-QC"
@@ -207,30 +108,30 @@ def test_preprocess(
     assert set(os.listdir(preprocessed_dir)) == {
         "all_processed_brain_paths.txt",
         "all_processed_mask_paths.txt",
+        "sub-a",
+        "sub-b",
         "template_builder_2025-12-10_15-15-00.log",
-        "sub-test1",
-        "sub-test2",
     }
 
     assert set(os.listdir(qc_dir)) == {
-        "sub-test1-mask-QC-grid.pdf",
-        "sub-test1-mask-QC-grid.png",
-        "sub-test2-mask-QC-grid.pdf",
-        "sub-test2-mask-QC-grid.png",
+        "sub-a-mask-QC-grid.pdf",
+        "sub-a-mask-QC-grid.png",
+        "sub-b-mask-QC-grid.pdf",
+        "sub-b-mask-QC-grid.png",
     }
 
-    for i in [1, 2]:
-        assert set(os.listdir(preprocessed_dir / f"sub-test{i}")) == {
-            f"test{i}_processed.nii.gz",
-            f"test{i}_processed_lrflip.nii.gz",
-            f"test{i}_processed_mask.nii.gz",
-            f"test{i}_processed_mask_lrflip.nii.gz",
+    for sub_id in ["a", "b"]:
+        assert set(os.listdir(preprocessed_dir / f"sub-{sub_id}")) == {
+            f"{sub_id}_processed.nii.gz",
+            f"{sub_id}_processed_lrflip.nii.gz",
+            f"{sub_id}_processed_mask.nii.gz",
+            f"{sub_id}_processed_mask_lrflip.nii.gz",
         }
 
 
 def test_create_subject_dir(tmp_path: Path) -> None:
     """Test that _create_subject_dir creates correct directory structure."""
-    sub_id = "test123"
+    sub_id = "a"
     sub_dir = _create_subject_dir(sub_id, tmp_path)
     assert sub_dir.exists()
     assert sub_dir == tmp_path / "preprocessed" / f"sub-{sub_id}"
@@ -238,7 +139,7 @@ def test_create_subject_dir(tmp_path: Path) -> None:
 
 def test_create_subject_dir_exists(tmp_path: Path) -> None:
     """Test exist_ok=True for _create_subject_dir."""
-    sub_id = "test123"
+    sub_id = "a"
     _create_subject_dir(sub_id, tmp_path)
     _create_subject_dir(sub_id, tmp_path)
 
@@ -288,10 +189,10 @@ def test_save_niftis_lrflip(
     ],
 )
 def test_process_subject(
-    create_standardised_test_data: tuple[Path, Path], n_sub: int
+    write_standardised_test_data: tuple[Path, Path], n_sub: int
 ) -> None:
     """Test _process_subject creates expected files with expected keys."""
-    csv_path, config_path = create_standardised_test_data
+    csv_path, config_path = write_standardised_test_data
 
     # load input csv df with first n subject rows
     input_df = pd.read_csv(csv_path).head(n_sub)
@@ -328,10 +229,10 @@ def test_process_subject(
 
 
 def test_process_subject_config_padding(
-    create_standardised_test_data: tuple[Path, Path],
+    write_standardised_test_data: tuple[Path, Path],
 ) -> None:
     """Test whether _process_subject uses padding from config file."""
-    csv_path, config_path = create_standardised_test_data
+    csv_path, config_path = write_standardised_test_data
     subject_row = pd.read_csv(csv_path).iloc[0]
 
     with open(config_path) as f:
@@ -359,10 +260,10 @@ def test_process_subject_config_padding(
 
 
 def test_process_subject_config_mask(
-    create_standardised_test_data: tuple[Path, Path],
+    write_standardised_test_data: tuple[Path, Path],
 ) -> None:
     """Test whether _process_subject uses mask from config file."""
-    csv_path, config_path = create_standardised_test_data
+    csv_path, config_path = write_standardised_test_data
     subject_row = pd.read_csv(csv_path).iloc[0]
 
     with open(config_path) as f:
