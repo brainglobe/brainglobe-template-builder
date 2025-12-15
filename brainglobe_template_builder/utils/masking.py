@@ -1,4 +1,5 @@
-from typing import Callable, Literal, Union
+from collections.abc import Callable
+from typing import Literal, Union
 
 import numpy as np
 from skimage import filters, measure, morphology
