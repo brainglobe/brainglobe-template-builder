@@ -9,9 +9,6 @@ from brainglobe_utils.IO.image.load import load_nii
 from numpy._typing._array_like import NDArray
 
 from brainglobe_template_builder.preproc.standardise import standardise
-from tests.conftest import (
-    _write_test_data,
-)
 
 
 @pytest.fixture()
@@ -34,15 +31,18 @@ def source_data_kwargs(make_tmp_dir, test_data):
 
 
 @pytest.fixture()
-def source_csv_no_masks(source_data_kwargs: dict) -> tuple[Path, Path] | Path:
+def source_csv_no_masks(
+    write_test_data: Callable, source_data_kwargs: dict
+) -> tuple[Path, Path] | Path:
     """Create source test data with CSV and config."""
-    return _write_test_data(**source_data_kwargs)
+    return write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_with_masks(
     source_data_kwargs: dict[str, Any],
     test_stacks: dict[str, NDArray[np.float64]],
+    write_test_data: Callable,
 ) -> tuple[Path, Path] | Path:
     """Create test data for two subjects, one with a mask and
     one without."""
@@ -50,13 +50,14 @@ def source_csv_with_masks(
     source_data_kwargs["test_data"][0]["mask"] = test_stacks["mask"]
     source_data_kwargs["test_data"][1]["mask"] = None
 
-    return _write_test_data(**source_data_kwargs)
+    return write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_single_image_with_mask(
     source_data_kwargs: dict[str, Any],
     test_stacks: dict[str, NDArray[np.float64]],
+    write_test_data: Callable,
 ) -> tuple[Path, Path] | Path:
     """Create test data for a single subject with a
     corresponding mask."""
@@ -64,12 +65,12 @@ def source_csv_single_image_with_mask(
     source_data_kwargs["test_data"] = [source_data_kwargs["test_data"][1]]
     source_data_kwargs["test_data"][0]["mask"] = test_stacks["mask"]
 
-    return _write_test_data(**source_data_kwargs)
+    return write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_with_use(
-    source_data_kwargs: dict[str, Any],
+    source_data_kwargs: dict[str, Any], write_test_data: Callable
 ) -> tuple[Path, Path] | Path:
     """Create test data for two subjects - one with use=False,
     and the other with use=True."""
@@ -77,13 +78,14 @@ def source_csv_with_use(
     source_data_kwargs["test_data"][0]["use"] = False
     source_data_kwargs["test_data"][1]["use"] = True
 
-    return _write_test_data(**source_data_kwargs)
+    return write_test_data(**source_data_kwargs)
 
 
 @pytest.fixture()
 def source_csv_anisotropic_with_mask(
     source_data_kwargs: dict[str, Any],
     test_stacks: dict[str, NDArray[np.float64]],
+    write_test_data: Callable,
 ) -> tuple[Path, Path] | Path:
     """Create test data for a single subject with anisotropic
     resolution and a corresponding mask."""
@@ -97,7 +99,7 @@ def source_csv_anisotropic_with_mask(
             "origin": "ASR",
         }
     ]
-    return _write_test_data(**source_data_kwargs)
+    return write_test_data(**source_data_kwargs)
 
 
 @pytest.mark.parametrize(

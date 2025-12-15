@@ -17,13 +17,13 @@ from brainglobe_template_builder.preproc.preprocess import (
     _save_niftis,
     preprocess,
 )
-from tests.conftest import _write_test_data
 
 
 @pytest.fixture()
 def write_standardised_test_data(
     test_data: list[dict[str, Any]],
     make_tmp_dir,
+    write_test_data,
 ) -> tuple[Path, Path] | Path:
     """Create standardised test data with CSV and config."""
 
@@ -31,7 +31,7 @@ def write_standardised_test_data(
     for test_data_i in test_data:
         test_data_i["origin"] = "ASR"
 
-    return _write_test_data(
+    return write_test_data(
         dir=make_tmp_dir("standardised"),
         test_data=test_data,
         image_type="nifti",
