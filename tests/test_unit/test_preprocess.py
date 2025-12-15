@@ -1,7 +1,6 @@
 import os
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -21,47 +20,38 @@ from brainglobe_template_builder.utils.preproc_config import PreprocConfig
 
 
 @pytest.fixture
-def write_standardised_test_data(
-    test_data: list[dict[str, Any]],
-    make_tmp_dir: Callable,
-    write_test_data: Callable,
-) -> tuple[Path, Path] | Path:
-    """Create standardised test data with CSV and config."""
-
+def standardised_data_kwargs(
+    make_tmp_dir: Callable, test_data: list[dict]
+) -> dict:
     # Assuming reorientation to ASR has happened
     for test_data_i in test_data:
         test_data_i["origin"] = "ASR"
 
-    return write_test_data(
-        dir=make_tmp_dir("standardised"),
-        test_data=test_data,
-        image_type="nifti",
-        csv_name="standardised_data",
-        config=True,
-    )
+    return {
+        "image_type": "nifti",
+        "csv_name": "standardised_data",
+        "config": True,
+        "dir": make_tmp_dir("standardised"),
+        "test_data": test_data,
+    }
+
+
+@pytest.fixture
+def write_standardised_test_data(
+    write_test_data, standardised_data_kwargs
+) -> tuple[Path, Path] | Path:
+    """Create standardised test data without custom masks."""
+    return write_test_data(**standardised_data_kwargs)
 
 
 @pytest.fixture
 def write_standardised_test_data_custom_mask(
-    test_stacks,
-    test_data,
-    make_tmp_dir,
-    write_test_data,
+    test_stacks, write_test_data, standardised_data_kwargs
 ):
-    """Create standardised test data with CSV and config."""
-
-    # Assuming reorientation to ASR has happened
-    for test_data_i in test_data:
-        test_data_i["origin"] = "ASR"
+    """Create standardised test data custom masks."""
+    for test_data_i in standardised_data_kwargs["test_data"]:
         test_data_i["mask"] = test_stacks["mask"]
-
-    return write_test_data(
-        dir=make_tmp_dir("standardised"),
-        test_data=test_data,
-        image_type="nifti",
-        csv_name="standardised_data",
-        config=True,
-    )
+    return write_test_data(**standardised_data_kwargs)
 
 
 @pytest.mark.parametrize(
@@ -297,11 +287,7 @@ def test_process_subject_config_padding(
     ],
 )
 def test_process_subject_mask(fixture: str, request) -> None:
-    """Test whether _process_subject uses mask parameters from config file.
-
-    When custom mask is provided, mask config changes should not affect
-    the mask.
-    """
+    """Test whether mask config settings affect (custom) masks as expected."""
     csv_path, config_path = request.getfixturevalue(fixture)
     subject_row = pd.read_csv(csv_path).iloc[0]
 
