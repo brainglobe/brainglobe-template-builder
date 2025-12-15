@@ -11,7 +11,7 @@ from numpy._typing._array_like import NDArray
 from brainglobe_template_builder.standardise import standardise
 
 
-@pytest.fixture()
+@pytest.fixture
 def source_dir(
     make_tmp_dir: Callable[[str], Path],
 ) -> tuple[Path, Path] | Path:
@@ -19,8 +19,8 @@ def source_dir(
     return make_tmp_dir("source")
 
 
-@pytest.fixture()
-def source_data_kwargs(make_tmp_dir, test_data):
+@pytest.fixture
+def source_data_kwargs(make_tmp_dir: Callable, test_data: list[dict]) -> dict:
     return {
         "image_type": "tif",
         "csv_name": "source_data",
@@ -30,7 +30,7 @@ def source_data_kwargs(make_tmp_dir, test_data):
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def source_csv_no_masks(
     write_test_data: Callable, source_data_kwargs: dict
 ) -> tuple[Path, Path] | Path:
@@ -38,7 +38,7 @@ def source_csv_no_masks(
     return write_test_data(**source_data_kwargs)
 
 
-@pytest.fixture()
+@pytest.fixture
 def source_csv_with_masks(
     source_data_kwargs: dict[str, Any],
     test_stacks: dict[str, NDArray[np.float64]],
@@ -53,7 +53,7 @@ def source_csv_with_masks(
     return write_test_data(**source_data_kwargs)
 
 
-@pytest.fixture()
+@pytest.fixture
 def source_csv_single_image_with_mask(
     source_data_kwargs: dict[str, Any],
     test_stacks: dict[str, NDArray[np.float64]],
@@ -68,7 +68,7 @@ def source_csv_single_image_with_mask(
     return write_test_data(**source_data_kwargs)
 
 
-@pytest.fixture()
+@pytest.fixture
 def source_csv_with_use(
     source_data_kwargs: dict[str, Any], write_test_data: Callable
 ) -> tuple[Path, Path] | Path:
@@ -81,7 +81,7 @@ def source_csv_with_use(
     return write_test_data(**source_data_kwargs)
 
 
-@pytest.fixture()
+@pytest.fixture
 def source_csv_anisotropic_with_mask(
     source_data_kwargs: dict[str, Any],
     test_stacks: dict[str, NDArray[np.float64]],
