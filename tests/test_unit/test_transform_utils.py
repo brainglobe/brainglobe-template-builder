@@ -8,7 +8,7 @@ from brainglobe_template_builder.preproc.transform_utils import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def stack():
     """Create a dask array representing an image stack"""
     rng = np.random.default_rng()
@@ -16,7 +16,7 @@ def stack():
     return da.from_array(data, chunks=(1, 100, 100))
 
 
-@pytest.fixture()
+@pytest.fixture
 def mask():
     """Create a dask array representing a mask - only values 0 and 1."""
     data = np.zeros(shape=(10, 100, 100), dtype="float64")
@@ -24,14 +24,14 @@ def mask():
     return da.from_array(data, chunks=(1, 100, 100))
 
 
-@pytest.fixture()
+@pytest.fixture
 def not_slicewise_stack(stack):
     """Create a dask array representing an image stack,
     chunked by multiple slices."""
     return stack.rechunk({0: 2, 1: 100, 2: 100})
 
 
-@pytest.fixture()
+@pytest.fixture
 def partial_slicewise_stack(stack):
     """Create a dask array representing an image stack,
     chunked by part of an individual slice."""
