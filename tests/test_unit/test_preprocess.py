@@ -10,8 +10,7 @@ from brainglobe_utils.IO.image import load_any
 from numpy.testing import assert_raises
 from numpy.typing import NDArray
 
-from brainglobe_template_builder.preproc.preproc_config import PreprocConfig
-from brainglobe_template_builder.preproc.preprocess import (
+from brainglobe_template_builder.preprocess import (
     _create_subject_dir,
     _process_subject,
     _save_niftis,

@@ -8,7 +8,7 @@ from brainglobe_space import AnatomicalSpace
 from brainglobe_utils.IO.image.load import load_nii
 from numpy._typing._array_like import NDArray
 
-from brainglobe_template_builder.preproc.standardise import standardise
+from brainglobe_template_builder.standardise import standardise
 
 
 @pytest.fixture

@@ -10,7 +10,7 @@ from brainglobe_utils.IO.image.save import save_as_asr_nii
 
 import brainglobe_template_builder as package_for_log
 from brainglobe_template_builder.plots import plot_orthographic
-from brainglobe_template_builder.preproc.transform_utils import (
+from brainglobe_template_builder.utils.transform_utils import (
     downsample_anisotropic_stack_to_isotropic,
 )
 from brainglobe_template_builder.validate import validate_input_csv

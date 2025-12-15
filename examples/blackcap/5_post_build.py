@@ -22,7 +22,7 @@ import numpy as np
 from brainglobe_utils.IO.image.save import save_as_asr_nii
 from loguru import logger
 
-from brainglobe_template_builder.preproc.masking import create_mask
+from brainglobe_template_builder.utils.masking import create_mask
 
 # %%
 # Setup
