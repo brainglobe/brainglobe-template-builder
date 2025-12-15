@@ -41,6 +41,29 @@ def write_standardised_test_data(
     )
 
 
+@pytest.fixture
+def write_standardised_test_data_custom_mask(
+    test_stacks,
+    test_data,
+    make_tmp_dir,
+    write_test_data,
+):
+    """Create standardised test data with CSV and config."""
+
+    # Assuming reorientation to ASR has happened
+    for test_data_i in test_data:
+        test_data_i["origin"] = "ASR"
+        test_data_i["mask"] = test_stacks["mask"]
+
+    return write_test_data(
+        dir=make_tmp_dir("standardised"),
+        test_data=test_data,
+        image_type="nifti",
+        csv_name="standardised_data",
+        config=True,
+    )
+
+
 @pytest.mark.parametrize(
     ["use", "expected_listdir"],
     [
@@ -281,3 +304,29 @@ def test_process_subject_config_mask(
 
     with assert_raises(AssertionError):
         np.testing.assert_equal(mask_changed, mask_default)
+
+
+def test_process_subject_custom_mask(
+    write_standardised_test_data_custom_mask: tuple[Path, Path],
+) -> None:
+    """Test whether _process_subject uses custom mask from config file.
+
+    When custom mask is provided, mask config changes should not affect
+    the mask.
+    """
+    csv_path, config_path = write_standardised_test_data_custom_mask
+    subject_row = pd.read_csv(csv_path).iloc[0]
+
+    with open(config_path) as f:
+        config_yaml = yaml.safe_load(f)
+
+    config_default = PreprocConfig.model_validate(config_yaml)
+    paths_default = _process_subject(subject_row, config_default)
+    mask_default = load_any(paths_default["mask"])
+
+    config_yaml["mask"]["closing_size"] += 5  # increase closing size
+    config_changed_mask = PreprocConfig.model_validate(config_yaml)
+    paths_changed_mask = _process_subject(subject_row, config_changed_mask)
+    mask_changed_config = load_any(paths_changed_mask["mask"])
+
+    np.testing.assert_equal(mask_changed_config, mask_default)
