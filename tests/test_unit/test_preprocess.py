@@ -283,38 +283,26 @@ def test_process_subject_config_padding(
     ), f"Mask with no padding should be {default_pad * 2} smaller per dim."
 
 
-def test_process_subject_config_mask(
-    write_standardised_test_data: tuple[Path, Path],
-) -> None:
-    """Test whether _process_subject uses mask from config file."""
-    csv_path, config_path = write_standardised_test_data
-    subject_row = pd.read_csv(csv_path).iloc[0]
-
-    with open(config_path) as f:
-        config_yaml = yaml.safe_load(f)
-
-    config_default = PreprocConfig.model_validate(config_yaml)
-    paths_default = _process_subject(subject_row, config_default)
-    mask_default = load_any(paths_default["mask"])
-
-    config_yaml["mask"]["closing_size"] += 5  # increase closing size
-    config_changed_mask = PreprocConfig.model_validate(config_yaml)
-    paths_changed_mask = _process_subject(subject_row, config_changed_mask)
-    mask_changed = load_any(paths_changed_mask["mask"])
-
-    with assert_raises(AssertionError):
-        np.testing.assert_equal(mask_changed, mask_default)
-
-
-def test_process_subject_custom_mask(
-    write_standardised_test_data_custom_mask: tuple[Path, Path],
-) -> None:
-    """Test whether _process_subject uses custom mask from config file.
+@pytest.mark.parametrize(
+    "fixture",
+    [
+        pytest.param(
+            "write_standardised_test_data_custom_mask",
+            id="custom mask provided",
+        ),
+        pytest.param(
+            "write_standardised_test_data",
+            id="no custom mask",
+        ),
+    ],
+)
+def test_process_subject_mask(fixture: str, request) -> None:
+    """Test whether _process_subject uses mask parameters from config file.
 
     When custom mask is provided, mask config changes should not affect
     the mask.
     """
-    csv_path, config_path = write_standardised_test_data_custom_mask
+    csv_path, config_path = request.getfixturevalue(fixture)
     subject_row = pd.read_csv(csv_path).iloc[0]
 
     with open(config_path) as f:
@@ -329,4 +317,8 @@ def test_process_subject_custom_mask(
     paths_changed_mask = _process_subject(subject_row, config_changed_mask)
     mask_changed_config = load_any(paths_changed_mask["mask"])
 
-    np.testing.assert_equal(mask_changed_config, mask_default)
+    if fixture == "write_standardised_test_data_custom_mask":
+        np.testing.assert_equal(mask_changed_config, mask_default)
+    else:
+        with assert_raises(AssertionError):
+            np.testing.assert_equal(mask_changed_config, mask_default)
