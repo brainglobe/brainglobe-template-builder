@@ -117,7 +117,7 @@ bash modelbuild.sh --output-dir "${template_dir}" \
     --walltime-nonlinear "${walltime_nonlinear}" \
     "${toggle_dry_run}" \
     --masks "${template_dir}/all_processed_mask_paths.txt" \
-    "${template_dir}/all_processed_brain_paths.txt" 
+    "${template_dir}/all_processed_brain_paths.txt"
 
 echo "Finished building the template!"
 
@@ -128,4 +128,3 @@ hours=$((execution_time / 3600))
 minutes=$(( (execution_time % 3600) / 60))
 formatted_time=$(printf "%02d:%02d" $hours $minutes)
 echo "Execution time: $formatted_time" > "${template_dir}/execution_time.txt"
-
