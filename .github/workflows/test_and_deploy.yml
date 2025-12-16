@@ -52,6 +52,11 @@ jobs:
           key: pooch-${{ runner.os }}-${{ hashFiles('./tests/fetch_test_data.py') }}
           enableCrossOsArchive: false
 
+      # these libraries enable testing on Qt on linux
+      - uses: pyvista/setup-headless-display-action@v3
+        with:
+          qt: true
+
       # Run tests
       - uses: neuroinformatics-unit/actions/test@v2
         if: ${{ ! startsWith(matrix.os, 'windows-') }}
