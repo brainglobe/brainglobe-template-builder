@@ -1,7 +1,6 @@
 import os
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -21,24 +20,38 @@ from brainglobe_template_builder.utils.preproc_config import PreprocConfig
 
 
 @pytest.fixture
-def write_standardised_test_data(
-    test_data: list[dict[str, Any]],
-    make_tmp_dir: Callable,
-    write_test_data: Callable,
-) -> tuple[Path, Path] | Path:
-    """Create standardised test data with CSV and config."""
-
+def standardised_data_kwargs(
+    make_tmp_dir: Callable, test_data: list[dict]
+) -> dict:
     # Assuming reorientation to ASR has happened
     for test_data_i in test_data:
         test_data_i["origin"] = "ASR"
 
-    return write_test_data(
-        dir=make_tmp_dir("standardised"),
-        test_data=test_data,
-        image_type="nifti",
-        csv_name="standardised_data",
-        config=True,
-    )
+    return {
+        "image_type": "nifti",
+        "csv_name": "standardised_data",
+        "config": True,
+        "dir": make_tmp_dir("standardised"),
+        "test_data": test_data,
+    }
+
+
+@pytest.fixture
+def write_standardised_test_data(
+    write_test_data, standardised_data_kwargs
+) -> tuple[Path, Path] | Path:
+    """Create standardised test data without custom masks."""
+    return write_test_data(**standardised_data_kwargs)
+
+
+@pytest.fixture
+def write_standardised_test_data_custom_mask(
+    test_stacks, write_test_data, standardised_data_kwargs
+):
+    """Create standardised test data custom masks."""
+    for test_data_i in standardised_data_kwargs["test_data"]:
+        test_data_i["mask"] = test_stacks["mask"]
+    return write_test_data(**standardised_data_kwargs)
 
 
 @pytest.mark.parametrize(
@@ -260,11 +273,22 @@ def test_process_subject_config_padding(
     ), f"Mask with no padding should be {default_pad * 2} smaller per dim."
 
 
-def test_process_subject_config_mask(
-    write_standardised_test_data: tuple[Path, Path],
-) -> None:
-    """Test whether _process_subject uses mask from config file."""
-    csv_path, config_path = write_standardised_test_data
+@pytest.mark.parametrize(
+    "fixture",
+    [
+        pytest.param(
+            "write_standardised_test_data_custom_mask",
+            id="custom mask provided",
+        ),
+        pytest.param(
+            "write_standardised_test_data",
+            id="no custom mask",
+        ),
+    ],
+)
+def test_process_subject_mask(fixture: str, request) -> None:
+    """Test whether mask config settings affect (custom) masks as expected."""
+    csv_path, config_path = request.getfixturevalue(fixture)
     subject_row = pd.read_csv(csv_path).iloc[0]
 
     with open(config_path) as f:
@@ -277,7 +301,10 @@ def test_process_subject_config_mask(
     config_yaml["mask"]["closing_size"] += 5  # increase closing size
     config_changed_mask = PreprocConfig.model_validate(config_yaml)
     paths_changed_mask = _process_subject(subject_row, config_changed_mask)
-    mask_changed = load_any(paths_changed_mask["mask"])
+    mask_changed_config = load_any(paths_changed_mask["mask"])
 
-    with assert_raises(AssertionError):
-        np.testing.assert_equal(mask_changed, mask_default)
+    if fixture == "write_standardised_test_data_custom_mask":
+        np.testing.assert_equal(mask_changed_config, mask_default)
+    else:
+        with assert_raises(AssertionError):
+            np.testing.assert_equal(mask_changed_config, mask_default)
