@@ -89,7 +89,7 @@ pip install -e .[dev]
 To build a template, provide a CSV with information about the images you'd like to use. Each line in the CSV represents a stack of images.
 Stacks of images can be single 3D TIFF files or folders of 2D TIFFs.
 
-See Brainglobe's [image space definition documentation](https://brainglobe.info/documentation/setting-up/image-definition.html) 
+See Brainglobe's [image space definition documentation](https://brainglobe.info/documentation/setting-up/image-definition.html)
 for further information about defining image axis 0/1/2 and the origin.
 
 ## Required Columns
