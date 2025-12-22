@@ -112,7 +112,7 @@ for further information about defining image axis 0/1/2 and the origin.
 
 ### Example
 
-```csv
+```
 subject_id,resolution_0,resolution_1,resolution_2,origin,filepath,species,sex
 ZF1,25,25,25,PSL,/ceph/atlas-forge/zebrafinch/sourcedata/ZF1_25_25_ch03_green.tif,Zebra finch,F
 ZF2,25,25,25,PSL,/ceph/atlas-forge/zebrafinch/sourcedata/ZF2_25_25_ch03_green.tif,Zebra finch,M
