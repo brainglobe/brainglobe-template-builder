@@ -92,7 +92,7 @@ Stacks of images can be single 3D TIFF files or folders of 2D TIFFs.
 See Brainglobe's [image space definition documentation](https://brainglobe.info/documentation/setting-up/image-definition.html)
 for further information about defining image axis 0/1/2 and the origin.
 
-## Required Columns
+### Required Columns
 - `subject_id`: Unique identifier for the subject. Do not use spaces, hyphens (`-`) or underscores (`_`).
 - `resolution_0`: Voxel resolution of axis 0 (in μm)
 - `resolution_1`: Voxel resolution of axis 1 (in μm)
@@ -100,7 +100,7 @@ for further information about defining image axis 0/1/2 and the origin.
 - `origin`: 3-letter anatomical orientation code (e.g., `PSL`, `LSP`, `RAS`). See the [`AnatomicalSpace`](https://github.com/brainglobe/brainglobe-space/blob/1f2e3056fb35de87b962355f263a1462ce1dec53/brainglobe_space/core.py#L30) docstring for more context.
 - `filepath`: Full path to the image stack
 
-## Optional Columns
+### Optional Columns
 - `species`: Species name
 - `sex`: Biological sex of the subject (`M`, `F`)
 - `age`: Age of the subject (e.g., `12 weeks`, `P30`)
@@ -110,7 +110,7 @@ for further information about defining image axis 0/1/2 and the origin.
 
 > ℹ️ Additional columns can be included as needed.
 
-## Example
+### Example
 
 ```csv
 subject_id,resolution_0,resolution_1,resolution_2,origin,filepath,species,sex
