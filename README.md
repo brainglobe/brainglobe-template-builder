@@ -97,7 +97,7 @@ for further information about defining image axis 0/1/2 and the origin.
 - `resolution_0`: Voxel resolution of axis 0 (in μm)
 - `resolution_1`: Voxel resolution of axis 1 (in μm)
 - `resolution_2`: Voxel resolution of axis 2 (in μm)
-- `origin`: 3-letter anatomical orientation code (e.g., `PSL`, `LSP`, `RAS`). See the [`AnatomicalSpace`](https://github.com/brainglobe/brainglobe-space/blob/1f2e3056fb35de87b962355f263a1462ce1dec53/brainglobe_space/core.py#L30) docstring for more context.
+- `origin`: 3-letter anatomical orientation code (e.g., `PSL`, `LSP`, `RAS`). See the [image space orientation](https://brainglobe.info/documentation/setting-up/image-definition.html#orientation) documentation for more context.
 - `filepath`: Full path to the image stack
 
 ### Optional Columns
