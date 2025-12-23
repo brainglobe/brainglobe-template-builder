@@ -85,6 +85,41 @@ Then, install the package in editable mode with the following command:
 pip install -e .[dev]
 ```
 
+## Input CSV
+To build a template, provide a CSV with information about the images you'd like to use. Each line in the CSV represents a stack of images.
+Stacks of images can be single 3D TIFF files or folders of 2D TIFFs.
+
+See Brainglobe's [image space definition documentation](https://brainglobe.info/documentation/setting-up/image-definition.html)
+for further information about defining image axis 0/1/2 and the origin.
+
+### Required Columns
+- `subject_id`: Unique identifier for the subject. Do not use spaces, hyphens (`-`) or underscores (`_`).
+- `resolution_0`: Voxel resolution of axis 0 (in μm)
+- `resolution_1`: Voxel resolution of axis 1 (in μm)
+- `resolution_2`: Voxel resolution of axis 2 (in μm)
+- `origin`: 3-letter anatomical orientation code (e.g., `PSL`, `LSP`, `RAS`). See the [image space orientation](https://brainglobe.info/documentation/setting-up/image-definition.html#orientation) documentation for more context.
+- `filepath`: Full path to the image stack
+
+### Optional Columns
+- `species`: Species name
+- `sex`: Biological sex of the subject (`M`, `F`)
+- `age`: Age of the subject (e.g., `12 weeks`, `P30`)
+- `channel`: Imaging channel (e.g., `green`)
+- `mask_filepath`: Full path to manually created mask image stacks, if using
+- `use`: Whether to include the image in the template building process (`true` or `false`)
+
+> ℹ️ Additional columns can be included as needed.
+
+### Example
+
+```
+subject_id,resolution_0,resolution_1,resolution_2,origin,filepath,species,sex
+ZF1,25,25,25,PSL,/ceph/atlas-forge/zebrafinch/sourcedata/ZF1_25_25_ch03_green.tif,Zebra finch,F
+ZF2,25,25,25,PSL,/ceph/atlas-forge/zebrafinch/sourcedata/ZF2_25_25_ch03_green.tif,Zebra finch,M
+ZF3,25,25,25,PSL,/ceph/atlas-forge/zebrafinch/sourcedata/ZF3_25_25_ch03_chan_3_green.tif,Zebra finch,F
+ZF4,25,25,25,PSL,/ceph/atlas-forge/zebrafinch/sourcedata/ZF4_25_25_ch03_chan_3_green.tif,Zebra finch,M
+```
+
 ## Background
 
 ### On templates and atlases
