@@ -314,7 +314,7 @@ def test_process_subject_mask(fixture: str, request) -> None:
 def test_preprocess_logging(
     write_standardised_test_data: tuple[Path, Path],
 ) -> None:
-    """Test logging."""
+    """Test log content."""
     csv_path, config_path = write_standardised_test_data
     preprocess(csv_path, config_path)
 
@@ -325,8 +325,22 @@ def test_preprocess_logging(
         / "preprocessed"
         / "template_builder_2025-12-10_15-15-00.log"
     )
-    assert log_file.exists()
 
-    # read log file contents
     log_text = log_file.read_text()
-    assert log_text
+
+    for expected_section in [
+        "BRAINGLOBE TEMPLATE BUILDER",
+        "GIT INFO",
+        "PYTHON VERSION",
+        "LOGGING",
+    ]:
+        assert expected_section in log_text
+
+    for expected_log in [
+        "Starting logging",
+        "Csv file path:",
+        "Config:",
+        "Processed subject 1/2 (sub-a)",
+        "Processed subject 2/2 (sub-b)",
+    ]:
+        assert expected_log in log_text
