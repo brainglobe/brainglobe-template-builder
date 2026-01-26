@@ -1,4 +1,6 @@
 import logging
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 
 import fancylog
@@ -237,7 +239,6 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
     for _, row in input_df.iterrows():
         if ("use" in row) and (row.use is False):
             continue
-
         paths_dict = _process_subject(row, preproc_config)
         image_paths.extend([paths_dict["image"], paths_dict["flipped_image"]])
         mask_paths.extend([paths_dict["mask"], paths_dict["flipped_mask"]])
@@ -248,7 +249,8 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
             f"Processed subject {subject_num}/{total_subjects} "
             f"(sub-{row.subject_id})"
         )
-        logger.debug(post_fix_str)
+        with redirect_stdout(StringIO()):
+            logger.info(post_fix_str)
         pbar.set_postfix_str(post_fix_str)
         pbar.update(1)
     pbar.close()
