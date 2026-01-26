@@ -248,10 +248,8 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
             f"Processed subject {subject_num}/{total_subjects} "
             f"(sub-{row.subject_id})"
         )
-
-        logger.info(post_fix_str)
+        logger.debug(post_fix_str)
         pbar.set_postfix_str(post_fix_str)
-
         pbar.update(1)
     pbar.close()
 
