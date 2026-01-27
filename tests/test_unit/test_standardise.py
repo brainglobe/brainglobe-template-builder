@@ -356,20 +356,33 @@ def test_standardise_downsampling(request, source_csv, expected_output_size):
 
 
 @pytest.mark.parametrize(
-    ["output_vox_size"],
+    ["output_vox_size", "source_dtype", "image_key"],
     [
-        pytest.param(None, id="no downsampling (output_voxel_size is None)"),
-        pytest.param(100, id="downsampling"),
+        pytest.param(None, "float64", "image", id="float64 no downsampling"),
+        pytest.param(100, "float64", "image", id="float64 downsampling"),
+        pytest.param(
+            None, "uint16", "image_uint16", id="uint16 no downsampling"
+        ),
+        pytest.param(100, "uint16", "image_uint16", id="uint16 downsampling"),
     ],
 )
 def test_standardise_downsampling_datatype(
-    source_csv_no_masks, output_vox_size
+    write_test_data: Callable,
+    source_data_kwargs,
+    output_vox_size,
+    test_stacks,
+    source_dtype,
+    image_key,
 ):
     """Test whether datatype is preserved during downsampling."""
 
-    output_dir = source_csv_no_masks.parents[1]
+    for stacks in source_data_kwargs["test_data"]:
+        stacks["image"] = test_stacks[image_key]
 
-    standardise(source_csv_no_masks, output_dir, output_vox_size)
+    test_data_dir = write_test_data(**source_data_kwargs)
+    output_dir = test_data_dir.parents[1]
+
+    standardise(test_data_dir, output_dir, output_vox_size)
 
     source_dir = output_dir / "source"
     source_image_paths = list(source_dir.glob("**/*.tif"))
@@ -385,4 +398,4 @@ def test_standardise_downsampling_datatype(
 
     for image_path in source_image_paths:
         image_any = load_any(image_path)
-        assert image_any.dtype == np.dtype("float64")
+        assert image_any.dtype == np.dtype(source_dtype)
