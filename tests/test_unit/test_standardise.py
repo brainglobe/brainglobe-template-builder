@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from brainglobe_space import AnatomicalSpace
-from brainglobe_utils.IO.image.load import load_nii
+from brainglobe_utils.IO.image.load import load_any, load_nii
 from numpy._typing._array_like import NDArray
 
 from brainglobe_template_builder.standardise import standardise
@@ -353,3 +353,36 @@ def test_standardise_downsampling(request, source_csv, expected_output_size):
             image.header.get_zooms(), output_vox_sizes_mm
         )
         assert image.shape == expected_output_size
+
+
+@pytest.mark.parametrize(
+    ["output_vox_size"],
+    [
+        pytest.param(None, id="no downsampling (output_voxel_size is None)"),
+        pytest.param(100, id="downsampling"),
+    ],
+)
+def test_standardise_downsampling_datatype(
+    source_csv_no_masks, output_vox_size
+):
+    """Test whether datatype is preserved during downsampling."""
+
+    output_dir = source_csv_no_masks.parents[1]
+
+    standardise(source_csv_no_masks, output_dir, output_vox_size)
+
+    source_dir = output_dir / "source"
+    source_image_paths = list(source_dir.glob("**/*.tif"))
+
+    standardised_dir = output_dir / "standardised"
+    standardised_image_paths = list(standardised_dir.glob("**/*.nii.gz"))
+
+    for image_path in standardised_image_paths:
+        image_any = load_any(image_path)
+        image_nii = load_nii(image_path, as_array=False)
+        assert image_any.dtype == np.dtype("float64")
+        assert image_nii.get_fdata().dtype == np.dtype("float64")
+
+    for image_path in source_image_paths:
+        image_any = load_any(image_path)
+        assert image_any.dtype == np.dtype("float64")
