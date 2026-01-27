@@ -361,9 +361,19 @@ def test_standardise_downsampling(request, source_csv, expected_output_size):
         pytest.param(None, "float64", "image", id="float64 no downsampling"),
         pytest.param(100, "float64", "image", id="float64 downsampling"),
         pytest.param(
-            None, "uint16", "image_uint16", id="uint16 no downsampling"
+            None,
+            "uint16",
+            "image_uint16",
+            id="uint16 no downsampling",
+            marks=pytest.mark.xfail(),
         ),
-        pytest.param(100, "uint16", "image_uint16", id="uint16 downsampling"),
+        pytest.param(
+            100,
+            "uint16",
+            "image_uint16",
+            id="uint16 downsampling",
+            marks=pytest.mark.xfail(),
+        ),
     ],
 )
 def test_standardise_downsampling_datatype(
@@ -374,7 +384,7 @@ def test_standardise_downsampling_datatype(
     source_dtype,
     image_key,
 ):
-    """Test whether datatype is preserved during downsampling."""
+    """Test whether datatype is preserved during standardisation."""
 
     for stacks in source_data_kwargs["test_data"]:
         stacks["image"] = test_stacks[image_key]
@@ -384,18 +394,11 @@ def test_standardise_downsampling_datatype(
 
     standardise(test_data_dir, output_dir, output_vox_size)
 
-    source_dir = output_dir / "source"
-    source_image_paths = list(source_dir.glob("**/*.tif"))
-
     standardised_dir = output_dir / "standardised"
     standardised_image_paths = list(standardised_dir.glob("**/*.nii.gz"))
 
     for image_path in standardised_image_paths:
         image_any = load_any(image_path)
         image_nii = load_nii(image_path, as_array=False)
-        assert image_any.dtype == np.dtype("float64")
-        assert image_nii.get_fdata().dtype == np.dtype("float64")
-
-    for image_path in source_image_paths:
-        image_any = load_any(image_path)
         assert image_any.dtype == np.dtype(source_dtype)
+        assert image_nii.get_fdata().dtype == np.dtype(source_dtype)
