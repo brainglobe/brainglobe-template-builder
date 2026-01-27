@@ -228,7 +228,7 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
 
     total_subjects = len(input_df)
     if "use" in input_df.columns:
-        total_subjects = -input_df.use.value_counts().get(False, 0)
+        total_subjects -= input_df.use.value_counts().get(False, 0)
     pbar = tqdm(
         total=total_subjects,
         desc="Brightness correction and mask creation",
