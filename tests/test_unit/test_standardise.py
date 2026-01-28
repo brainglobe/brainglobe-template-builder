@@ -376,7 +376,7 @@ def test_standardise_downsampling(request, source_csv, expected_output_size):
         ),
     ],
 )
-def test_standardise_downsampling_datatype(
+def test_standardise_preserves_datatype(
     write_test_data: Callable,
     source_data_kwargs,
     output_vox_size,
