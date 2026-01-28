@@ -127,6 +127,8 @@ def _downsample_anisotropic_stack_by_factors(
         If the array is not chunked by entire planes along axis 0.
     """
 
+    source_dtype = stack.dtype.type
+
     # check we have expected slice chunks
     _verify_chunked_by_entire_plane(stack)
 
@@ -167,7 +169,7 @@ def _downsample_anisotropic_stack_by_factors(
         anti_aliasing=anti_aliasing,
         preserve_range=True,
     )
-    return downsampled_axial.compute()
+    return downsampled_axial.compute().astype(source_dtype)
 
 
 def _warn_if_output_vox_sizes_incorrect(
