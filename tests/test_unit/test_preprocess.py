@@ -308,3 +308,39 @@ def test_process_subject_mask(fixture: str, request) -> None:
     else:
         with assert_raises(AssertionError):
             np.testing.assert_equal(mask_changed_config, mask_default)
+
+
+@pytest.mark.usefixtures("mock_fancylog_datetime")
+def test_preprocess_logging(
+    write_standardised_test_data: tuple[Path, Path],
+) -> None:
+    """Test log content."""
+    csv_path, config_path = write_standardised_test_data
+    preprocess(csv_path, config_path)
+
+    output_dir = csv_path.parents[1]
+
+    log_file = (
+        output_dir
+        / "preprocessed"
+        / "template_builder_2025-12-10_15-15-00.log"
+    )
+
+    log_text = log_file.read_text()
+
+    for expected_section in [
+        "BRAINGLOBE TEMPLATE BUILDER",
+        "GIT INFO",
+        "PYTHON VERSION",
+        "LOGGING",
+    ]:
+        assert expected_section in log_text
+
+    for expected_log in [
+        "Starting logging",
+        "Csv file path:",
+        "Config:",
+        "Processed subject 1/2 (sub-a)",
+        "Processed subject 2/2 (sub-b)",
+    ]:
+        assert expected_log in log_text

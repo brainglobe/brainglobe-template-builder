@@ -1,4 +1,6 @@
 import logging
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 
 import fancylog
@@ -7,6 +9,7 @@ import pandas as pd
 import yaml
 from brainglobe_utils.IO.image.load import load_any
 from brainglobe_utils.IO.image.save import save_as_asr_nii
+from tqdm.auto import tqdm
 
 import brainglobe_template_builder as package_for_log
 from brainglobe_template_builder.plots import plot_grid
@@ -220,16 +223,37 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
     validate_input_csv(standardised_csv)
     input_df = pd.read_csv(standardised_csv)
 
-    image_paths = []
+    image_paths: list[Path] = []
     mask_paths = []
-    for _, row in input_df.iterrows():
 
+    total_subjects = len(input_df)
+    if "use" in input_df.columns:
+        total_subjects -= input_df.use.value_counts().get(False, 0)
+    pbar = tqdm(
+        total=total_subjects,
+        desc="Brightness correction and mask creation",
+        unit="subject",
+    )
+
+    subject_num = 0
+    for _, row in input_df.iterrows():
         if ("use" in row) and (row.use is False):
             continue
-
         paths_dict = _process_subject(row, preproc_config)
         image_paths.extend([paths_dict["image"], paths_dict["flipped_image"]])
         mask_paths.extend([paths_dict["mask"], paths_dict["flipped_mask"]])
+
+        subject_num += 1
+
+        post_fix_str = (
+            f"Processed subject {subject_num}/{total_subjects} "
+            f"(sub-{row.subject_id})"
+        )
+        with redirect_stdout(StringIO()):
+            logger.info(post_fix_str)
+        pbar.set_postfix_str(post_fix_str)
+        pbar.update(1)
+    pbar.close()
 
     np.savetxt(
         preprocessed_dir / "all_processed_brain_paths.txt",
