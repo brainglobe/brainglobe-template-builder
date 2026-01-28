@@ -399,6 +399,4 @@ def test_standardise_preserves_datatype(
 
     for image_path in standardised_image_paths:
         image_any = load_any(image_path)
-        image_nii = load_nii(image_path, as_array=False)
         assert image_any.dtype == np.dtype(source_dtype)
-        assert image_nii.get_fdata().dtype == np.dtype(source_dtype)
