@@ -365,14 +365,12 @@ def test_standardise_downsampling(request, source_csv, expected_output_size):
             "uint16",
             "image_uint16",
             id="uint16 no downsampling",
-            marks=pytest.mark.xfail(),
         ),
         pytest.param(
             100,
             "uint16",
             "image_uint16",
             id="uint16 downsampling",
-            marks=pytest.mark.xfail(),
         ),
     ],
 )
