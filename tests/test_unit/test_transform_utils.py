@@ -4,7 +4,6 @@ import pytest
 from skimage import transform
 
 from brainglobe_template_builder.utils.transform_utils import (
-    _downsample_anisotropic_stack_by_factors,
     downsample_anisotropic_stack_to_isotropic,
 )
 
@@ -163,7 +162,7 @@ def test_downsampling_preserves_dtype(test_stacks, image_stack):
     """Test that downsampling an image stack preserves its original dtype."""
     original_dtype = test_stacks[image_stack].dtype
     dask_stack = da.from_array(test_stacks[image_stack], chunks=(1, 50, 50))
-    downsampled_stack = _downsample_anisotropic_stack_by_factors(
-        dask_stack, [0.5, 0.5, 0.5], mask=False
+    downsampled_stack = downsample_anisotropic_stack_to_isotropic(
+        dask_stack, [25, 25, 25], 50
     )
     assert downsampled_stack.dtype == original_dtype
