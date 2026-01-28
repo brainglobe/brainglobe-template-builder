@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from brainglobe_space import AnatomicalSpace
-from brainglobe_utils.IO.image.load import load_any, load_nii
+from brainglobe_utils.IO.image.load import load_nii
 from numpy._typing._array_like import NDArray
 
 from brainglobe_template_builder.standardise import standardise
@@ -398,5 +398,5 @@ def test_standardise_preserves_datatype(
     standardised_image_paths = list(standardised_dir.glob("**/*.nii.gz"))
 
     for image_path in standardised_image_paths:
-        image_any = load_any(image_path)
+        image_any = load_nii(image_path, as_array=True)
         assert image_any.dtype == np.dtype(source_dtype)
