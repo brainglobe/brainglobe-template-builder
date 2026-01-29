@@ -353,3 +353,48 @@ def test_standardise_downsampling(request, source_csv, expected_output_size):
             image.header.get_zooms(), output_vox_sizes_mm
         )
         assert image.shape == expected_output_size
+
+
+@pytest.mark.parametrize(
+    ["output_vox_size", "source_dtype", "image_key"],
+    [
+        pytest.param(None, "float64", "image", id="float64 no downsampling"),
+        pytest.param(100, "float64", "image", id="float64 downsampling"),
+        pytest.param(
+            None,
+            "uint16",
+            "image_uint16",
+            id="uint16 no downsampling",
+        ),
+        pytest.param(
+            100,
+            "uint16",
+            "image_uint16",
+            id="uint16 downsampling",
+        ),
+    ],
+)
+def test_standardise_preserves_datatype(
+    write_test_data: Callable,
+    source_data_kwargs,
+    output_vox_size,
+    test_stacks,
+    source_dtype,
+    image_key,
+):
+    """Test whether datatype is preserved during standardisation."""
+
+    for stacks in source_data_kwargs["test_data"]:
+        stacks["image"] = test_stacks[image_key]
+
+    test_data_dir = write_test_data(**source_data_kwargs)
+    output_dir = test_data_dir.parents[1]
+
+    standardise(test_data_dir, output_dir, output_vox_size)
+
+    standardised_dir = output_dir / "standardised"
+    standardised_image_paths = list(standardised_dir.glob("**/*.nii.gz"))
+
+    for image_path in standardised_image_paths:
+        image_any = load_nii(image_path, as_array=True)
+        assert image_any.dtype == np.dtype(source_dtype)

@@ -149,3 +149,20 @@ def test_chunks_covering_part_of_plane_raises_error(partial_slicewise_stack):
         downsample_anisotropic_stack_to_isotropic(
             partial_slicewise_stack, [25, 25, 25], 50
         )
+
+
+@pytest.mark.parametrize(
+    ["image_stack"],
+    [
+        pytest.param("image_uint16", id="preserve uint16 dtype"),
+        pytest.param("image", id="preserve float64 dtype"),
+    ],
+)
+def test_downsampling_preserves_dtype(test_stacks, image_stack):
+    """Test that downsampling an image stack preserves its original dtype."""
+    original_dtype = test_stacks[image_stack].dtype
+    dask_stack = da.from_array(test_stacks[image_stack], chunks=(1, 50, 50))
+    downsampled_stack = downsample_anisotropic_stack_to_isotropic(
+        dask_stack, [25, 25, 25], 50
+    )
+    assert downsampled_stack.dtype == original_dtype

@@ -15,15 +15,23 @@ from numpy.typing import NDArray
 def _make_stack(
     offset: int | None = None,
     mask: bool = False,
-) -> NDArray[np.float64]:
+    dtype: np.dtype = np.dtype(np.float64),
+) -> NDArray:
     """Create a 50x50x50 zeros stack with foreground."""
 
     shape = [50, 50, 50]
     obj_size = 20
     mask_extra = 5
-    value = 1 if mask else 0.5
+    value: int | float
+    if mask:
+        value = 1
+    elif np.issubdtype(dtype, np.floating):
+        value = 0.5
+    else:
+        max_value: int = np.iinfo(dtype).max
+        value = max_value // 2
 
-    stack = np.zeros(shape, dtype=np.float64)
+    stack = np.zeros(shape, dtype=dtype)
     foreground_size = obj_size + (mask_extra if mask else 0)
 
     start = [(s - foreground_size) // 2 for s in shape]
@@ -150,6 +158,7 @@ def test_stacks() -> dict[str, NDArray[np.float64]]:
     return {
         "image": _make_stack(offset=5),
         "mask": _make_stack(mask=True, offset=5),
+        "image_uint16": _make_stack(dtype=np.dtype(np.uint16), offset=5),
     }
 
 

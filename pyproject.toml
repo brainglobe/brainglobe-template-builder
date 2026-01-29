@@ -21,7 +21,7 @@ classifiers = [
 
 dependencies = [
     "napari[all]>=0.6.1",
-    "brainglobe-utils>=0.9.0",
+    "brainglobe-utils>=0.11.1",
     "brainglobe-atlasapi>=2.0.7",
     "napari-itk-io",
     "loguru",
