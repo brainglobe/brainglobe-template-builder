@@ -75,3 +75,21 @@ def test_create_mask_layer_data(mask_widget, stack, mask_config):
     mask_layer = mask_widget.viewer.layers[-1]
 
     np.testing.assert_array_equal(mask_layer.data, expected_mask_data)
+
+
+@pytest.mark.parametrize(
+    "label,input_val,expected_val",
+    [
+        pytest.param("gauss_sigma", -5, 0, id="gauss_sigma min"),
+        pytest.param("gauss_sigma", 25, 20, id="gauss_sigma max"),
+        pytest.param("closing_size", -5, 0, id="closing_size min"),
+        pytest.param("closing_size", 25, 20, id="closing_size max"),
+        pytest.param("erode_size", -5, 0, id="erode_size min"),
+        pytest.param("erode_size", 25, 20, id="erode_size max"),
+    ],
+)
+def test_create_mask_value_clamp(mask_widget, label, input_val, expected_val):
+    """Test that clamping of valid values works correctly."""
+    spinbox = getattr(mask_widget, label)
+    spinbox.setValue(input_val)
+    assert spinbox.value() == expected_val
