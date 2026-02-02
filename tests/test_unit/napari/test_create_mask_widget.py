@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import yaml
 
 from brainglobe_template_builder.napari.mask_widget import CreateMask
 from brainglobe_template_builder.utils.masking import create_mask
@@ -16,6 +17,17 @@ def mask_widget(make_napari_viewer, stack):
     return mask_widget
 
 
+@pytest.fixture
+def default_mask_config():
+    """Returns the default mask configuration as a dictionary."""
+    return {
+        "closing_size": 5,
+        "erode_size": 0,
+        "gaussian_sigma": 3.0,
+        "threshold_method": "triangle",
+    }
+
+
 def test_create_mask_creates_layer(mask_widget):
     """Test that clicking 'Create mask' generates a new layer."""
     initial_layer_count = len(mask_widget.viewer.layers)
@@ -23,51 +35,51 @@ def test_create_mask_creates_layer(mask_widget):
     assert len(mask_widget.viewer.layers) == initial_layer_count + 1
 
 
+def test_create_mask_layer_data_default(
+    mask_widget, stack, default_mask_config
+):
+    """Test that the created mask layer contains the correct data
+    with default configuration."""
+    expected_mask_data = create_mask(stack, **default_mask_config)
+
+    mask_widget._on_create_mask_button_click()
+    mask_layer = mask_widget.viewer.layers[-1]
+
+    np.testing.assert_array_equal(mask_layer.data, expected_mask_data)
+
+
 @pytest.mark.parametrize(
     "mask_config",
     [
         pytest.param(
             {
-                "default": {
-                    "gauss_sigma": 3,
-                    "threshold_method": "triangle",
-                    "closing_size": 5,
-                    "erode_size": 0,
-                }
-            },
-            id="default",
-        ),
-        pytest.param(
-            {
-                "custom": {
-                    "gauss_sigma": 1,
-                    "threshold_method": "otsu",
-                    "closing_size": 3,
-                    "erode_size": 2,
-                }
+                "gauss_sigma": 1,
+                "threshold_method": "otsu",
+                "closing_size": 3,
+                "erode_size": 2,
             },
             id="custom otsu",
         ),
+        pytest.param(
+            {
+                "gauss_sigma": 2,
+                "threshold_method": "isodata",
+                "closing_size": 4,
+                "erode_size": 2,
+            },
+            id="custom isodata",
+        ),
     ],
 )
-def test_create_mask_layer_data(mask_widget, stack, mask_config):
-    """Test that the created mask layer contains the correct data.
-
-    Applying different masking configurations (default and custom)
-    produce a mask layer with data matching the expected output.
-    """
-
-    if "default" in mask_config:
-        mask_config = mask_config["default"]
-
-    elif "custom" in mask_config:
-        mask_config = mask_config["custom"]
-        mask_widget.gauss_sigma.setValue(mask_config["gauss_sigma"])
-        mask_widget.threshold_method.setCurrentText(
-            mask_config["threshold_method"]
-        )
-        mask_widget.closing_size.setValue(mask_config["closing_size"])
-        mask_widget.erode_size.setValue(mask_config["erode_size"])
+def test_create_mask_layer_data_custom(mask_widget, stack, mask_config):
+    """Test that the created mask layer contains the correct data
+    with various custom configurations."""
+    mask_widget.gauss_sigma.setValue(mask_config["gauss_sigma"])
+    mask_widget.threshold_method.setCurrentText(
+        mask_config["threshold_method"]
+    )
+    mask_widget.closing_size.setValue(mask_config["closing_size"])
+    mask_widget.erode_size.setValue(mask_config["erode_size"])
 
     expected_mask_data = create_mask(stack, **mask_config)
 
@@ -93,3 +105,34 @@ def test_create_mask_value_clamp(mask_widget, label, input_val, expected_val):
     spinbox = getattr(mask_widget, label)
     spinbox.setValue(input_val)
     assert spinbox.value() == expected_val
+
+
+@pytest.mark.parametrize(
+    "pad",
+    [
+        pytest.param(5, id="pad_pixels 5"),
+        pytest.param(10, id="pad_pixels 10"),
+    ],
+)
+def test_export_mask_config(mask_widget, tmp_path, default_mask_config, pad):
+    """Test that exporting mask configuration to a yaml file
+    works correctly."""
+    output_path = tmp_path / "output"
+    output_path.mkdir(exist_ok=True)
+
+    mask_widget.output_dir_widget.path_edit.setText(str(output_path))
+    mask_widget.config_dir_widget.path_edit.setText(str(tmp_path))
+    mask_widget.pad_pixels.setValue(pad)
+    mask_widget._on_export_config_button_click()
+    config_file = tmp_path / "preproc_config.yaml"
+
+    expected_config = {
+        "mask": default_mask_config,
+        "output_dir": str(output_path),
+        "pad_pixels": pad,
+    }
+
+    assert config_file.exists()
+    with open(config_file, "r") as f:
+        exported_config = yaml.safe_load(f)
+    assert exported_config == expected_config
