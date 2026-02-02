@@ -18,12 +18,12 @@ def mask_widget(make_napari_viewer, stack):
 
 
 @pytest.fixture
-def default_mask_config():
+def default_mask_config_kwargs():
     """Returns the default mask configuration as a dictionary."""
     return {
         "closing_size": 5,
         "erode_size": 0,
-        "gaussian_sigma": 3.0,
+        "gauss_sigma": 3.0,
         "threshold_method": "triangle",
     }
 
@@ -36,12 +36,11 @@ def test_create_mask_creates_layer(mask_widget):
 
 
 def test_create_mask_layer_data_default(
-    mask_widget, stack, default_mask_config
+    mask_widget, stack, default_mask_config_kwargs
 ):
     """Test that the created mask layer contains the correct data
     with default configuration."""
-    expected_mask_data = create_mask(stack, **default_mask_config)
-
+    expected_mask_data = create_mask(stack, **default_mask_config_kwargs)
     mask_widget._on_create_mask_button_click()
     mask_layer = mask_widget.viewer.layers[-1]
 
@@ -49,7 +48,7 @@ def test_create_mask_layer_data_default(
 
 
 @pytest.mark.parametrize(
-    "mask_config",
+    "mask_config_kwargs",
     [
         pytest.param(
             {
@@ -71,17 +70,17 @@ def test_create_mask_layer_data_default(
         ),
     ],
 )
-def test_create_mask_layer_data_custom(mask_widget, stack, mask_config):
+def test_create_mask_layer_data_custom(mask_widget, stack, mask_config_kwargs):
     """Test that the created mask layer contains the correct data
     with various custom configurations."""
-    mask_widget.gauss_sigma.setValue(mask_config["gauss_sigma"])
+    mask_widget.gauss_sigma.setValue(mask_config_kwargs["gauss_sigma"])
     mask_widget.threshold_method.setCurrentText(
-        mask_config["threshold_method"]
+        mask_config_kwargs["threshold_method"]
     )
-    mask_widget.closing_size.setValue(mask_config["closing_size"])
-    mask_widget.erode_size.setValue(mask_config["erode_size"])
+    mask_widget.closing_size.setValue(mask_config_kwargs["closing_size"])
+    mask_widget.erode_size.setValue(mask_config_kwargs["erode_size"])
 
-    expected_mask_data = create_mask(stack, **mask_config)
+    expected_mask_data = create_mask(stack, **mask_config_kwargs)
 
     mask_widget._on_create_mask_button_click()
     mask_layer = mask_widget.viewer.layers[-1]
@@ -114,9 +113,11 @@ def test_create_mask_value_clamp(mask_widget, label, input_val, expected_val):
         pytest.param(10, id="pad_pixels 10"),
     ],
 )
-def test_export_mask_config(mask_widget, tmp_path, default_mask_config, pad):
+def test_export_mask_config(
+    mask_widget, tmp_path, default_mask_config_kwargs, pad
+):
     """Test that exporting mask configuration to a yaml file
-    works correctly."""
+    works as expected."""
     output_path = tmp_path / "output"
     output_path.mkdir(exist_ok=True)
 
@@ -126,13 +127,17 @@ def test_export_mask_config(mask_widget, tmp_path, default_mask_config, pad):
     mask_widget._on_export_config_button_click()
     config_file = tmp_path / "preproc_config.yaml"
 
+    # change keyname gauss_sigma (internal use) to gaussian_sigma (config file)
+    mask_config = default_mask_config_kwargs.copy()
+    mask_config["gaussian_sigma"] = mask_config.pop("gauss_sigma")
+
     expected_config = {
-        "mask": default_mask_config,
+        "mask": mask_config,
         "output_dir": str(output_path),
         "pad_pixels": pad,
     }
 
-    assert config_file.exists()
+    assert config_file.exists(), "Config file was not created."
     with open(config_file, "r") as f:
         exported_config = yaml.safe_load(f)
-    assert exported_config == expected_config
+    assert exported_config == expected_config, "Exported config is incorrect."
