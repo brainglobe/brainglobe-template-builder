@@ -145,7 +145,7 @@ class AlignMidplane(QWidget):
             "properties": {"label": list(range(9))},
             "face_color": "green",
             "symbol": "cross",
-            "edge_width": 0,
+            "border_width": 0,
             "opacity": 0.6,
             "size": 6,
             "ndim": mask.ndim,
