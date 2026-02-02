@@ -13,8 +13,9 @@ from brainglobe_template_builder.utils.preproc_config import (
 def test_standardise_preprocess(source_csv_no_masks):
     """Test standardise followed by preprocess.
 
-    Verifies paths of preprocessed images are written to txt files (for
-    further processing) and that the files those paths point to exist.
+    Runs standardise and preprocess and checks that expected txt output files:
+    - are created for both brain and mask and are readable
+    - contain file paths that point to existing files
     """
 
     output_dir = source_csv_no_masks.parents[1]
@@ -23,7 +24,6 @@ def test_standardise_preprocess(source_csv_no_masks):
     config = PreprocConfig(output_dir=output_dir, mask=MaskConfig())
     preprocess(standardised_csv, config)
 
-    # Verify output files exist
     preprocessed_dir = output_dir / "preprocessed"
     for file_type in ["brain", "mask"]:
         paths_file = preprocessed_dir / f"all_processed_{file_type}_paths.txt"
