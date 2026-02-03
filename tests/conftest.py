@@ -195,3 +195,23 @@ def make_tmp_dir(tmp_path: Path) -> Callable:
         return subdir
 
     return _make_subdir
+
+
+@pytest.fixture
+def source_data_kwargs(make_tmp_dir: Callable, test_data: list[dict]) -> dict:
+    """Kwargs for creating source test data."""
+    return {
+        "image_type": "tif",
+        "csv_name": "source_data",
+        "config": False,
+        "dir": make_tmp_dir("source"),
+        "test_data": test_data,
+    }
+
+
+@pytest.fixture
+def source_csv_no_masks(
+    write_test_data: Callable, source_data_kwargs: dict
+) -> Path:
+    """Create source test data with CSV (no masks)."""
+    return write_test_data(**source_data_kwargs)
