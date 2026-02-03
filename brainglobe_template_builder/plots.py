@@ -297,7 +297,9 @@ def _compute_attenuated_mip(
     attenuation_shape = [1] * trimmed_img.ndim
     attenuation_shape[axis] = trimmed_img.shape[axis]
     attenuation = attenuation.reshape(attenuation_shape)
-    attenuated_img = trimmed_img.astype(np.float32) * attenuation
+    attenuated_img = trimmed_img.astype(np.float32) * attenuation.astype(
+        np.float32
+    )
 
     # Compute and return the attenuated MIP
     mip = np.max(attenuated_img, axis=axis)
