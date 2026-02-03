@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from brainglobe_space import AnatomicalSpace
-from brainglobe_utils.IO.image.load import load_nii
+from brainglobe_utils.IO.image.load import load_any, load_nii
 from numpy._typing._array_like import NDArray
 
 from brainglobe_template_builder.standardise import standardise
@@ -379,3 +379,65 @@ def test_standardise_preserves_datatype(
     for image_path in standardised_image_paths:
         image_any = load_nii(image_path, as_array=True)
         assert image_any.dtype == np.dtype(source_dtype)
+
+
+@pytest.mark.xfail(
+    reason="Test only runs locally with test_datatype.nii.gz image"
+)
+def test_standardise_preserves_datatype_real_image(
+    make_tmp_dir, write_test_data
+):
+    """Test whether datatype is preserved during standardisation.
+
+    Uses a real nii uint8 image renamed to `test_datatype.nii.gz` and saved in
+    `~/test_data` to verify dtype preservation during standardisation. Test
+    will only work locally.
+    """
+
+    real_image_path = Path.home() / "test_data" / "test_datatype.nii.gz"
+    assert (
+        real_image_path.exists()
+    ), "Image not found at ~/test_data/test_datatype.nii.gz"
+    real_image = load_any(real_image_path)
+    original_dtype = real_image.dtype
+    assert original_dtype == np.uint8, "Original image should be uint8 dtype"
+
+    # structure used for other tests
+    data = [
+        {
+            "subject_id": "a",
+            "image": real_image,
+            "mask": None,
+            "voxel_size": [25, 25, 25],
+            "origin": "PSL",
+        },
+        {
+            "subject_id": "b",
+            "image": real_image,
+            "mask": None,
+            "voxel_size": [10, 10, 10],
+            "origin": "ASR",
+        },
+    ]
+
+    # kwargs compatible with write_test_data to set up expected folder
+    # structure
+    real_image_source_data_kwargs = {
+        "image_type": "nifti",
+        "csv_name": "source_data",
+        "config": False,
+        "dir": make_tmp_dir("source"),
+        "test_data": data,
+    }
+
+    csv_path = write_test_data(**real_image_source_data_kwargs)
+    assert csv_path.exists()
+
+    output_dir = make_tmp_dir("output")
+    standardise(csv_path, output_dir)
+
+    standardised_dir = output_dir / "standardised"
+    standardised_image_paths = list(standardised_dir.glob("**/*.nii.gz"))
+    for image_path in standardised_image_paths:
+        standardised_image = load_any(image_path)
+        assert standardised_image.dtype == np.uint8
