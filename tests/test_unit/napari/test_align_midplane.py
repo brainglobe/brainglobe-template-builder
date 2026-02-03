@@ -40,7 +40,6 @@ def align_widget(make_napari_viewer, test_data):
     return align_widget
 
 
-@pytest.mark.xfail(reason="invalid edge_width property in widget points layer")
 @pytest.mark.parametrize(
     "axis",
     [
@@ -63,7 +62,6 @@ def test_estimate_points(align_widget, test_data, axis):
     np.testing.assert_array_equal(points_layer.data, expected_points)
 
 
-@pytest.mark.xfail(reason="invalid edge_width property in widget points layer")
 def test_estimate_points_different_axes(align_widget):
     """Test that different axes produce different midplane point estimates."""
     points = {}
@@ -96,6 +94,26 @@ def test_align_midplane(make_napari_viewer, test_data, stack_type):
     viewer = make_napari_viewer()
     viewer.add_image(test_data["stack" + stack_type], name="test_stack")
     viewer.add_labels(test_data["mask" + stack_type], name="test_mask")
+
+    # Add midplane points (required for alignment)
+    mask_data = test_data["mask" + stack_type]
+    estimator = MidplaneEstimator(mask_data, symmetry_axis="x")
+    points = estimator.get_points()
+    viewer.add_points(points, name="test_points-midplane")
+
     align_widget = AlignMidplane(viewer)
     viewer.window.add_dock_widget(align_widget)
-    assert align_widget._on_align_button_click()
+
+    initial_layer_count = len(viewer.layers)
+    align_widget._on_align_button_click()
+
+    # Verify new layers were created (aligned image, mask, and halves)
+    assert len(viewer.layers) == initial_layer_count + 3
+    assert "test_stack_aligned" in [layer.name for layer in viewer.layers]
+    assert "test_mask_aligned" in [layer.name for layer in viewer.layers]
+    # Verify aligner was stored and save button enabled
+    assert hasattr(align_widget, "aligner")
+    assert align_widget.save_transform_button.isEnabled()
+    # Verify original layers are hidden
+    assert not viewer.layers["test_stack"].visible
+    assert not viewer.layers["test_mask"].visible
