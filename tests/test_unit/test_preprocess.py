@@ -354,7 +354,6 @@ def test_preprocess_logging(
             "uint16",
             "image_uint16",
             id="uint16",
-            marks=pytest.mark.xfail,  # remove after dtype preservation bug fix
         ),
     ],
 )
