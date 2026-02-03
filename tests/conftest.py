@@ -17,10 +17,11 @@ def _make_stack(
     mask: bool = False,
     dtype: np.dtype = np.dtype(np.float64),
 ) -> NDArray:
-    """Create a 50x50x50 zeros stack with foreground object.
+    """Create a 50x50x50 zeros stack with foreground.
 
-    The foreground contains a centred less bright area at 75% of the
-    outer foreground value.
+    The foreground contains a centered inner region at 75% brightness.
+    This prevents preprocessing failures on uint images (homogeneous
+    foregrounds can break slice selection).
     """
 
     shape = [50, 50, 50]
