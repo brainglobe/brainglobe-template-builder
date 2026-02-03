@@ -41,6 +41,20 @@ def _make_stack(
 
     stack[start[0] : end[0], start[1] : end[1], start[2] : end[2]] = value
 
+    # Add inner foreground centred within the first foreground at 70% max value
+    inner_foreground_size = int(foreground_size * 0.7)
+    inner_start = [
+        start[i] + (foreground_size - inner_foreground_size) // 2
+        for i in range(3)
+    ]
+    inner_end = [inner_start[i] + inner_foreground_size for i in range(3)]
+    inner_value = value * 0.7
+    stack[
+        inner_start[0] : inner_end[0],
+        inner_start[1] : inner_end[1],
+        inner_start[2] : inner_end[2],
+    ] = inner_value
+
     return stack
 
 
