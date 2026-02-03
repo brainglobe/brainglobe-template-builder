@@ -107,4 +107,4 @@ def test_align_midplane(make_napari_viewer, test_data, stack_type):
     try:
         align_widget._on_align_button_click()
     except Exception as e:
-        pytest.fail(f"_on_align_button_click raised {e}")
+        pytest.fail(f'_on_align_button_click raised "{e}"')
