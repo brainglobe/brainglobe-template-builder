@@ -84,28 +84,35 @@ def test_estimate_points_symmetry_axis(align_widget, symmetry_axis):
     assert np.all(sym_axis_coordinates == sym_axis_coordinates[0])
 
 
-@pytest.mark.xfail(
-    reason="bug: test transform does not result in valid transformation matrix"
-)
 @pytest.mark.parametrize(
-    "stack_type",
+    "rotation_needed",
     [
-        pytest.param("", id="parallel midplane"),
-        pytest.param("_rotated", id="rotated midplane"),
+        pytest.param(True, id="rotation needed"),
+        pytest.param(
+            False,
+            id="no rotation needed",
+            marks=pytest.mark.xfail(
+                reason="bug (remove marker once issue #155 is resolved)"
+            ),
+        ),
     ],
 )
-def test_align_midplane(make_napari_viewer, test_data, stack_type):
-    """Test that align midplane modifies image and mask data correctly."""
+def test_align_midplane(make_napari_viewer, test_data, rotation_needed):
+    """Test that midplane can be aligned without raising an exception.
+
+    Test scenario when rotation is needed (by adding offset to the by default
+    perfectly aligned points) and when it is not."""
+
     viewer = make_napari_viewer()
-    viewer.add_image(test_data["stack" + stack_type], name="test_stack")
-    viewer.add_labels(test_data["mask" + stack_type], name="test_mask")
-
-    # Add midplane points (required for alignment)
-    mask_data = test_data["mask" + stack_type]
-    estimator = MidplaneEstimator(mask_data, symmetry_axis="x")
+    viewer.add_image(test_data["stack"], name="test_stack")
+    viewer.add_labels(test_data["mask"], name="test_mask")
+    estimator = MidplaneEstimator(test_data["mask"], symmetry_axis="x")
     points = estimator.get_points()
-    viewer.add_points(points, name="test_points-midplane")
 
+    if rotation_needed:
+        points[0] += [1, 3, 2]
+
+    viewer.add_points(points, name="test_points-midplane")
     align_widget = AlignMidplane(viewer)
     viewer.window.add_dock_widget(align_widget)
 
