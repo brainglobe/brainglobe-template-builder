@@ -69,7 +69,7 @@ class MidplaneEstimator:
 
         self._get_mask_properties()
         # Find middle of the symmetry axis
-        mid_plane = self.centroid[self.symmetry_axis_idx]
+        mid_symmetry_axis = self.centroid[self.symmetry_axis_idx]
         # Find slices at 1/4, 2/4, and 3/4 of the mask extents along the
         # other two (non-symmetry) axes
         a, b = [i for i in range(3) if i != self.symmetry_axis_idx]
@@ -80,10 +80,20 @@ class MidplaneEstimator:
         other_planes_b = [
             self.bbox[b, 0] + mask_extents[b] / 4 * i for i in [1, 2, 3]
         ]
-        # Find points at the intersection the symmetry axis midplane
-        # with quarter-planes of the other two axes (produces 9 points)
-        points = list(product(other_planes_a, other_planes_b, [mid_plane]))
-        self.points = np.array(points)  # (9, 3)
+
+        # Create 9 points by combining all pairs of coordinates from axes a and
+        # b, keeping the symmetry axis at its midpoint.
+        points = []
+        for coor_axis_a, coor_axis_b in product(
+            other_planes_a, other_planes_b
+        ):
+            point = np.zeros(3)
+            point[self.symmetry_axis_idx] = mid_symmetry_axis
+            point[a] = coor_axis_a
+            point[b] = coor_axis_b
+            points.append(point)
+
+        self.points = np.array(points)
         return self.points
 
 
