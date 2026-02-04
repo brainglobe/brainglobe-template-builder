@@ -396,16 +396,16 @@ def _choose_slices(
         Array of slice indexes (length = n_slices)
     """
 
-    if vmin is None:
-        # Return evenly spaced slices including the first and last slice
-        return np.linspace(0, img.shape[axis_idx] - 1, n_slices, dtype=int)
-
     # Remove slices where no pixels have a brightness > vmin
     axes_to_sum = list(range(img.ndim))
     axes_to_sum.remove(axis_idx)
 
     n_pixels_above_vmin = (img > vmin).sum(axis=tuple(axes_to_sum))
     slice_idx_above_vmin = np.where(n_pixels_above_vmin > 0)[0]
+
+    if vmin is None or len(slice_idx_above_vmin) == 0:
+        # Return evenly spaced slices including the first and last slice
+        return np.linspace(0, img.shape[axis_idx] - 1, n_slices, dtype=int)
 
     min_idx = slice_idx_above_vmin[0]
     max_idx = slice_idx_above_vmin[-1]
