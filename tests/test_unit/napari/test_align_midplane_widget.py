@@ -62,21 +62,26 @@ def test_estimate_points(align_widget, test_data, axis):
     np.testing.assert_array_equal(points_layer.data, expected_points)
 
 
-def test_estimate_points_different_axes(align_widget):
-    """Test that different axes produce different midplane point estimates."""
-    points = {}
+@pytest.mark.xfail(reason="bug (remove marker after PR #161 is merged)")
+@pytest.mark.parametrize(
+    "symmetry_axis",
+    [
+        pytest.param("z", id="z axis"),
+        pytest.param("y", id="y axis"),
+        pytest.param("x", id="x axis"),
+    ],
+)
+def test_estimate_points_symmetry_axis(align_widget, symmetry_axis):
+    """Check whether the coordinates along the symmetry axis stay constant.
 
-    for axis in ["x", "y", "z"]:
-        align_widget.select_axis_dropdown.setCurrentText(axis)
-        align_widget._on_estimate_button_click()
-        points_layer = align_widget.viewer.layers[-1]
-        points[axis] = points_layer.data.copy()
-
-    # All axis pairs should produce different points
-    x, y, z = points["x"], points["y"], points["z"]
-    assert not (
-        np.array_equal(x, y) or np.array_equal(x, z) or np.array_equal(y, z)
-    )
+    For a given symmetry axis, all points in the estimated midplane should
+    have the same coordinate value along that axis."""
+    axis_dict = {"z": 0, "y": 1, "x": 2}
+    align_widget.select_axis_dropdown.setCurrentText(symmetry_axis)
+    align_widget._on_estimate_button_click()
+    points = align_widget.viewer.layers[-1].data
+    sym_axis_coordinates = points[:, axis_dict[symmetry_axis]]
+    assert np.all(sym_axis_coordinates == sym_axis_coordinates[0])
 
 
 @pytest.mark.xfail(
