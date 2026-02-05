@@ -23,7 +23,10 @@ def get_rotation_from_vectors(vec1: np.ndarray, vec2: np.ndarray):
 
     Returns
     -------
-    A rotation matrix (3x3) that, when applied to vec1, aligns it with vec2.
+    np.ndarray
+        A rotation matrix (3x3) that, when applied to vec1, aligns it with
+        vec2. When vec1 and vec2 point in the same or opposite directions and
+        no rotation is needed, the rotation matrix is an identity matrix.
 
     References
     ----------
