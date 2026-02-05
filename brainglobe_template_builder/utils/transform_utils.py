@@ -32,8 +32,9 @@ def get_rotation_from_vectors(vec1: np.ndarray, vec2: np.ndarray):
     a = (vec1 / np.linalg.norm(vec1)).reshape(3)
     b = (vec2 / np.linalg.norm(vec2)).reshape(3)
 
-    # If the vec1 and vec2 are already aligned, return identity matrix
-    if np.allclose(a, b):
+    # If vec1 and vec2 point in the same or opposite directions,
+    # return identity matrix
+    if np.isclose(np.abs(np.dot(a, b)), 1.0):
         return np.eye(3)
 
     v = np.cross(a, b)
