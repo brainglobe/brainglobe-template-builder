@@ -84,19 +84,19 @@ def test_estimate_points_symmetry_axis(align_widget, symmetry_axis):
 
 
 @pytest.mark.parametrize(
-    "rotation_needed",
+    "alignment_needed",
     [
-        pytest.param(True, id="rotation needed"),
+        pytest.param(True, id="alignment needed"),
         pytest.param(
             False,
-            id="no rotation needed",
+            id="already aligned",
             marks=pytest.mark.xfail(
                 reason="bug (remove marker once issue #155 is resolved)"
             ),
         ),
     ],
 )
-def test_align_midplane(make_napari_viewer, test_data, rotation_needed):
+def test_align_midplane(make_napari_viewer, test_data, alignment_needed):
     """Test that midplane can be aligned without raising an exception.
 
     Test scenario when rotation is needed (by adding offset to the by default
@@ -108,7 +108,7 @@ def test_align_midplane(make_napari_viewer, test_data, rotation_needed):
     estimator = MidplaneEstimator(test_data["mask"], symmetry_axis="x")
     points = estimator.get_points()
 
-    if rotation_needed:
+    if alignment_needed:
         points[0] += [1, 3, 2]
 
     viewer.add_points(points, name="test_points-midplane")
