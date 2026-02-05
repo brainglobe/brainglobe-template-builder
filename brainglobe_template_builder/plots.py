@@ -1,9 +1,12 @@
+import logging
 from pathlib import Path
 from typing import Literal
 
 import numpy as np
 from brainglobe_space import AnatomicalSpace
 from matplotlib import pyplot as plt
+
+logger = logging.getLogger(__name__)
 
 
 def plot_orthographic(
@@ -378,6 +381,9 @@ def _choose_slices(
 ) -> np.ndarray:
     """Return indexes of evenly spaced slices along a given image axis.
 
+    If no slices are found above vmin, vmin is set to None (default) and a
+    warning is logged.
+
     Parameters
     ----------
     img : np.ndarray
@@ -403,8 +409,15 @@ def _choose_slices(
     n_pixels_above_vmin = (img > vmin).sum(axis=tuple(axes_to_sum))
     slice_idx_above_vmin = np.where(n_pixels_above_vmin > 0)[0]
 
-    if vmin is None or len(slice_idx_above_vmin) == 0:
-        # Return evenly spaced slices including the first and last slice
+    if len(slice_idx_above_vmin) == 0:
+        logger.warning(
+            f"No slices found with pixels above the specified vmin ({vmin}). "
+            "Resorting to default vmin=None."
+        )
+        vmin = None
+
+    # Return evenly spaced slices including the first and last slice
+    if vmin is None:
         return np.linspace(0, img.shape[axis_idx] - 1, n_slices, dtype=int)
 
     min_idx = slice_idx_above_vmin[0]
