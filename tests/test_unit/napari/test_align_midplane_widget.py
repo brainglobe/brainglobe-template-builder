@@ -62,7 +62,6 @@ def test_estimate_points(align_widget, test_data, axis):
     np.testing.assert_array_equal(points_layer.data, expected_points)
 
 
-@pytest.mark.xfail(reason="bug (remove marker after PR #161 is merged)")
 @pytest.mark.parametrize(
     "symmetry_axis",
     [
