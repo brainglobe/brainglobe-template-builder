@@ -96,24 +96,21 @@ def test_estimate_points_symmetry_axis(align_widget, symmetry_axis):
         ),
     ],
 )
-def test_align_midplane(make_napari_viewer, test_data, alignment_needed):
+def test_align_midplane(align_widget, alignment_needed):
     """Test that midplane can be aligned without raising an exception.
 
     Test scenario when rotation is needed (by adding offset to the by default
     perfectly aligned points) and when it is not."""
 
-    viewer = make_napari_viewer()
-    viewer.add_image(test_data["stack"], name="test_stack")
-    viewer.add_labels(test_data["mask"], name="test_mask")
-    estimator = MidplaneEstimator(test_data["mask"], symmetry_axis="x")
-    points = estimator.get_points()
+    viewer = align_widget.viewer
+    mask = viewer.layers["test_mask"].data
+    points = MidplaneEstimator(mask, symmetry_axis="x").get_points()
 
     if alignment_needed:
         points[0] += [1, 3, 2]
 
-    viewer.add_points(points, name="test_points-midplane")
-    align_widget = AlignMidplane(viewer)
-    viewer.window.add_dock_widget(align_widget)
+    viewer.add_points(points, name="test_points-x")
+    align_widget.refresh_dropdowns()
 
     try:
         align_widget._on_align_button_click()
