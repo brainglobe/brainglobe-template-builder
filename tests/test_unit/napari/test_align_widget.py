@@ -1,3 +1,6 @@
+from pathlib import Path
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 from scipy.ndimage import rotate
@@ -116,3 +119,40 @@ def test_align_midplane(align_widget, alignment_needed):
         align_widget._on_align_button_click()
     except Exception as e:
         pytest.fail(f'_on_align_button_click raised "{e}"')
+
+
+@pytest.mark.xfail(reason="bug (remove marker once issue #155 is resolved)")
+def test_align_save_transform(align_widget, tmp_path):
+    """Test saving the alignment transform matrix through user interaction.
+
+    Verifies that the transform matrix can be saved when the user
+    selects a save path via QFileDialog (which is mocked in this test).
+    The test checks whether a file is created and that the saved
+    file contains the expected transformation matrix.
+    """
+
+    viewer = align_widget.viewer
+    mask = viewer.layers["test_mask"].data
+    points = MidplaneEstimator(mask, symmetry_axis="x").get_points()
+    viewer.add_points(points, name="test_points-x")
+    align_widget.refresh_dropdowns()
+    align_widget._on_align_button_click()
+
+    transform_filepath = str(tmp_path / "transform")
+    with patch(
+        "brainglobe_template_builder.napari.align_widget.QFileDialog"
+    ) as mock_qfile_dialog:
+        mock_qfile_dialog.return_value.exec_.return_value = True
+        mock_qfile_dialog.return_value.selectedFiles.return_value = [
+            transform_filepath
+        ]
+        align_widget._on_save_transform_click()
+
+    assert Path(transform_filepath).exists(), "Transform file was not created."
+    saved_transform = np.loadtxt(transform_filepath)
+    expected_transform = align_widget.aligner.transform
+
+    assert np.allclose(
+        saved_transform,
+        expected_transform,
+    )
