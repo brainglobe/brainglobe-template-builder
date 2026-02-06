@@ -17,31 +17,45 @@ def _make_stack(
     mask: bool = False,
     dtype: np.dtype = np.dtype(np.float64),
 ) -> NDArray:
-    """Create a 50x50x50 zeros stack with foreground."""
+    """Create a 50x50x50 zeros stack with object foreground or mask.
+
+    offset : int | None, optional
+        Offset of object position. If None (default), object is centered.
+    mask : bool, optional
+        If True, create a binary mask. If False (default), an image with
+        pixel intensity values is created.
+    dtype : np.dtype, optional
+        Data type of the output array. Default is np.float64.
+    """
 
     shape = [50, 50, 50]
-    obj_size = 20
-    mask_extra = 5
-    value: int | float
-    if mask:
-        value = 1
-    elif np.issubdtype(dtype, np.floating):
-        value = 0.5
-    else:
-        max_value: int = np.iinfo(dtype).max
-        value = max_value // 2
+    obj_size = 20 + (5 if mask else 0)
+    value = int(1) if mask else 0.5
 
     stack = np.zeros(shape, dtype=dtype)
-    foreground_size = obj_size + (mask_extra if mask else 0)
-
-    start = [(s - foreground_size) // 2 for s in shape]
+    start = [(s - obj_size) // 2 for s in shape]
     if offset:
         start = [s - offset for s in start]
-    end = [s + foreground_size for s in start]
+    end = [s + obj_size for s in start]
 
+    # convert to correct dtype and scale of uint.
+    if not mask and np.issubdtype(dtype, np.integer):
+        value = int(np.iinfo(dtype).max // (1 / value))
+
+    # Add object
     stack[start[0] : end[0], start[1] : end[1], start[2] : end[2]] = value
 
-    return stack
+    # Add less bright volume inside object
+    if not mask:
+        value = value // 2
+        half_obj = obj_size // 2
+        stack[
+            start[0] : start[0] + half_obj,
+            start[1] : start[1] + half_obj,
+            start[2] : start[2] + half_obj,
+        ] = value
+
+    return stack.astype(dtype)
 
 
 def _create_test_images(
