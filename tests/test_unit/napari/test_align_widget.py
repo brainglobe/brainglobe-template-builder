@@ -150,6 +150,14 @@ def test_align_save_transform(align_widget, tmp_path):
     )
 
 
+def test_align_save_transform_no_aligner(align_widget, capsys):
+    """Test save transform displays message when no aligner is available."""
+    align_widget._on_save_transform_click()
+    captured = capsys.readouterr()
+    expected_message = "Please align the image to the midplane first"
+    assert expected_message in captured.out
+
+
 def test_midplane_estimator_validate_symmetry_axis(test_data):
     """Test validation of axis label upon MidplaneEstimator creation."""
     invalid_label = "b"
