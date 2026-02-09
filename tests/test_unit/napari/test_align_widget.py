@@ -230,3 +230,27 @@ def test_midplane_estimator_validate_bool_mask(test_data):
         warnings.simplefilter("always")
         MidplaneEstimator(mask=test_data["mask"], symmetry_axis="x")
     assert len(caught_warnings) == 0
+
+
+@pytest.mark.parametrize(
+    "points_modification",
+    [
+        pytest.param(
+            lambda p: p.transpose(),
+            id="transposed (3, 9)",
+        ),
+        pytest.param(
+            lambda p: p[:, 0],
+            id="collapsed to 1D (9,)",
+        ),
+    ],
+)
+def test_midplane_estimator_validate_points_shape(
+    test_data, points_modification
+):
+    """Test MidplaneAligner image validation of points."""
+    points = points_modification(test_data["points"])
+    with pytest.raises(ValueError, match="Points must be an array of shape"):
+        MidplaneAligner(
+            image=test_data["stack"], points=points, symmetry_axis="x"
+        )
