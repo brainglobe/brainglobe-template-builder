@@ -168,11 +168,20 @@ def test_midplane_aligner_validate_symmetry_axis(test_data):
         )
 
 
-def test_midplane_estimator_validate_2Dmask():
+def test_midplane_estimator_validate_2Dmask(test_data):
     """Test MidplaneEstimator mask validation for invalid 2D mask."""
-    mask2D = np.zeros((50, 50), dtype=np.uint8)
+    mask2D = test_data["mask"][:, :, 0]
     with pytest.raises(ValueError, match="Mask must be 3D"):
         MidplaneEstimator(mask=mask2D, symmetry_axis="x")
+
+
+def test_midplane_estimator_validate_2Dimage(test_data):
+    """Test MidplaneAligner image validation for invalid 2D image."""
+    image2D = test_data["stack"][:, :, 0]
+    with pytest.raises(ValueError, match="Image must be 3D"):
+        MidplaneAligner(
+            image=image2D, points=test_data["points"], symmetry_axis="x"
+        )
 
 
 @pytest.mark.skip(reason="Handling of non-binary masks TBD (issue #167)")
