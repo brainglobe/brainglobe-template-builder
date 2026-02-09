@@ -7,6 +7,7 @@ import pytest
 
 from brainglobe_template_builder.napari.align_widget import AlignMidplane
 from brainglobe_template_builder.utils.alignment import (
+    MidplaneAligner,
     MidplaneEstimator,
 )
 
@@ -17,10 +18,12 @@ def test_data():
     stack = np.zeros((50, 50, 50), dtype=np.float32)
     stack[10:30, 15:40, 20:45] = 0.5
     mask = (stack > 0).astype(bool)
+    points = MidplaneEstimator(mask, symmetry_axis="x").get_points()
 
     return {
         "stack": stack,
         "mask": mask,
+        "points": points,
     }
 
 
@@ -152,6 +155,17 @@ def test_midplane_estimator_validate_symmetry_axis(test_data):
     invalid_label = "b"
     with pytest.raises(ValueError, match="Symmetry axis must be one of"):
         MidplaneEstimator(mask=test_data["mask"], symmetry_axis=invalid_label)
+
+
+def test_midplane_aligner_validate_symmetry_axis(test_data):
+    """Test validation of axis label upon MidplaneAligner creation."""
+    invalid_label = "b"
+    with pytest.raises(ValueError, match="Symmetry axis must be one of"):
+        MidplaneAligner(
+            image=test_data["stack"],
+            points=test_data["points"],
+            symmetry_axis=invalid_label,
+        )
 
 
 def test_midplane_estimator_validate_2Dmask():
