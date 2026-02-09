@@ -1,9 +1,9 @@
+import warnings
 from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
 import pytest
-from scipy.ndimage import rotate
 
 from brainglobe_template_builder.napari.align_widget import AlignMidplane
 from brainglobe_template_builder.utils.alignment import (
@@ -16,18 +16,11 @@ def test_data():
     """Create asymmetric test data with stack, mask, and rotated stack."""
     stack = np.zeros((50, 50, 50), dtype=np.float32)
     stack[10:30, 15:40, 20:45] = 0.5
-    mask = (stack > 0).astype(np.uint8)
-
-    rotated = stack.copy()
-    for axes in [(1, 2), (0, 2), (0, 1)]:  # rotate around all 3 mid planes
-        rotated = rotate(rotated, angle=15, axes=axes, order=0, reshape=True)
-    mask_rotated = (rotated > 0).astype(np.uint8)
+    mask = (stack > 0).astype(bool)
 
     return {
         "stack": stack,
         "mask": mask,
-        "stack_rotated": rotated,
-        "mask_rotated": mask_rotated,
     }
 
 
@@ -152,3 +145,69 @@ def test_align_save_transform(align_widget, tmp_path):
         saved_transform,
         expected_transform,
     )
+
+
+def test_midplane_estimator_validate_symmetry_axis(test_data):
+    """Test validation of axis label upon MidplaneEstimator creation."""
+    invalid_label = "b"
+    with pytest.raises(ValueError, match="Symmetry axis must be one of"):
+        MidplaneEstimator(mask=test_data["mask"], symmetry_axis=invalid_label)
+
+
+def test_midplane_estimator_validate_2Dmask():
+    """Test MidplaneEstimator mask validation for invalid 2D mask."""
+    mask2D = np.zeros((50, 50), dtype=np.uint8)
+    with pytest.raises(ValueError, match="Mask must be 3D"):
+        MidplaneEstimator(mask=mask2D, symmetry_axis="x")
+
+
+@pytest.mark.skip(
+    reason="Warning not yet added for validating non-boolean masks."
+)
+@pytest.mark.parametrize(
+    "dtype, values, indexes",
+    [
+        pytest.param(
+            np.float32,
+            [0.5],
+            [[10, 15, 20]],
+            id="float mask",
+        ),
+        pytest.param(
+            np.uint8,
+            [1, 2],
+            [[10, 15, 20], [30, 40, 45]],
+            id="uint8 mask with 0, 1, and 2 values",
+        ),
+    ],
+)
+def test_midplane_estimator_validate_nonbinary_mask(dtype, values, indexes):
+    """Test MidplaneEstimator mask validation for non-binary masks."""
+
+    non_binary_mask = np.zeros((50, 50, 50), dtype=dtype)
+    for i, value in enumerate(values):
+        start = indexes[i]
+        end = [index + 5 for index in indexes[i]]
+        non_binary_mask[
+            start[0] : end[0], start[1] : end[1], start[2] : end[2]
+        ] = value
+
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        midplane_estimator = MidplaneEstimator(
+            mask=non_binary_mask, symmetry_axis="x"
+        )
+    assert len(caught_warnings) == 1
+    assert "Mask must be boolean" in str(caught_warnings[0].message)
+    assert midplane_estimator.mask.dtype == bool
+
+
+@pytest.mark.skip(
+    reason="Warning not yet added for validating non-boolean masks."
+)
+def test_midplane_estimator_validate_bool_mask(test_data):
+    """Test mask validation of MidplaneEstimator object for boolean masks."""
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        MidplaneEstimator(mask=test_data["mask"], symmetry_axis="x")
+    assert len(caught_warnings) == 0
