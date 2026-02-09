@@ -48,10 +48,15 @@ class MidplaneEstimator:
         if self.symmetry_axis not in ["x", "y", "z"]:
             raise ValueError("Symmetry axis must be one of 'x', 'y', or 'z'")
         if self.mask.dtype != bool:
-            warnings.warn(
-                f"Mask must be boolean but is a {self.mask.dtype} with values "
-                f"{np.unique(self.mask)}. Converting mask to bool"
-            )
+            unique_values = np.unique(self.mask)
+            if set(unique_values) == {int(0), int(1)}:
+                print("Converting binary mask to boolean.")
+            else:
+                warnings.warn(
+                    f"Mask has {len(unique_values)} unique values: "
+                    f"{unique_values}. Converting to boolean (non-zero "
+                    f"values become True, zero values become False)."
+                )
             self.mask = self.mask.astype(bool)
 
     def _get_mask_properties(self):
