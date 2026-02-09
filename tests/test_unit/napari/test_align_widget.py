@@ -161,9 +161,7 @@ def test_midplane_estimator_validate_2Dmask():
         MidplaneEstimator(mask=mask2D, symmetry_axis="x")
 
 
-@pytest.mark.skip(
-    reason="Warning not yet added for validating non-boolean masks."
-)
+@pytest.mark.skip(reason="Handling of non-binary masks TBD (issue #167)")
 @pytest.mark.parametrize(
     "dtype, values, indexes",
     [
@@ -198,13 +196,11 @@ def test_midplane_estimator_validate_nonbinary_mask(dtype, values, indexes):
             mask=non_binary_mask, symmetry_axis="x"
         )
     assert len(caught_warnings) == 1
-    assert "Mask must be boolean" in str(caught_warnings[0].message)
+    assert "Converting to boolean" in str(caught_warnings[0].message)
     assert midplane_estimator.mask.dtype == bool
 
 
-@pytest.mark.skip(
-    reason="Warning not yet added for validating non-boolean masks."
-)
+@pytest.mark.skip(reason="Handling of non-boolean masks TBD (issue #167)")
 def test_midplane_estimator_validate_bool_mask(test_data):
     """Test mask validation of MidplaneEstimator object for boolean masks."""
     with warnings.catch_warnings(record=True) as caught_warnings:
