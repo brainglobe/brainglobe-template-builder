@@ -16,12 +16,9 @@ def test_data():
     stack = np.zeros((50, 50, 50), dtype=np.float32)
     stack[10:30, 15:40, 20:45] = 0.5
     mask = (stack > 0).astype(bool)
-    points = MidplaneEstimator(mask, symmetry_axis="x").get_points()
-
     return {
         "stack": stack,
         "mask": mask,
-        "points": points,
     }
 
 
