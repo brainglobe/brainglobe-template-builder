@@ -93,9 +93,6 @@ def test_estimate_points_symmetry_axis(align_widget, symmetry_axis):
         pytest.param(
             False,
             id="already aligned",
-            marks=pytest.mark.xfail(
-                reason="bug (remove marker once issue #155 is resolved)"
-            ),
         ),
     ],
 )
@@ -121,7 +118,6 @@ def test_align_midplane(align_widget, alignment_needed):
         pytest.fail(f'_on_align_button_click raised "{e}"')
 
 
-@pytest.mark.xfail(reason="bug (remove marker once issue #155 is resolved)")
 def test_align_save_transform(align_widget, tmp_path):
     """Test saving the alignment transform matrix through user interaction.
 
