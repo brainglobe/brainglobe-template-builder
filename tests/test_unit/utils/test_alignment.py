@@ -124,6 +124,11 @@ def test_midplane_estimator_validate_bool_mask(test_data):
             "At least 3 points are required",
             id="too few points (2, 3)",
         ),
+        pytest.param(
+            lambda p: np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]]),
+            "Points must not be colinear",
+            id="colinear points",
+        ),
     ],
 )
 def test_midplane_estimator_validate_points_shape(
