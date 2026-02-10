@@ -344,3 +344,40 @@ def test_preprocess_logging(
         "Processed subject 2/2 (sub-b)",
     ]:
         assert expected_log in log_text
+
+
+@pytest.mark.parametrize(
+    ["dtype", "image_key"],
+    [
+        pytest.param("float64", "image", id="float64"),
+        pytest.param(
+            "uint16",
+            "image_uint16",
+            id="uint16",
+        ),
+    ],
+)
+def test_preprocess_preserves_datatype(
+    write_test_data,
+    standardised_data_kwargs,
+    test_stacks,
+    dtype,
+    image_key,
+):
+    """Test whether datatype is preserved during standardisation."""
+
+    for stacks in standardised_data_kwargs["test_data"]:
+        stacks["image"] = test_stacks[image_key]
+    csv_path, config_path = write_test_data(**standardised_data_kwargs)
+
+    preprocess(csv_path, config_path)
+
+    output_dir = csv_path.parents[1]
+    preprocessed_dir = output_dir / "preprocessed"
+    preprocessed_image_paths = list(
+        preprocessed_dir.glob("**/*_processed.nii.gz")
+    )
+
+    for image_path in preprocessed_image_paths:
+        image = load_any(image_path)
+        assert image.dtype == np.dtype(dtype)
