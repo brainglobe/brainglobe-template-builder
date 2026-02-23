@@ -58,16 +58,39 @@ def test_midplane_estimator_validate_2Dimage(test_data):
         )
 
 
-@pytest.mark.skip(reason="Handling of non-binary masks TBD (issue #167)")
+@pytest.mark.parametrize(
+    ["values", "expected_error_message"],
+    [
+        pytest.param(
+            0,
+            "Mask must contain nonzero values (object)",
+            id="mask with only zero values",
+        ),
+        pytest.param(
+            1,
+            "Mask must contain zero values (background)",
+            id="mask with only non-zero values",
+        ),
+    ],
+)
+def test_midplane_estimator_mask_error(values, expected_error_message):
+    """Test MidplaneEstimator mask ValueErrors"""
+
+    mask = np.full((50, 50, 50), values, dtype=np.uint8)
+
+    import re
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(expected_error_message),
+    ):
+        MidplaneEstimator(mask=mask, symmetry_axis="x")
+
+
+@pytest.mark.skip(reason="Remove marker after #167 has been resolved")
 @pytest.mark.parametrize(
     "dtype, values, indexes",
     [
-        pytest.param(
-            np.float32,
-            [0.5],
-            [[10, 15, 20]],
-            id="float mask",
-        ),
         pytest.param(
             np.uint8,
             [1, 2],
@@ -92,17 +115,24 @@ def test_midplane_estimator_validate_nonbinary_mask(dtype, values, indexes):
         midplane_estimator = MidplaneEstimator(
             mask=non_binary_mask, symmetry_axis="x"
         )
+
+    expected_warning_message = "Mask is not binary (3 unique values). "
     assert len(caught_warnings) == 1
-    assert "Converting to boolean" in str(caught_warnings[0].message)
+    assert expected_warning_message in str(caught_warnings[0].message)
     assert midplane_estimator.mask.dtype == bool
 
 
-@pytest.mark.skip(reason="Handling of non-boolean masks TBD (issue #167)")
-def test_midplane_estimator_validate_bool_mask(test_data):
-    """Test mask validation of MidplaneEstimator object for boolean masks."""
+@pytest.mark.skip(reason="Remove marker after #167 has been resolved")
+@pytest.mark.parametrize("boolean_mask", [True, False])
+def test_midplane_estimator_validate_bool_mask(boolean_mask):
+    """Test MidplaneEstimator mask validation for bool/binary masks."""
+    mask = np.zeros((50, 50, 50))
+    mask[10:30, 15:40, 20:45] = 1
+    if boolean_mask:
+        mask = mask.astype(bool)
     with warnings.catch_warnings(record=True) as caught_warnings:
         warnings.simplefilter("always")
-        MidplaneEstimator(mask=test_data["mask"], symmetry_axis="x")
+        MidplaneEstimator(mask=mask, symmetry_axis="x")
     assert len(caught_warnings) == 0
 
 
