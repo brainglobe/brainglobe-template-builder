@@ -1,3 +1,4 @@
+import warnings
 from itertools import product
 from pathlib import Path
 from typing import Literal
@@ -41,15 +42,23 @@ class MidplaneEstimator:
 
     def _validate_inputs(self):
         """Validate the inputs to the aligner."""
-
         if self.mask.ndim != 3:
             raise ValueError("Mask must be 3D")
         if self.symmetry_axis not in ["x", "y", "z"]:
             raise ValueError("Symmetry axis must be one of 'x', 'y', or 'z'")
-        try:
+        unique_values = set(np.unique(self.mask))
+        if 0 not in unique_values:
+            raise ValueError("Mask must contain zero values (background)")
+        if unique_values == {0}:
+            raise ValueError("Mask must contain nonzero values (object)")
+        if len(unique_values) > 2:
+            warnings.warn(
+                f"Mask is not binary ({len(unique_values)} unique values). "
+                "Converting: all nonzero values to True (object), and all "
+                "zero values to False (background)."
+            )
+        if len(unique_values) > 1:
             self.mask = self.mask.astype(bool)
-        except ValueError:
-            raise ValueError("Mask must be binary")
 
     def _get_mask_properties(self):
         """Get properties of the mask, specifically the centroid and the
