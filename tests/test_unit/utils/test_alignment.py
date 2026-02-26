@@ -58,7 +58,6 @@ def test_midplane_estimator_validate_2Dimage(test_data):
         )
 
 
-@pytest.mark.skip(reason="Remove marker after #167 has been resolved")
 @pytest.mark.parametrize(
     ["values", "expected_error_message"],
     [
