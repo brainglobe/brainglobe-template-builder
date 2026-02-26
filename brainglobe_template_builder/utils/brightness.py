@@ -27,7 +27,8 @@ def correct_image_brightness(
 
     # The output of GetLogBiasFieldAsImage is always float32,
     # so we need a float32 input image to avoid errors
-    if input_image.dtype != np.float32:
+    original_dtype = input_image.dtype
+    if original_dtype != np.float32:
         input_image = input_image.astype(np.float32, casting="same_kind")
 
     sitk_image = sitk.GetImageFromArray(input_image)
@@ -49,4 +50,6 @@ def correct_image_brightness(
     log_bias_field = corrector.GetLogBiasFieldAsImage(sitk_image)
     corrected_image_full_resolution = sitk_image / sitk.Exp(log_bias_field)
 
-    return sitk.GetArrayFromImage(corrected_image_full_resolution)
+    return sitk.GetArrayFromImage(corrected_image_full_resolution).astype(
+        original_dtype
+    )

@@ -1,0 +1,153 @@
+from pathlib import Path
+from unittest.mock import patch
+
+import numpy as np
+import pytest
+
+from brainglobe_template_builder.napari.align_widget import AlignMidplane
+from brainglobe_template_builder.utils.alignment import (
+    MidplaneEstimator,
+)
+
+
+@pytest.fixture
+def test_data():
+    """Create asymmetric test data with stack, mask, and rotated stack."""
+    stack = np.zeros((50, 50, 50), dtype=np.float32)
+    stack[10:30, 15:40, 20:45] = 0.5
+    mask = (stack > 0).astype(bool)
+    return {
+        "stack": stack,
+        "mask": mask,
+    }
+
+
+@pytest.fixture
+def align_widget(make_napari_viewer, test_data):
+    """Creates a napari viewer with the AlignMidplane widget
+    docked and a test stack layer added."""
+    viewer = make_napari_viewer()
+    viewer.add_image(test_data["stack"], name="test_stack")
+    viewer.add_labels(test_data["mask"], name="test_mask")
+    align_widget = AlignMidplane(viewer)
+    viewer.window.add_dock_widget(align_widget)
+    return align_widget
+
+
+@pytest.mark.parametrize(
+    "axis",
+    [
+        pytest.param("x", id="x axis"),
+        pytest.param("y", id="y axis"),
+        pytest.param("z", id="z axis"),
+    ],
+)
+def test_estimate_points(align_widget, test_data, axis):
+    """Test that estimate points creates a Points layer with correct data."""
+    align_widget.select_axis_dropdown.setCurrentText(axis)
+    align_widget._on_estimate_button_click()
+    points_layer = align_widget.viewer.layers[-1]  # Last added layer
+
+    # get estimated points for specified symmetry axis
+    midplane_estimate = MidplaneEstimator(
+        test_data["mask"], symmetry_axis=axis
+    )
+    expected_points = midplane_estimate.get_points()
+    np.testing.assert_array_equal(points_layer.data, expected_points)
+
+
+@pytest.mark.parametrize(
+    "symmetry_axis",
+    [
+        pytest.param("z", id="z axis"),
+        pytest.param("y", id="y axis"),
+        pytest.param("x", id="x axis"),
+    ],
+)
+def test_estimate_points_symmetry_axis(align_widget, symmetry_axis):
+    """Check whether the coordinates along the symmetry axis stay constant.
+
+    For a given symmetry axis, all points in the estimated midplane should
+    have the same coordinate value along that axis."""
+    axis_dict = {"z": 0, "y": 1, "x": 2}
+    align_widget.select_axis_dropdown.setCurrentText(symmetry_axis)
+    align_widget._on_estimate_button_click()
+    points = align_widget.viewer.layers[-1].data
+    sym_axis_coordinates = points[:, axis_dict[symmetry_axis]]
+    assert np.all(sym_axis_coordinates == sym_axis_coordinates[0])
+
+
+@pytest.mark.parametrize(
+    "alignment_needed",
+    [
+        pytest.param(True, id="alignment needed"),
+        pytest.param(
+            False,
+            id="already aligned",
+        ),
+    ],
+)
+def test_align_midplane(align_widget, alignment_needed):
+    """Test that midplane can be aligned without raising an exception.
+
+    Test scenario when rotation is needed (by adding offset to the by default
+    perfectly aligned points) and when it is not."""
+
+    viewer = align_widget.viewer
+    mask = viewer.layers["test_mask"].data
+    points = MidplaneEstimator(mask, symmetry_axis="x").get_points()
+
+    if alignment_needed:
+        points[0] += [1, 3, 2]
+
+    viewer.add_points(points, name="test_points-x")
+    align_widget.refresh_dropdowns()
+
+    try:
+        align_widget._on_align_button_click()
+    except Exception as e:
+        pytest.fail(f'_on_align_button_click raised "{e}"')
+
+
+def test_align_save_transform(align_widget, tmp_path):
+    """Test saving the alignment transform matrix through user interaction.
+
+    Verifies that the transform matrix can be saved when the user
+    selects a save path via QFileDialog (which is mocked in this test).
+    The test checks whether a file is created and that the saved
+    file contains the expected transformation matrix.
+    """
+
+    viewer = align_widget.viewer
+    mask = viewer.layers["test_mask"].data
+    points = MidplaneEstimator(mask, symmetry_axis="x").get_points()
+    viewer.add_points(points, name="test_points-x")
+    align_widget.refresh_dropdowns()
+    align_widget._on_align_button_click()
+
+    transform_filepath = str(tmp_path / "transform")
+    with patch(
+        "brainglobe_template_builder.napari.align_widget.QFileDialog"
+    ) as mock_qfile_dialog:
+        mock_qfile_dialog.return_value.exec_.return_value = True
+        mock_qfile_dialog.return_value.selectedFiles.return_value = [
+            transform_filepath
+        ]
+        align_widget._on_save_transform_click()
+
+    assert Path(transform_filepath).exists(), "Transform file was not created."
+    saved_transform = np.loadtxt(transform_filepath)
+    expected_transform = align_widget.aligner.transform
+
+    assert np.allclose(
+        saved_transform,
+        expected_transform,
+    )
+
+
+def test_align_save_transform_no_aligner(align_widget, capsys):
+    """Test save transform displays message when no aligner is available."""
+    align_widget._on_save_transform_click()
+    captured = capsys.readouterr()
+    expected_message = "Please align the image to the midplane first"
+    assert expected_message in captured.out
