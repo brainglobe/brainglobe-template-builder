@@ -88,7 +88,6 @@ def test_midplane_estimator_mask_error(values, expected_error_message):
         MidplaneEstimator(mask=mask, symmetry_axis="x")
 
 
-@pytest.mark.skip(reason="Remove marker after #167 has been resolved")
 @pytest.mark.parametrize(
     "dtype, values, indexes",
     [
@@ -123,7 +122,6 @@ def test_midplane_estimator_validate_nonbinary_mask(dtype, values, indexes):
     assert midplane_estimator.mask.dtype == bool
 
 
-@pytest.mark.skip(reason="Remove marker after #167 has been resolved")
 @pytest.mark.parametrize("boolean_mask", [True, False])
 def test_midplane_estimator_validate_bool_mask(boolean_mask):
     """Test MidplaneEstimator mask validation for bool/binary masks."""
