@@ -1,0 +1,181 @@
+import warnings
+
+import numpy as np
+import pytest
+
+from brainglobe_template_builder.utils.alignment import (
+    MidplaneAligner,
+    MidplaneEstimator,
+)
+
+
+@pytest.fixture
+def test_data_with_estimated_points():
+    """Create asymmetric test data with stack, mask, and rotated stack."""
+    stack = np.zeros((50, 50, 50), dtype=np.float32)
+    stack[10:30, 15:40, 20:45] = 0.5
+    mask = (stack > 0).astype(bool)
+    points = MidplaneEstimator(mask, symmetry_axis="x").get_points()
+
+    return {
+        "stack": stack,
+        "mask": mask,
+        "points": points,
+    }
+
+
+def test_midplane_estimator_validate_symmetry_axis(
+    test_data_with_estimated_points,
+):
+    """Test validation of axis label upon MidplaneEstimator creation."""
+    invalid_label = "b"
+    with pytest.raises(ValueError, match="Symmetry axis must be one of"):
+        MidplaneEstimator(
+            mask=test_data_with_estimated_points["mask"],
+            symmetry_axis=invalid_label,
+        )
+
+
+def test_midplane_aligner_validate_symmetry_axis(
+    test_data_with_estimated_points,
+):
+    """Test validation of axis label upon MidplaneAligner creation."""
+    invalid_label = "b"
+    with pytest.raises(ValueError, match="Symmetry axis must be one of"):
+        MidplaneAligner(
+            image=test_data_with_estimated_points["stack"],
+            points=test_data_with_estimated_points["points"],
+            symmetry_axis=invalid_label,
+        )
+
+
+def test_midplane_estimator_validate_2Dmask(test_data_with_estimated_points):
+    """Test MidplaneEstimator mask validation for invalid 2D mask."""
+    mask2D = test_data_with_estimated_points["mask"][:, :, 0]
+    with pytest.raises(ValueError, match="Mask must be 3D"):
+        MidplaneEstimator(mask=mask2D, symmetry_axis="x")
+
+
+def test_midplane_estimator_validate_2Dimage(test_data_with_estimated_points):
+    """Test MidplaneAligner image validation for invalid 2D image."""
+    image2D = test_data_with_estimated_points["stack"][:, :, 0]
+    with pytest.raises(ValueError, match="Image must be 3D"):
+        MidplaneAligner(
+            image=image2D,
+            points=test_data_with_estimated_points["points"],
+            symmetry_axis="x",
+        )
+
+
+@pytest.mark.parametrize(
+    ["values", "expected_error_message"],
+    [
+        pytest.param(
+            0,
+            "Mask must contain nonzero values (object)",
+            id="mask with only zero values",
+        ),
+        pytest.param(
+            1,
+            "Mask must contain zero values (background)",
+            id="mask with only non-zero values",
+        ),
+    ],
+)
+def test_midplane_estimator_mask_error(values, expected_error_message):
+    """Test MidplaneEstimator mask ValueErrors"""
+
+    mask = np.full((50, 50, 50), values, dtype=np.uint8)
+
+    import re
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(expected_error_message),
+    ):
+        MidplaneEstimator(mask=mask, symmetry_axis="x")
+
+
+@pytest.mark.parametrize(
+    "dtype, values, indexes",
+    [
+        pytest.param(
+            np.uint8,
+            [1, 2],
+            [[10, 15, 20], [30, 40, 45]],
+            id="uint8 mask with 0, 1, and 2 values",
+        ),
+    ],
+)
+def test_midplane_estimator_validate_nonbinary_mask(dtype, values, indexes):
+    """Test MidplaneEstimator mask validation for non-binary masks."""
+
+    non_binary_mask = np.zeros((50, 50, 50), dtype=dtype)
+    for i, value in enumerate(values):
+        start = indexes[i]
+        end = [index + 5 for index in indexes[i]]
+        non_binary_mask[
+            start[0] : end[0], start[1] : end[1], start[2] : end[2]
+        ] = value
+
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        midplane_estimator = MidplaneEstimator(
+            mask=non_binary_mask, symmetry_axis="x"
+        )
+
+    expected_warning_message = "Mask is not binary (3 unique values). "
+    assert len(caught_warnings) == 1
+    assert expected_warning_message in str(caught_warnings[0].message)
+    assert midplane_estimator.mask.dtype == bool
+
+
+@pytest.mark.parametrize("boolean_mask", [True, False])
+def test_midplane_estimator_validate_bool_mask(boolean_mask):
+    """Test MidplaneEstimator mask validation for bool/binary masks."""
+    mask = np.zeros((50, 50, 50))
+    mask[10:30, 15:40, 20:45] = 1
+    if boolean_mask:
+        mask = mask.astype(bool)
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        MidplaneEstimator(mask=mask, symmetry_axis="x")
+    assert len(caught_warnings) == 0
+
+
+@pytest.mark.parametrize(
+    ["points_modification", "error_message"],
+    [
+        pytest.param(
+            lambda p: p.transpose(),
+            "Points must be an array of shape",
+            id="transposed (3, 9)",
+        ),
+        pytest.param(
+            lambda p: p[:, 0],
+            "Points must be an array of shape",
+            id="collapsed to 1D (9,)",
+        ),
+        pytest.param(
+            lambda p: p[0:2, :],
+            "At least 3 points are required",
+            id="too few points (2, 3)",
+        ),
+        pytest.param(
+            lambda p: np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]]),
+            "Points must not be colinear",
+            id="colinear points",
+        ),
+    ],
+)
+def test_midplane_estimator_validate_points_shape(
+    test_data_with_estimated_points, points_modification, error_message
+):
+    """Test MidplaneAligner image validation of points."""
+    points = points_modification(test_data_with_estimated_points["points"])
+    with pytest.raises(ValueError, match=error_message):
+        MidplaneAligner(
+            image=test_data_with_estimated_points["stack"],
+            points=points,
+            symmetry_axis="x",
+        )
