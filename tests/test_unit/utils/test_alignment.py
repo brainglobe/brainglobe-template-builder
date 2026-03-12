@@ -10,7 +10,7 @@ from brainglobe_template_builder.utils.alignment import (
 
 
 @pytest.fixture
-def test_data():
+def test_data_with_estimated_points():
     """Create asymmetric test data with stack, mask, and rotated stack."""
     stack = np.zeros((50, 50, 50), dtype=np.float32)
     stack[10:30, 15:40, 20:45] = 0.5
@@ -24,37 +24,46 @@ def test_data():
     }
 
 
-def test_midplane_estimator_validate_symmetry_axis(test_data):
+def test_midplane_estimator_validate_symmetry_axis(
+    test_data_with_estimated_points,
+):
     """Test validation of axis label upon MidplaneEstimator creation."""
     invalid_label = "b"
     with pytest.raises(ValueError, match="Symmetry axis must be one of"):
-        MidplaneEstimator(mask=test_data["mask"], symmetry_axis=invalid_label)
-
-
-def test_midplane_aligner_validate_symmetry_axis(test_data):
-    """Test validation of axis label upon MidplaneAligner creation."""
-    invalid_label = "b"
-    with pytest.raises(ValueError, match="Symmetry axis must be one of"):
-        MidplaneAligner(
-            image=test_data["stack"],
-            points=test_data["points"],
+        MidplaneEstimator(
+            mask=test_data_with_estimated_points["mask"],
             symmetry_axis=invalid_label,
         )
 
 
-def test_midplane_estimator_validate_2Dmask(test_data):
+def test_midplane_aligner_validate_symmetry_axis(
+    test_data_with_estimated_points,
+):
+    """Test validation of axis label upon MidplaneAligner creation."""
+    invalid_label = "b"
+    with pytest.raises(ValueError, match="Symmetry axis must be one of"):
+        MidplaneAligner(
+            image=test_data_with_estimated_points["stack"],
+            points=test_data_with_estimated_points["points"],
+            symmetry_axis=invalid_label,
+        )
+
+
+def test_midplane_estimator_validate_2Dmask(test_data_with_estimated_points):
     """Test MidplaneEstimator mask validation for invalid 2D mask."""
-    mask2D = test_data["mask"][:, :, 0]
+    mask2D = test_data_with_estimated_points["mask"][:, :, 0]
     with pytest.raises(ValueError, match="Mask must be 3D"):
         MidplaneEstimator(mask=mask2D, symmetry_axis="x")
 
 
-def test_midplane_estimator_validate_2Dimage(test_data):
+def test_midplane_estimator_validate_2Dimage(test_data_with_estimated_points):
     """Test MidplaneAligner image validation for invalid 2D image."""
-    image2D = test_data["stack"][:, :, 0]
+    image2D = test_data_with_estimated_points["stack"][:, :, 0]
     with pytest.raises(ValueError, match="Image must be 3D"):
         MidplaneAligner(
-            image=image2D, points=test_data["points"], symmetry_axis="x"
+            image=image2D,
+            points=test_data_with_estimated_points["points"],
+            symmetry_axis="x",
         )
 
 
@@ -160,11 +169,13 @@ def test_midplane_estimator_validate_bool_mask(boolean_mask):
     ],
 )
 def test_midplane_estimator_validate_points_shape(
-    test_data, points_modification, error_message
+    test_data_with_estimated_points, points_modification, error_message
 ):
     """Test MidplaneAligner image validation of points."""
-    points = points_modification(test_data["points"])
+    points = points_modification(test_data_with_estimated_points["points"])
     with pytest.raises(ValueError, match=error_message):
         MidplaneAligner(
-            image=test_data["stack"], points=points, symmetry_axis="x"
+            image=test_data_with_estimated_points["stack"],
+            points=points,
+            symmetry_axis="x",
         )
