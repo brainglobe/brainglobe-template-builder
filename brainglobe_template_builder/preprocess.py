@@ -77,6 +77,9 @@ def _process_subject(
 ) -> dict[str, Path]:
     """Process an individual subject's images.
 
+    Creates the mask based on the image and the config parameter
+    before applying the brightness correction step.
+
     Parameters
     ----------
     subject_row : pd.Series
@@ -231,7 +234,7 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
         total_subjects -= input_df.use.value_counts().get(False, 0)
     pbar = tqdm(
         total=total_subjects,
-        desc="Brightness correction and mask creation",
+        desc="Mask creation and brightness correction",
         unit="subject",
     )
 
