@@ -108,9 +108,6 @@ def _process_subject(
         subject_row.resolution_2 * 0.001,
     ]
 
-    # n4 bias field correction
-    image = correct_image_brightness(image, spacing=vox_sizes_mm)
-
     if ("mask_filepath" in subject_row) and pd.notna(
         subject_row.mask_filepath
     ):
@@ -125,6 +122,9 @@ def _process_subject(
             closing_size=mask_config.closing_size,
             erode_size=mask_config.erode_size,
         )
+
+    # n4 bias field correction
+    image = correct_image_brightness(image, spacing=vox_sizes_mm)
 
     # Crop image to mask bounds, and pad by n pixels
     image, mask = crop_to_mask(image, mask, padding=config.pad_pixels)
