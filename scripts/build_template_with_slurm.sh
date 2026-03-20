@@ -1,5 +1,11 @@
 #!/bin/bash
 
+###
+# Wrapper script that is intended to be called from atlas-specific configuration slurm files
+# and calls modelbuild.sh under the hood.
+# Does some basic checks and prints basic logs to standard out.
+###
+
 # Start the timer
 start_time=$(date +%s)
 
