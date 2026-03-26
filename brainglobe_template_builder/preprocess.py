@@ -18,7 +18,10 @@ from brainglobe_template_builder.utils.brightness import (
 )
 from brainglobe_template_builder.utils.cropping import crop_to_mask
 from brainglobe_template_builder.utils.masking import create_mask
-from brainglobe_template_builder.utils.preproc_config import PreprocConfig
+from brainglobe_template_builder.utils.preproc_config import (
+    MaskConfig,
+    PreprocConfig,
+)
 from brainglobe_template_builder.validate import validate_input_csv
 
 logger = logging.getLogger(__name__)
@@ -77,6 +80,9 @@ def _process_subject(
 ) -> dict[str, Path]:
     """Process an individual subject's images.
 
+    Creates the mask based on the image and the config parameter
+    before applying the brightness correction step.
+
     Parameters
     ----------
     subject_row : pd.Series
@@ -108,9 +114,6 @@ def _process_subject(
         subject_row.resolution_2 * 0.001,
     ]
 
-    # n4 bias field correction
-    image = correct_image_brightness(image, spacing=vox_sizes_mm)
-
     if ("mask_filepath" in subject_row) and pd.notna(
         subject_row.mask_filepath
     ):
@@ -125,6 +128,9 @@ def _process_subject(
             closing_size=mask_config.closing_size,
             erode_size=mask_config.erode_size,
         )
+
+    # n4 bias field correction
+    image = correct_image_brightness(image, spacing=vox_sizes_mm)
 
     # Crop image to mask bounds, and pad by n pixels
     image, mask = crop_to_mask(image, mask, padding=config.pad_pixels)
@@ -158,7 +164,9 @@ def _process_subject(
     }
 
 
-def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
+def preprocess(
+    standardised_csv: Path, config: Path | PreprocConfig | None = None
+) -> None:
     """Process nifti files in ASR orientation to create output images +
     masks ready for template creation.
 
@@ -189,12 +197,19 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
     standardised_csv : Path
         Standardised csv file path. One row per sample, each with a
         unique 'subject_id' - this is created via `standardise`.
-    config : Path | PreprocConfig
+    config : Path | PreprocConfig | None
         Config yaml file path, or PreprocConfig object. Contains settings for
-        pre-processing steps.
+        pre-processing steps. Defaults to None, which will use defaults.
     """
 
-    if isinstance(config, Path):
+    if not config:
+        # use default mask and padding, and default to outputting
+        # into sibling folder of `standardised/`
+        preproc_config = PreprocConfig(
+            output_dir=standardised_csv.parent.parent,
+            mask=MaskConfig(),
+        )
+    elif isinstance(config, Path):
         with open(config) as f:
             config_yaml = yaml.safe_load(f)
         preproc_config = PreprocConfig.model_validate(config_yaml)
@@ -231,7 +246,7 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
         total_subjects -= input_df.use.value_counts().get(False, 0)
     pbar = tqdm(
         total=total_subjects,
-        desc="Brightness correction and mask creation",
+        desc="Mask creation and brightness correction",
         unit="subject",
     )
 
