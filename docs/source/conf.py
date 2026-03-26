@@ -90,6 +90,7 @@ exclude_patterns = [
 # during sphinx-build linkcheck
 linkcheck_ignore = [
     "https://opensource.org/license/*",  # to avoid odd 403 error
+    "https://biorxiv.org",  # Read time outs
 ]
 
 # -- Options for HTML output -------------------------------------------------
