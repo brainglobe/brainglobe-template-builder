@@ -18,7 +18,10 @@ from brainglobe_template_builder.utils.brightness import (
 )
 from brainglobe_template_builder.utils.cropping import crop_to_mask
 from brainglobe_template_builder.utils.masking import create_mask
-from brainglobe_template_builder.utils.preproc_config import PreprocConfig
+from brainglobe_template_builder.utils.preproc_config import (
+    MaskConfig,
+    PreprocConfig,
+)
 from brainglobe_template_builder.validate import validate_input_csv
 
 logger = logging.getLogger(__name__)
@@ -158,7 +161,9 @@ def _process_subject(
     }
 
 
-def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
+def preprocess(
+    standardised_csv: Path, config: Path | PreprocConfig | None = None
+) -> None:
     """Process nifti files in ASR orientation to create output images +
     masks ready for template creation.
 
@@ -189,12 +194,19 @@ def preprocess(standardised_csv: Path, config: Path | PreprocConfig) -> None:
     standardised_csv : Path
         Standardised csv file path. One row per sample, each with a
         unique 'subject_id' - this is created via `standardise`.
-    config : Path | PreprocConfig
+    config : Path | PreprocConfig | None
         Config yaml file path, or PreprocConfig object. Contains settings for
-        pre-processing steps.
+        pre-processing steps. Defaults to None, which will use defaults.
     """
 
-    if isinstance(config, Path):
+    if not config:
+        # use default mask and padding, and default to outputting
+        # into sibling folder of `standardised/`
+        config = PreprocConfig(
+            output_dir=standardised_csv.parent.parent / "preprocessed",
+            mask=MaskConfig(),
+        )
+    elif isinstance(config, Path):
         with open(config) as f:
             config_yaml = yaml.safe_load(f)
         preproc_config = PreprocConfig.model_validate(config_yaml)
