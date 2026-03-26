@@ -99,8 +99,8 @@ def test_preprocess_use_input(
 def test_preprocess(
     write_standardised_test_data: tuple[Path, Path], config_type: str
 ) -> None:
-    """Test that preprocess creates expected directories and files - both
-    with a config yaml file path as input OR a PreprocConfig object."""
+    """Test that preprocess creates expected directories and files - with
+    a config yaml file path as input, a PreprocConfig object OR None."""
     csv_path, config_path = write_standardised_test_data
 
     config: Path | PreprocConfig | None
