@@ -202,8 +202,8 @@ def preprocess(
     if not config:
         # use default mask and padding, and default to outputting
         # into sibling folder of `standardised/`
-        config = PreprocConfig(
-            output_dir=standardised_csv.parent.parent / "preprocessed",
+        preproc_config = PreprocConfig(
+            output_dir=standardised_csv.parent.parent,
             mask=MaskConfig(),
         )
     elif isinstance(config, Path):
