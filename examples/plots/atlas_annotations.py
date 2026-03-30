@@ -23,7 +23,7 @@ from brainglobe_template_builder.plots import save_figure
 # Specify paths
 
 # Path to the BrainGlobe atlas
-atlas_name = "eurasian_blackcap_25um_v1.4"
+atlas_name = "eurasian_blackcap_25um_v1.5"
 atlas_dir = Path.home() / ".brainglobe" / atlas_name
 reference_path = atlas_dir / "reference.tiff"
 annotation_path = atlas_dir / "annotation.tiff"
@@ -37,7 +37,8 @@ plt.style.use(current_dir / "plots.mplstyle")
 
 # Path to save the plots
 niu_dropbox_dir = Path.home() / "Dropbox" / "NIU"
-save_dir = niu_dropbox_dir / "resources" / "figures" / "BlackCap_Atlas_Male"
+save_dir = niu_dropbox_dir / "resources" / "figures" / "BlackCap_Atlas_v1.5"
+save_dir.mkdir(parents=True, exist_ok=True)
 
 # %%
 # Load structures.json
@@ -156,6 +157,53 @@ def plot_slice_with_atlas_overlay(
 
 
 # %%
+# Function for plotting a single slice of the reference image
+# with the atlas overlay side by side
+
+
+def plot_slice_with_atlas_side_by_side(
+    ref_slice, ann_slice, cmap, cmap_norm, axes=None, save_path=None
+):
+    height, width = ref_slice.shape
+
+    if axes is None:
+        fig_width = 2 * width / 100
+        fig_height = height / 100
+        fig, axes = plt.subplots(1, 2, figsize=(fig_width, fig_height))
+        fig.set_facecolor("black")
+    else:
+        fig = axes[0].get_figure()
+
+    for ax in axes:
+        ax.set_facecolor("black")
+
+    axes[0].imshow(
+        ref_slice,
+        cmap="gray",
+        vmin=np.percentile(ref_slice, 1),
+        vmax=np.percentile(ref_slice, 99),
+    )
+    axes[0].axis("off")
+
+    opaque_cmap = cmap.resampled(cmap.N)
+    opaque_colors = opaque_cmap(np.arange(opaque_cmap.N))
+    opaque_colors[:, 3] = 1.0
+    opaque_cmap = mcolors.ListedColormap(opaque_colors, name=cmap.name)
+
+    axes[1].imshow(
+        ann_slice,
+        cmap=opaque_cmap,
+        norm=cmap_norm,
+        interpolation="nearest",
+    )
+    axes[1].axis("off")
+
+    if save_path:
+        plt.savefig(save_path, bbox_inches="tight", pad_inches=0)
+    return fig, axes
+
+
+# %%
 # Plot each slice of the reference image with the atlas overlay
 
 frames_path = save_dir / "video" / "frames"
@@ -174,11 +222,30 @@ for i in range(reference_img.shape[0]):
     )
     plt.close()
 
+# %%
+# Plot each slice of the reference image with annotations side by side
+
+frames_path = save_dir / "video" / "frames_side-by-side"
+frames_path.mkdir(parents=True, exist_ok=True)
+
+for i in range(reference_img.shape[0]):
+    ref_slice = reference_img.take(i, axis=0)
+    ann_slice = atlas_overlay.take(i, axis=0)
+
+    plot_slice_with_atlas_side_by_side(
+        ref_slice,
+        ann_slice,
+        atlas_cmap,
+        atlas_cmap_norm,
+        save_path=(frames_path / f"slice_{i:03d}.png"),
+    )
+    plt.close()
+
 
 # To convert to mp4, while padding to nearest even w/h resolution:
 # ffmpeg -framerate 30 -i frames/slice_%03d.png \
-#     -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -\
-#     crf 18 -pix_fmt yuv420p output.mp4
+#     -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 \
+#     -crf 18 -pix_fmt yuv420p output.mp4
 
 
 # %%
