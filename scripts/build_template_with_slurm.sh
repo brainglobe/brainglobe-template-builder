@@ -17,19 +17,26 @@ walltime_short="1:30:00"
 walltime_linear="03:00:00"
 walltime_nonlinear="40:00:00"
 toggle_dry_run="--dry-run"
+precision="--float" # default to single precision
+initial_target="first"
 
 
 # Function to display help message
 usage() {
-  echo "Usage: $0 --template-dir <path> [--average-type <string> --walltime-short <string> --walltime-linear <string> --walltime-nonlinear <string> --(no-)dry-run]"
+  echo "Usage: $0 --template-dir <path> [--average-type <string> --walltime-short <string> --walltime-linear <string> --walltime-nonlinear <string> --toggle-dry-run <string> --precision <string> --registration_metric <string> --initial_target <path>]"
   echo ""
   echo "Options:"
-  echo "  --template-dir <path>         Path to the atlas-forge template directory [REQUIRED]"
-  echo "  --average-type <string>       The type of average to use (default: mean)."
-  echo "  --walltime-short <string>     The max time required for "short" averaging/shape_update steps in HH:MM:SS (default: 1:30:00)."
-  echo "  --walltime-linear <string>    The max time required for linear registration steps in HH:MM:SS (default: 3:00:00)."
-  echo "  --walltime-nonlinear <string> The max time required for nonlinear registration steps in HH:MM:SS (default: 40:00:00)."
-  echo "  --(no-)dry-run                Toggle whether a dry run should be executed or not (default: --dry-run)."
+  echo "  --template-dir <path>          Path to the atlas-forge template directory [REQUIRED]"
+  echo "  --average-type <string>        The type of average to use (default: mean)."
+  echo "  --walltime-short <string>      The max time required for "short" averaging/shape_update steps in HH:MM:SS (default: 1:30:00)."
+  echo "  --walltime-linear <string>     The max time required for linear registration steps in HH:MM:SS (default: 3:00:00)."
+  echo "  --walltime-nonlinear <string>  The max time required for nonlinear registration steps in HH:MM:SS (default: 40:00:00)."
+  echo "  --toggle-dry-run <string>      Dry-run flag passed to modelbuild.sh (default: --dry-run)."
+  echo "                                 Allowed values: --dry-run or --no-dry-run."
+  echo "  --precision <string>           Precision flag passed to modelbuild.sh (default: --float; alternatively, pass empty string for double precision)."
+  echo "  --registration_metric <string> Registration metric override (default: Mattes; alternatively, pass '--fast' for cross-correlation)."
+  echo "  --initial_target <path>        Path to initial target (default: first)"
+  echo "  --help"
   exit 1
 }
 
@@ -67,6 +74,18 @@ while [[ $# -gt 0 ]]; do
       toggle_dry_run="$2"
       shift 2
       ;;
+    --precision)
+      precision="$2"
+      shift 2
+      ;;
+    --registration_metric)
+      registration_metric="$2"
+      shift 2
+      ;;
+    --initial_target)
+      initial_target="$2"
+      shift 2
+      ;;
     --help)
       usage
       ;;
@@ -76,6 +95,10 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ -n "$registration_metric" ]]; then
+  optional_args+=("${registration_metric}")
+fi
 
 echo "Finished parsing."
 
@@ -107,11 +130,13 @@ echo "Results will be written to ${template_dir}"
 # Execute the actual template building
 echo "Starting to build the template..."
 bash modelbuild.sh --output-dir "${template_dir}" \
-    --starting-target first \
-    --stages rigid,similarity,affine,nlin \
+    --starting-target "${initial_target}" \
+    --stages rigid,similariy,affine,nlin \
     --average-type "${average_type}" \
     --average-prog "${average_prog}" \
     --reuse-affines \
+    "${precision}" \
+    "${optional_args[@]}" \
     --walltime-short "${walltime_short}" \
     --walltime-linear "${walltime_linear}" \
     --walltime-nonlinear "${walltime_nonlinear}" \
