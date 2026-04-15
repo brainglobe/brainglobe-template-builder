@@ -126,13 +126,17 @@ def plot_slice_with_atlas_overlay(
     ref_slice, ann_slice, cmap, cmap_norm, ax=None, save_path=None
 ):
     height, width = ref_slice.shape
+    side = max(height, width)
 
     if ax is None:
-        fig_width = width / 100
-        fig_height = height / 100
-        fig, ax = plt.subplots(1, 1, figsize=(fig_width, fig_height))
+        fig_side = side / 100
+        fig, ax = plt.subplots(1, 1, figsize=(fig_side, fig_side))
+        fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
     else:
         fig = ax.get_figure()
+
+    fig.patch.set_facecolor("black")
+    ax.set_facecolor("black")
 
     ann_slice[:, : width // 2] = 0  # Make the left half of the slice to 0
 
@@ -149,10 +153,13 @@ def plot_slice_with_atlas_overlay(
         norm=cmap_norm,
         interpolation="nearest",
     )
+    ax.set_xlim((width - side) / 2, (width + side) / 2)
+    ax.set_ylim((height + side) / 2, (height - side) / 2)
+    ax.set_aspect("equal")
     ax.axis("off")
 
     if save_path:
-        plt.savefig(save_path, bbox_inches="tight", pad_inches=0)
+        plt.savefig(save_path, pad_inches=0, facecolor=fig.get_facecolor())
     return fig, ax
 
 
@@ -243,7 +250,7 @@ for i in range(reference_img.shape[0]):
 
 
 # To convert to mp4, while padding to nearest even w/h resolution:
-# ffmpeg -framerate 30 -i frames/slice_%03d.png \
+# ffmpeg -framerate 60 -i frames/slice_%03d.png \
 #     -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 \
 #     -crf 18 -pix_fmt yuv420p output.mp4
 
