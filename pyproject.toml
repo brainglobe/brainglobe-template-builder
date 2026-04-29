@@ -43,6 +43,7 @@ entry-points."napari.manifest".brainglobe-template-builder = "brainglobe_templat
 
 [project.optional-dependencies]
 dev = [
+    "brainglobe-template-builder[napari]",
     "pytest",
     "pytest-cov",
     "pytest-mock",
@@ -57,6 +58,7 @@ dev = [
     "pooch",
     "types-PyYAML"
 ]
+napari = ["napari[all]"]
 wingdisc = [
     'bioio',
     'bioio_czi',
