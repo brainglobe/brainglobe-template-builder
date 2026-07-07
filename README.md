@@ -1,6 +1,4 @@
-![CI](https://img.shields.io/github/actions/workflow/status/brainglobe/brainglobe-template-builder/test_and_deploy.yml?label=CI)
-
-[![Docs](https://img.shields.io/badge/Docs-brainglobe--template--builder-blue)](https://brainglobe.info/documentation/brainglobe-atlasapi/index.html)
+[![Docs](https://img.shields.io/badge/Docs-brainglobe--template--builder-blue)](https://brainglobe.info/documentation/index.html)
 [![Get in Touch](https://img.shields.io/badge/Get%20in%20Touch-BrainGlobe-blue)](https://brainglobe.info/contact.html)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.14608573-green)](https://doi.org/10.5281/zenodo.14608573)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
