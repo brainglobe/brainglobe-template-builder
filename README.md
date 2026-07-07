@@ -1,13 +1,17 @@
-[![DOI](https://zenodo.org/badge/700299148.svg)](https://doi.org/10.5281/zenodo.14608573)
-[![License](https://img.shields.io/badge/License-BSD_3--Clause-orange.svg)](https://opensource.org/license/bsd-3-clause/)
 ![CI](https://img.shields.io/github/actions/workflow/status/brainglobe/brainglobe-template-builder/test_and_deploy.yml?label=CI)
-[![codecov](https://codecov.io/gh/brainglobe/brainglobe-template-builder/branch/main/graph/badge.svg?token=P8CCH3TI8K)](https://codecov.io/gh/brainglobe/brainglobe-template-builder)
-[![Code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/format.json)](https://github.com/astral-sh/ruff)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
-[![image.sc forum](https://img.shields.io/badge/dynamic/json.svg?label=forum&url=https%3A%2F%2Fforum.image.sc%2Ftags%2Fbrainglobe.json&query=%24.topic_list.tags.0.topic_count&colorB=brightgreen&suffix=%20topics&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAABPklEQVR42m3SyyqFURTA8Y2BER0TDyExZ+aSPIKUlPIITFzKeQWXwhBlQrmFgUzMMFLKZeguBu5y+//17dP3nc5vuPdee6299gohUYYaDGOyyACq4JmQVoFujOMR77hNfOAGM+hBOQqB9TjHD36xhAa04RCuuXeKOvwHVWIKL9jCK2bRiV284QgL8MwEjAneeo9VNOEaBhzALGtoRy02cIcWhE34jj5YxgW+E5Z4iTPkMYpPLCNY3hdOYEfNbKYdmNngZ1jyEzw7h7AIb3fRTQ95OAZ6yQpGYHMMtOTgouktYwxuXsHgWLLl+4x++Kx1FJrjLTagA77bTPvYgw1rRqY56e+w7GNYsqX6JfPwi7aR+Y5SA+BXtKIRfkfJAYgj14tpOF6+I46c4/cAM3UhM3JxyKsxiOIhH0IO6SH/A1Kb1WBeUjbkAAAAAElFTkSuQmCC)](https://forum.image.sc/tag/brainglobe)
-[![Bluesky](https://img.shields.io/badge/Bluesky-0285FF?logo=bluesky&logoColor=fff)](https://bsky.app/profile/brainglobe.info)
-[![Mastodon](https://img.shields.io/badge/Mastodon-6364FF?logo=mastodon&logoColor=fff)](https://mastodon.online/@brainglobe)
+
+[![Docs](https://img.shields.io/badge/Docs-brainglobe--template--builder-blue)](https://brainglobe.info/documentation/brainglobe-atlasapi/index.html)
+[![Get in Touch](https://img.shields.io/badge/Get%20in%20Touch-BrainGlobe-blue)](https://brainglobe.info/contact.html)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.14608573-green)](https://doi.org/10.5281/zenodo.14608573)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![Tests](https://github.com/brainglobe/brainglobe-template-builder/actions/workflows/test_and_deploy.yml/badge.svg)](https://github.com/brainglobe/brainglobe-template-builder/actions/workflows/test_and_deploy.yml)
+[![Codecov](https://codecov.io/gh/brainglobe/brainglobe-template-builder/graph/badge.svg?token=P8CCH3TI8K)](https://codecov.io/gh/brainglobe/brainglobe-template-builder)
+[![Python Version](https://img.shields.io/pypi/pyversions/brainglobe-template-builder.svg)](https://pypi.org/project/brainglobe-template-builder)
+[![PyPI](https://img.shields.io/pypi/v/brainglobe-template-builder.svg)](https://pypi.org/project/brainglobe-template-builder)
+[![Downloads](https://static.pepy.tech/badge/brainglobe-template-builder)](https://pepy.tech/project/brainglobe-template-builder)
+[![Code Style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/format.json)](https://github.com/astral-sh/ruff)
+[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-green?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-green.svg)](https://brainglobe.info/community/developers/index.html)
 
 # brainglobe-template-builder
 Build unbiased anatomical templates from individual images
@@ -56,11 +60,8 @@ Build unbiased anatomical templates from individual images
 
   If you are on MacOS, you may need to replace `$HOME/.bashrc` with `$HOME/.bash_profile`.
 
-
-
 ### Create a `conda` environment
 We recommend installing `brainglobe-template-builder` within a [conda](https://docs.conda.io/en/latest/) or [mamba](https://mamba.readthedocs.io/en/latest/index.html) environment. Instructions assume `conda` usage, but `mamba`/`micromamba` are interchangeable.
-
 
 ```sh
 conda env create -n template-builder -f environment.yaml
@@ -73,7 +74,6 @@ This environment contains all dependencies for running the optimised ANTs templa
 post-processing functionalities of `brainglobe-template-builder`, you will need to also pip install the package in editable mode (see below).
 
 ### Install `brainglobe-template-builder` with `pip`
-
 
 To install the latest development version of `brainglobe-template-builder`, first clone the repository:
 
