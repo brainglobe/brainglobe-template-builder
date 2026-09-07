@@ -23,7 +23,7 @@ class PreprocWidgets(CollapsibleWidgetContainer):
         self.add_widget(
             CorrectBrightness(napari_viewer, parent=self),
             collapsible=True,
-            widget_title="N4 Bias Field brightness correction",
+            widget_title="Correct brightness (N4 Bias Field)",
         )
 
         self.add_widget(
