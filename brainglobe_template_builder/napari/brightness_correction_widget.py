@@ -1,5 +1,4 @@
 from napari.layers import Image
-from napari.qt.threading import thread_worker
 from napari.utils.notifications import show_info
 from napari.viewer import Viewer
 from qtpy.QtWidgets import (
@@ -34,7 +33,7 @@ class CorrectBrightness(QWidget):
 
         self.voxel_size = QSpinBox(parent=self.correct_brightness_groupbox)
         self.voxel_size.setRange(0, 20)
-        self.voxel_size.setValue(0)
+        self.voxel_size.setValue(1)
         self.correct_brightness_groupbox.layout().addRow(
             "Voxel size (microns):", self.voxel_size
         )
@@ -65,14 +64,10 @@ class CorrectBrightness(QWidget):
         spacing = [self.voxel_size.value()] * 3
         corrected_name = f"{image.name}_brightness-corrected"
 
-        @thread_worker
-        def _correct_brightness_worker(data, spacing_):
-            return correct_image_brightness(data, spacing=spacing_)
-
-        worker = _correct_brightness_worker(image.data, spacing)
-        worker.returned.connect(
-            lambda corrected_image_data: self.viewer.add_image(
-                corrected_image_data, name=corrected_name, scale=image.scale
-            )
+        corrected_image_data = correct_image_brightness(
+            image.data, spacing=spacing
         )
-        worker.start()
+
+        self.viewer.add_image(
+            corrected_image_data, name=corrected_name, scale=image.scale
+        )
