@@ -5,10 +5,10 @@ from qtpy.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QPushButton,
-    QSpinBox,
     QWidget,
 )
 
+from brainglobe_template_builder.napari.utils import VoxelSizeWidget
 from brainglobe_template_builder.utils.brightness import (
     correct_image_brightness,
 )
@@ -31,12 +31,7 @@ class CorrectBrightness(QWidget):
         self.correct_brightness_groupbox.setLayout(QFormLayout())
         self.layout().addRow(self.correct_brightness_groupbox)
 
-        self.voxel_size = QSpinBox(parent=self.correct_brightness_groupbox)
-        self.voxel_size.setRange(0, 20)
-        self.voxel_size.setValue(1)
-        self.correct_brightness_groupbox.layout().addRow(
-            "Voxel size (microns):", self.voxel_size
-        )
+        self._create_voxel_size_widget()
 
         self.correct_brightness_button = QPushButton(
             "Correct Brightness", parent=self
@@ -46,6 +41,13 @@ class CorrectBrightness(QWidget):
         )
         self.correct_brightness_button.clicked.connect(
             self._on_correct_brightness_button_click
+        )
+
+    def _create_voxel_size_widget(self):
+        """Create 3 fields for entering the voxel size."""
+        self.voxel_size_widget = VoxelSizeWidget()
+        self.correct_brightness_groupbox.layout().addRow(
+            "Voxel size (axes 0, 1, 2) in mm:", self.voxel_size_widget
         )
 
     def _on_correct_brightness_button_click(self):
@@ -61,9 +63,9 @@ class CorrectBrightness(QWidget):
             show_info("The selected layer is not an Image layer")
             return None
 
-        spacing = [self.voxel_size.value()] * 3
         corrected_name = f"{image.name}_brightness-corrected"
 
+        spacing = self.voxel_size_widget.get_voxel_sizes()
         corrected_image_data = correct_image_brightness(
             image.data, spacing=spacing
         )

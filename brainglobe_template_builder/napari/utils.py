@@ -1,9 +1,11 @@
+from napari.utils.notifications import show_info
 from qtpy.QtWidgets import (
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
     QLineEdit,
     QPushButton,
+    QWidget,
 )
 
 
@@ -50,3 +52,68 @@ class DirPathWidget:
     def get_dir_path(self):
         """Get chosen directory path."""
         return self.path_edit.text()
+
+
+class VoxelSizeWidget(QWidget):
+    """Widget for entering voxel sizes along axes 0, 1, and 2.
+
+    The widget contains three line edits arranged horizontally, one per axis.
+    Values are expected to be numeric and are interpreted as voxel sizes in mm.
+    """
+
+    def __init__(self, default_voxel_size="1", parent=None):
+        """Initialise the voxel-size input widget.
+
+        Parameters
+        ----------
+        default_voxel_size : str, optional
+            Initial text value used for all three axis fields.
+            Defaults to '1'.
+        parent : QWidget, optional
+            Parent Qt widget.
+        """
+        super().__init__(parent)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.axis_0_size = QLineEdit(default_voxel_size)
+        self.axis_1_size = QLineEdit(default_voxel_size)
+        self.axis_2_size = QLineEdit(default_voxel_size)
+
+        for w in (self.axis_0_size, self.axis_1_size, self.axis_2_size):
+            layout.addWidget(w)
+
+    def get_voxel_sizes(self) -> tuple[float, float, float] | None:
+        """Return voxel sizes entered for axes 0, 1, and 2.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Parsed voxel sizes for the three axes.
+
+        Notes
+        -----
+        If parsing fails, an informational notification is shown.
+        """
+        try:
+            return (
+                float(self.axis_0_size.text()),
+                float(self.axis_1_size.text()),
+                float(self.axis_2_size.text()),
+            )
+        except ValueError:
+            show_info("Please enter valid voxel sizes in mm.")
+            return None
+
+    def set_voxel_sizes(self, sizes: tuple[float, float, float]):
+        """Set voxel sizes for axes 0, 1, and 2.
+
+        Parameters
+        ----------
+        sizes : tuple[float, float, float]
+            Values to set for axis 0, axis 1, and axis 2 respectively.
+        """
+        for w, v in zip(
+            (self.axis_0_size, self.axis_1_size, self.axis_2_size), sizes
+        ):
+            w.setText(str(v))
