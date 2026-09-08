@@ -90,6 +90,8 @@ exclude_patterns = [
 # during sphinx-build linkcheck
 linkcheck_ignore = [
     "https://opensource.org/license/*",  # to avoid odd 403 error
+    "https://zenodo.org/badge/*",  # avoid 403 error
+    "https://doi.org/*",  # avoid 403 error
 ]
 
 # -- Options for HTML output -------------------------------------------------

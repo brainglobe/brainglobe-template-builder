@@ -93,23 +93,27 @@ def test_preprocess_use_input(
 
 @pytest.mark.parametrize(
     "config_type",
-    ["config_file", "PreprocConfig object"],
+    ["config_file", "PreprocConfig object", "None"],
 )
 @pytest.mark.usefixtures("mock_fancylog_datetime")
 def test_preprocess(
     write_standardised_test_data: tuple[Path, Path], config_type: str
 ) -> None:
-    """Test that preprocess creates expected directories and files - both
-    with a config yaml file path as input OR a PreprocConfig object."""
+    """Test that preprocess creates expected directories and files - with
+    a config yaml file path as input, a PreprocConfig object OR None."""
     csv_path, config_path = write_standardised_test_data
 
-    config: Path | PreprocConfig
+    config: Path | PreprocConfig | None
     if config_type == "config_file":
         config = config_path
-    else:
+    elif config_type == "PreprocConfig object":
         with open(config_path) as f:
             config_yaml = yaml.safe_load(f)
         config = PreprocConfig.model_validate(config_yaml)
+    elif config_type == "None":
+        config = None
+    else:
+        raise ValueError("Testing with invalid config")
 
     preprocess(csv_path, config)
 
