@@ -110,12 +110,12 @@ def create_mask(
     mask = _extract_largest_object(binary)
 
     if closing_size > 0:
-        mask = morphology.binary_closing(
+        mask = morphology.closing(
             mask, footprint=np.ones((closing_size,) * image.ndim)
         )
 
     if erode_size > 0:
-        mask = morphology.binary_erosion(
+        mask = morphology.erosion(
             mask, footprint=np.ones((erode_size,) * image.ndim)
         )
 
