@@ -17,10 +17,7 @@ def save_widget(tmp_path, make_napari_viewer):
     viewer = make_napari_viewer()
     widget = SaveFiles(viewer)
 
-    # voxel size of [0.01, 0.02, 0.03]
-    widget.axis_0_size.setText("0.01")
-    widget.axis_1_size.setText("0.02")
-    widget.axis_2_size.setText("0.03")
+    widget.voxel_size_widget.set_voxel_sizes((0.01, 0.02, 0.03))
 
     # Output to a temporary directory
     widget.output_dir_widget.path_edit.setText(str(tmp_path))

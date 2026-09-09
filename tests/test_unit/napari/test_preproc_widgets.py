@@ -9,8 +9,8 @@ def test_preproc_widgets(make_napari_viewer):
     preproc_widgets = PreprocWidgets(viewer)
     viewer.window.add_dock_widget(preproc_widgets)
 
-    # Should be 4 widgets included in PreprocWidgets
-    n_widgets = 4
+    # Should be 5 widgets included in PreprocWidgets
+    n_widgets = 5
     assert len(preproc_widgets.collapsible_widgets) == n_widgets
     assert (
         len(preproc_widgets.layout()) == n_widgets + 1
@@ -20,6 +20,7 @@ def test_preproc_widgets(make_napari_viewer):
     # be expanded (rest are collapsed by default)
     expected_widget_titles = [
         "Reorient to standard space",
+        "Correct brightness (N4 Bias Field)",
         "Create mask",
         "Align midplane",
         "Save files",

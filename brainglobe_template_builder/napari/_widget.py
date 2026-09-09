@@ -2,6 +2,9 @@ from napari.viewer import Viewer
 from qt_niu.collapsible_widget import CollapsibleWidgetContainer
 
 from brainglobe_template_builder.napari.align_widget import AlignMidplane
+from brainglobe_template_builder.napari.brightness_correction_widget import (
+    CorrectBrightness,
+)
 from brainglobe_template_builder.napari.mask_widget import CreateMask
 from brainglobe_template_builder.napari.reorient_widget import Reorient
 from brainglobe_template_builder.napari.save_widget import SaveFiles
@@ -15,6 +18,12 @@ class PreprocWidgets(CollapsibleWidgetContainer):
             Reorient(napari_viewer, parent=self),
             collapsible=True,
             widget_title="Reorient to standard space",
+        )
+
+        self.add_widget(
+            CorrectBrightness(napari_viewer, parent=self),
+            collapsible=True,
+            widget_title="Correct brightness (N4 Bias Field)",
         )
 
         self.add_widget(
@@ -37,6 +46,7 @@ class PreprocWidgets(CollapsibleWidgetContainer):
 
         (
             self.reorient_widget,
+            self.brightness_correction_widget,
             self.mask_widget,
             self.midplane_widget,
             self.save_widget,
