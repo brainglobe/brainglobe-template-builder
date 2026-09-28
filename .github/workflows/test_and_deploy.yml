@@ -31,14 +31,14 @@ jobs:
     strategy:
       matrix:
         # Run all supported Python versions on linux
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
         os: [ubuntu-latest]
         # Include one windows and one macos run
         include:
         - os: macos-latest
-          python-version: "3.13"
+          python-version: "3.14"
         - os: windows-latest
-          python-version: "3.13"
+          python-version: "3.14"
 
     steps:
       # checkout files, so the pooch cache can use hashFiles() in its key
