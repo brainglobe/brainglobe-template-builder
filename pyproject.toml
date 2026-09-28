@@ -3,7 +3,7 @@ name = "brainglobe-template-builder"
 authors = [{ name = "Niko Sirmpilatze", email = "niko.sirbiladze@gmail.com" }]
 description = "Build unbiased anatomical templates from individual images"
 readme = "README.md"
-requires-python = ">=3.11.0"
+requires-python = ">=3.12.0"
 dynamic = ["version"]
 
 license = { text = "BSD-3-Clause" }
@@ -12,9 +12,9 @@ classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: BSD License",
 ]
@@ -79,7 +79,7 @@ exclude = ["tests", "docs*"]
 addopts = "--cov=brainglobe_template_builder --cov-report=xml --color=yes -vv"
 
 [tool.black]
-target-version = ['py311', 'py312', 'py313']
+target-version = ['py312', 'py313', 'py314']
 skip-string-normalization = false
 line-length = 79
 
