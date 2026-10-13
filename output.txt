@@ -1,5 +1,4 @@
 index.rst:1: [redirected permanently] https://codecov.io/gh/brainglobe/brainglobe-template-builder to https://app.codecov.io/gh/brainglobe/brainglobe-template-builder
-index.rst:1: [redirected permanently] https://github.com/charliermarsh/ruff to https://github.com/astral-sh/ruff
-index.rst:1: [redirected permanently] https://github.com/python/black to https://github.com/psf/black
-index.rst:1: [redirected with Found] https://zenodo.org/badge/700299148.svg to https://zenodo.org/badge/DOI/10.5281/zenodo.17950747.svg
-index.rst:1: [redirected with Found] https://doi.org/10.5281/zenodo.14608573 to https://zenodo.org/records/17950747
+index.rst:1: [redirected permanently] https://pepy.tech/project/brainglobe-template-builder to https://pepy.tech/projects/brainglobe-template-builder
+index.rst:1: [redirected with Found] https://doi.org/10.5281/zenodo.14608573 to https://zenodo.org/records/23343722
+index.rst:143: [redirected with Found] https://github.com/ANTsX/ANTs/blob/master/Scripts/antsMultivariateTemplateConstruction2.sh to https://github.com/ANTsX/ANTs/blob/main/Scripts/antsMultivariateTemplateConstruction2.sh
